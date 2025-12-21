@@ -253,7 +253,7 @@ const App: React.FC = () => {
       return {
         ...prev,
         recommendations: updatedRecs,
-        feedbackHistory: [...prev.feedbackHistory, { title: movie.title, feedback }]
+        feedbackHistory: [{ title: movie.title, feedback }, ...prev.feedbackHistory].slice(0, 50)
       };
     });
   };
@@ -539,31 +539,67 @@ const App: React.FC = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-8 pt-0 md:pt-4">
-               <div className="space-y-1 md:space-y-3">
-                  <label className="mono text-[8px] md:text-[10px] uppercase text-slate-600 tracking-widest font-bold">Modality</label>
-                  <div className="flex flex-row sm:flex-col flex-wrap gap-1">
-                    {CONTENT_TYPES.map((ct) => (
-                      <button key={ct.value} onClick={() => setState((s) => ({ ...s, filters: { ...s.filters, type: ct.value } }))} className={`py-1 md:py-2 px-2 md:px-3 mono text-[9px] md:text-xs font-bold uppercase text-left transition-all border-l-2 ${state.filters.type === ct.value ? 'border-cyan-500 bg-cyan-500/5 text-white' : 'border-transparent text-slate-500 hover:text-slate-300'} whitespace-nowrap`}>
-                        {ct.label}
-                      </button>
-                    ))}
-                  </div>
-               </div>
-               <div className="space-y-1 md:space-y-3">
-                  <label className="mono text-[8px] md:text-[10px] uppercase text-slate-600 tracking-widest font-bold">Genre_Axis</label>
-                  <select value={state.filters.genre} onChange={(e) => setState((s) => ({ ...s, filters: { ...s.filters, genre: e.target.value } }))} className="w-full bg-black/40 border border-white/10 p-2 md:p-4 mono text-[10px] md:text-xs uppercase text-white outline-none focus:border-cyan-500/50 appearance-none rounded-none">
-                    <option value="">ALL_CHANNELS</option>
-                    {GENRES.map((g) => <option key={g} value={g}>{g.toUpperCase()}</option>)}
-                  </select>
-               </div>
-               <div className="space-y-1 md:space-y-3 sm:col-span-2 lg:col-span-1">
-                  <label className="mono text-[8px] md:text-[10px] uppercase text-slate-600 tracking-widest font-bold">Affective_State</label>
-                  <select value={state.filters.mood} onChange={(e) => setState((s) => ({ ...s, filters: { ...s.filters, mood: e.target.value } }))} className="w-full bg-black/40 border border-white/10 p-2 md:p-4 mono text-[10px] md:text-xs uppercase text-white outline-none focus:border-cyan-500/50 appearance-none rounded-none">
-                    <option value="">UNCALIBRATED</option>
-                    {MOODS.map((m) => <option key={m} value={m}>{m.toUpperCase()}</option>)}
-                  </select>
-               </div>
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+              <div className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-8 pt-0 md:pt-4">
+                 <div className="space-y-1 md:space-y-3">
+                    <label className="mono text-[8px] md:text-[10px] uppercase text-slate-600 tracking-widest font-bold">Modality</label>
+                    <div className="flex flex-row sm:flex-col flex-wrap gap-1">
+                      {CONTENT_TYPES.map((ct) => (
+                        <button key={ct.value} onClick={() => setState((s) => ({ ...s, filters: { ...s.filters, type: ct.value } }))} className={`py-1 md:py-2 px-2 md:px-3 mono text-[9px] md:text-xs font-bold uppercase text-left transition-all border-l-2 ${state.filters.type === ct.value ? 'border-cyan-500 bg-cyan-500/5 text-white' : 'border-transparent text-slate-500 hover:text-slate-300'} whitespace-nowrap`}>
+                          {ct.label}
+                        </button>
+                      ))}
+                    </div>
+                 </div>
+                 <div className="space-y-1 md:space-y-3">
+                    <label className="mono text-[8px] md:text-[10px] uppercase text-slate-600 tracking-widest font-bold">Genre_Axis</label>
+                    <select value={state.filters.genre} onChange={(e) => setState((s) => ({ ...s, filters: { ...s.filters, genre: e.target.value } }))} className="w-full bg-black/40 border border-white/10 p-2 md:p-4 mono text-[10px] md:text-xs uppercase text-white outline-none focus:border-cyan-500/50 appearance-none rounded-none">
+                      <option value="">ALL_CHANNELS</option>
+                      {GENRES.map((g) => <option key={g} value={g}>{g.toUpperCase()}</option>)}
+                    </select>
+                 </div>
+                 <div className="space-y-1 md:space-y-3">
+                    <label className="mono text-[8px] md:text-[10px] uppercase text-slate-600 tracking-widest font-bold">Affective_State</label>
+                    <select value={state.filters.mood} onChange={(e) => setState((s) => ({ ...s, filters: { ...s.filters, mood: e.target.value } }))} className="w-full bg-black/40 border border-white/10 p-2 md:p-4 mono text-[10px] md:text-xs uppercase text-white outline-none focus:border-cyan-500/50 appearance-none rounded-none">
+                      <option value="">UNCALIBRATED</option>
+                      {MOODS.map((m) => <option key={m} value={m}>{m.toUpperCase()}</option>)}
+                    </select>
+                 </div>
+              </div>
+
+              {/* Bias Monitor */}
+              <div className="bg-black/40 border border-white/5 p-4 space-y-4">
+                 <div className="flex items-center justify-between border-b border-white/5 pb-2">
+                    <span className="mono text-[9px] text-slate-500 uppercase font-black tracking-widest">Neural_Bias_Monitor</span>
+                    <i className="fa-solid fa-microchip text-[10px] text-cyan-500 animate-pulse"></i>
+                 </div>
+                 <div className="space-y-3 max-h-[160px] overflow-y-auto pr-2 custom-scrollbar">
+                    {state.feedbackHistory.length === 0 ? (
+                      <div className="mono text-[9px] text-slate-700 uppercase italic py-4 text-center">NO_SIGNALS_DETECTED</div>
+                    ) : (
+                      state.feedbackHistory.slice(0, 5).map((f, i) => (
+                        <div key={i} className="flex flex-col gap-1 border-l border-white/5 pl-2 group">
+                          <div className="flex items-center gap-2">
+                            <i className={`fa-solid ${f.feedback.type === 'like' ? 'fa-circle-up text-cyan-500' : 'fa-circle-down text-red-500'} text-[8px]`}></i>
+                            <span className="mono text-[9px] text-slate-400 uppercase font-bold truncate group-hover:text-white transition-colors">{f.title}</span>
+                          </div>
+                          {f.feedback.reason && (
+                            <div className="mono text-[8px] text-slate-600 uppercase italic pl-4 truncate">"{(f.feedback.reason as string).slice(0, 30)}..."</div>
+                          )}
+                        </div>
+                      ))
+                    )}
+                 </div>
+                 <div className="pt-2 border-t border-white/5">
+                    <div className="flex justify-between items-center text-[8px] mono text-slate-600 uppercase">
+                       <span>Stability</span>
+                       <span className="text-cyan-500">98.4%</span>
+                    </div>
+                    <div className="h-0.5 bg-white/5 mt-1">
+                       <div className="h-full bg-cyan-500/40 w-[98.4%]"></div>
+                    </div>
+                 </div>
+              </div>
             </div>
           </div>
 
@@ -612,6 +648,11 @@ const App: React.FC = () => {
           </section>
         )}
       </main>
+      <style>{`
+        .custom-scrollbar::-webkit-scrollbar { width: 2px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(0, 245, 255, 0.2); }
+      `}</style>
     </div>
   );
 };
