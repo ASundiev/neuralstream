@@ -2,12 +2,22 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { RecommendationRequest, Movie, ContentType } from "../types";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// The Gemini API key is obtained exclusively from process.env.API_KEY
+// In development, you can create a .env file with VITE_API_KEY=your_key
+const API_KEY = process.env.API_KEY;
 
-// High-fidelity TMDB Access Token
-const TMDB_TOKEN = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI4NjU4YmVlMDE0Njg1YjUzYmIwNTlmNTU5MDE2YjE1YyIsIm5iZiI6MTc2NjE3ODkzMy41Nywic3ViIjoiNjk0NWMwNzVhMWIzN2ZjYjlhYjFiZTdmIiwic2NvcGVzIjpbImFwaV9yZWFkIl0sInZlcnNpb24iOjF9.MvX0cWuSIuUiboWcnwIXabWu9FPptZAFhj6m9ivMLhE";
+let ai: any = null;
+if (API_KEY && API_KEY !== 'undefined') {
+  ai = new GoogleGenAI({ apiKey: API_KEY });
+}
+
+const TMDB_TOKEN = process.env.VITE_TMDB_TOKEN;
 
 async function fetchPosterFromTmdb(title: string, year?: string): Promise<string | null> {
+  if (!TMDB_TOKEN || TMDB_TOKEN === 'undefined') {
+    return null;
+  }
+
   try {
     const cleanYear = year ? year.split(/[-–—]/)[0].trim().match(/\d{4}/)?.[0] : null;
     const query = encodeURIComponent(title);
@@ -37,6 +47,8 @@ async function fetchPosterFromTmdb(title: string, year?: string): Promise<string
 }
 
 export async function searchMovieForHistory(query: string): Promise<Movie | null> {
+  if (!ai) throw new Error("NEURAL_ENGINE_OFFLINE: Missing API_KEY");
+  
   try {
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
@@ -73,6 +85,8 @@ export async function searchMovieForHistory(query: string): Promise<Movie | null
 }
 
 export async function getRecommendations(request: RecommendationRequest): Promise<{ movies: Movie[], sources: any[] }> {
+  if (!ai) throw new Error("NEURAL_ENGINE_OFFLINE: Missing API_KEY");
+  
   const { watchedHistory, targetType, genre, mood, seedMovie, naturalLanguageQuery } = request;
 
   const context = watchedHistory
@@ -81,25 +95,14 @@ export async function getRecommendations(request: RecommendationRequest): Promis
     .slice(0, 15)
     .join(', ');
 
-  // Construct a prompt that prioritizes the natural language query if it exists
   const prompt = `
     TASK: GENERATE 8 PRECISE RECOMMENDATIONS.
-    
-    USER_HISTORY_NODES (Highly Rated): [${context}]
-    
-    NEURAL_OVERRIDE_SIGNAL (PRIMARY): ${naturalLanguageQuery ? `"${naturalLanguageQuery}"` : "NONE"}
-    
-    SECONDARY_FILTERS:
-    - Modality: ${targetType}
-    - Genre Axis: ${genre || "ALL"}
-    - Affective State: ${mood || "UNCALIBRATED"}
-    ${seedMovie ? `- Genetic Seed: Similar to "${seedMovie.title}"` : ""}
-
-    INSTRUCTIONS:
-    1. If a NEURAL_OVERRIDE_SIGNAL is provided, interpret the fuzzy intent (e.g., "non-stupid Christmas movie" implies intellectual or emotionally resonant holiday films).
-    2. Cross-reference the override signal with the USER_HISTORY_NODES to ensure the recommendations align with the user's general quality bar.
-    3. Ensure the result is strictly ${targetType === 'both' ? 'a mix of movies and series' : targetType}.
-    4. Provide a unique "reason" for each that explains why it matches both the history and the override signal.
+    USER_HISTORY_NODES: [${context}]
+    NEURAL_OVERRIDE_SIGNAL: ${naturalLanguageQuery || "NONE"}
+    MODALITY: ${targetType}
+    GENRE: ${genre || "ALL"}
+    MOOD: ${mood || "UNCALIBRATED"}
+    ${seedMovie ? `SEED: Similar to "${seedMovie.title}"` : ""}
   `;
 
   try {
@@ -108,7 +111,7 @@ export async function getRecommendations(request: RecommendationRequest): Promis
       contents: prompt,
       config: {
         tools: [{ googleSearch: {} }],
-        systemInstruction: "You are the core logic of NeuralStream AI, a world-class cinema recommendation engine. You excel at interpreting complex, fuzzy, and natural language requests to find perfect content matches. You prioritize quality and sophisticated taste.",
+        systemInstruction: "You are the core logic of NeuralStream AI. Interpret history and fuzzy queries to find perfect matches.",
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.ARRAY,
