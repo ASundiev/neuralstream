@@ -1,0 +1,5 @@
+{
+  "name": "NeuralStream AI",
+  "description": "A high-end movie and series recommendation engine that analyzes your IMDB ratings (7+) to suggest new content based on your taste, mood, and genre preferences.",
+  "requestFramePermissions": []
+}
