@@ -358,7 +358,7 @@ const App: React.FC = () => {
                     {authLoading ? 'ESTABLISHING...' : (isSignUp ? '[ SIGN_UP ]' : '[ AUTHORIZE ]')}
                   </button>
                   <div className="flex justify-between mono text-[10px] text-slate-500 uppercase">
-                    <button type="button" onClick={() => setIsSignUp(!isSignUp)} className="hover:text-cyan-400">{isSignUp ? 'EXISTING_MEMBER?' : 'NEED_NEW_IDENT?'}</button>
+                    <button type="button" onClick={(e) => setIsSignUp(!isSignUp)} className="hover:text-cyan-400">{isSignUp ? 'EXISTING_MEMBER?' : 'NEED_NEW_IDENT?'}</button>
                     <span className="opacity-30">SYS_AUTH_SECURE</span>
                   </div>
                 </form>
@@ -395,23 +395,25 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen pb-20">
-      <header className="sticky top-0 z-50 bg-slate-950/95 backdrop-blur-2xl border-b border-white/5 px-8 flex items-center justify-between h-20">
-        <div className="flex items-center gap-10">
-          <div className="flex items-center gap-3 shrink-0">
-            <div className="w-8 h-8 bg-cyan-500 flex items-center justify-center">
-              <i className="fa-solid fa-dna text-black text-sm"></i>
+      <header className="sticky top-0 z-50 bg-slate-950/95 backdrop-blur-2xl border-b border-white/5 px-4 md:px-8 flex items-center justify-between h-14 md:h-20">
+        <div className="flex items-center gap-2 md:gap-10 overflow-hidden">
+          <div className="flex items-center gap-2 shrink-0">
+            <div className="w-5 h-5 md:w-8 md:h-8 bg-cyan-500 flex items-center justify-center">
+              <i className="fa-solid fa-dna text-black text-[8px] md:text-sm"></i>
             </div>
-            <span className="text-2xl font-black tracking-tighter uppercase italic leading-tight">Neural<span className="text-cyan-400">Stream</span></span>
+            <span className="text-sm md:text-2xl font-black tracking-tighter uppercase italic leading-tight whitespace-nowrap">Neural<span className="text-cyan-400">Stream</span></span>
           </div>
-          <div className="hidden md:flex items-center h-full">
-            <form onSubmit={handleQuickAdd} className="flex items-center gap-2 border border-white/10 bg-black/40 px-4 h-11 rounded-sm">
-               <i className="fa-solid fa-search text-xs text-slate-600"></i>
-               <input type="text" placeholder="QUICK_ADD_WATCHED..." className="bg-transparent mono text-xs outline-none w-64 text-white placeholder-slate-700 uppercase" value={quickSearch} onChange={(e) => setQuickSearch(e.target.value)} disabled={isQuickAdding} />
-               <button type="submit" className="bg-white/5 hover:bg-cyan-500 hover:text-black px-4 h-8 mono text-xs uppercase font-bold transition-all ml-2">{isQuickAdding ? '...' : '[ ADD ]'}</button>
+          {/* Hidden quick search on small mobile to avoid header collapse */}
+          <div className="hidden sm:flex items-center h-full">
+            <form onSubmit={handleQuickAdd} className="flex items-center gap-2 border border-white/10 bg-black/40 px-2 md:px-4 h-8 md:h-11 rounded-sm">
+               <i className="fa-solid fa-search text-[10px] text-slate-600"></i>
+               <input type="text" placeholder="QUICK_ADD..." className="bg-transparent mono text-[10px] md:text-xs outline-none w-24 md:w-48 lg:w-64 text-white placeholder-slate-700 uppercase" value={quickSearch} onChange={(e) => setQuickSearch(e.target.value)} disabled={isQuickAdding} />
+               <button type="submit" className="bg-white/5 hover:bg-cyan-500 hover:text-black px-2 md:px-4 h-6 md:h-8 mono text-[9px] md:text-xs uppercase font-bold transition-all ml-1 md:ml-2">{isQuickAdding ? '...' : '[ ADD ]'}</button>
             </form>
           </div>
         </div>
-        <div className="flex items-center gap-10">
+        
+        <div className="flex items-center gap-2 md:gap-10">
           <div className="hidden lg:flex flex-col items-end leading-tight justify-center">
              <div className="mono text-[10px] text-slate-600 uppercase tracking-widest flex items-center gap-2">
                 <span className={`w-1.5 h-1.5 ${syncStatus === 'SYNCING' ? 'bg-cyan-500 animate-ping' : syncStatus === 'ERROR' ? 'bg-red-500' : 'bg-green-500'} rounded-full`}></span>
@@ -419,63 +421,68 @@ const App: React.FC = () => {
              </div>
              <div className="mono text-xs font-bold text-cyan-400 uppercase tracking-tighter">{state.userMovies.length} DATA_POINTS // {state.feedbackHistory.length} FEEDBACKS</div>
           </div>
-          <button onClick={() => supabase.auth.signOut()} className="mono text-xs text-red-400/50 hover:text-red-400 hover:bg-red-400/10 px-6 h-11 border border-red-500/20 transition-all uppercase font-bold flex items-center justify-center">[ DISCONNECT ]</button>
+          <button onClick={() => supabase.auth.signOut()} className="mono text-[9px] md:text-xs text-red-400/50 hover:text-red-400 hover:bg-red-400/10 px-2 md:px-6 h-8 md:h-11 border border-red-500/20 transition-all uppercase font-bold flex items-center justify-center">[ EXIT ]</button>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-8 py-10 space-y-16">
-        <section className="tech-border p-8 bg-slate-900/10 backdrop-blur-md relative overflow-hidden">
+      <main className="max-w-7xl mx-auto px-4 md:px-8 py-4 md:py-10 space-y-6 md:space-y-16">
+        <section className="tech-border p-3 md:p-8 bg-slate-900/10 backdrop-blur-md relative overflow-hidden">
           <div className="scanline opacity-10"></div>
           
-          <div className="space-y-10">
+          <div className="space-y-4 md:space-y-10">
             {/* Unified Tuning Parameters & Command Bar */}
-            <div className="space-y-6">
+            <div className="space-y-2 md:space-y-6">
               <div className="flex items-center justify-between">
-                <div className="mono text-[10px] text-cyan-500 uppercase font-black tracking-[0.2em] flex items-center gap-2">
-                   <span className="w-1.5 h-1.5 bg-cyan-500 rounded-full animate-pulse"></span>
+                <div className="mono text-[8px] md:text-[10px] text-cyan-500 uppercase font-black tracking-[0.2em] flex items-center gap-2">
+                   <span className="w-1 h-1 md:w-1.5 md:h-1.5 bg-cyan-500 rounded-full animate-pulse"></span>
                    TUNING PARAMETERS
                 </div>
               </div>
               
-              <div className="relative group flex items-center">
-                <div className="absolute left-6 mono text-cyan-500/60 font-black text-sm select-none">CMD_&gt;</div>
-                <input 
-                  type="text"
+              <div className="relative group flex items-start">
+                <div className="absolute left-4 md:left-6 top-4 md:top-5 mono text-cyan-500/60 font-black text-xs md:text-sm select-none">CMD_&gt;</div>
+                <textarea 
+                  rows={2}
                   value={state.filters.query}
                   onChange={(e) => setState((s) => ({ ...s, filters: { ...s.filters, query: e.target.value } }))}
-                  onKeyDown={(e) => e.key === 'Enter' && fetchRecommendations()}
-                  placeholder="SPECIFY_NEURAL_OVERRIDE... (E.G. 'NON-STUPID CHRISTMAS MOVIE, LIKE HOLDOVERS')"
-                  className="w-full bg-black/40 border border-white/10 group-hover:border-cyan-500/40 focus:border-cyan-500/60 p-5 pl-20 mono text-sm text-white outline-none transition-all uppercase placeholder-slate-800 rounded-sm"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      fetchRecommendations();
+                    }
+                  }}
+                  placeholder="SPECIFY_NEURAL_OVERRIDE..."
+                  className="w-full bg-black/40 border border-white/10 group-hover:border-cyan-500/40 focus:border-cyan-500/60 p-4 md:p-5 pl-12 md:pl-20 mono text-[11px] md:text-sm text-white outline-none transition-all uppercase placeholder-slate-800 rounded-sm resize-none min-h-[80px] md:min-h-0"
                 />
-                <div className="absolute right-6 flex items-center gap-3">
-                   <div className="mono text-[8px] text-slate-700 uppercase hidden sm:block tracking-widest">Syntax::FUZZY</div>
+                <div className="absolute right-4 md:right-6 bottom-4 flex items-center gap-2 md:gap-3">
+                   <div className="mono text-[8px] text-slate-700 uppercase hidden lg:block tracking-widest">Syntax::FUZZY</div>
                    <div className={`w-1.5 h-1.5 rounded-full ${state.filters.query ? 'bg-cyan-500 shadow-[0_0_8px_cyan]' : 'bg-slate-800'}`}></div>
                 </div>
               </div>
             </div>
 
-            {/* Manual Controls Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-4">
-               <div className="space-y-3">
-                  <label className="mono text-[10px] uppercase text-slate-600 tracking-widest font-bold">Modality</label>
-                  <div className="flex flex-col gap-1">
+            {/* Manual Controls Grid - More compact for mobile */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-8 pt-0 md:pt-4">
+               <div className="space-y-1 md:space-y-3">
+                  <label className="mono text-[8px] md:text-[10px] uppercase text-slate-600 tracking-widest font-bold">Modality</label>
+                  <div className="flex flex-row sm:flex-col flex-wrap gap-1">
                     {CONTENT_TYPES.map((ct) => (
-                      <button key={ct.value} onClick={() => setState((s) => ({ ...s, filters: { ...s.filters, type: ct.value } }))} className={`py-2 px-3 mono text-xs font-bold uppercase text-left transition-all border-l-2 ${state.filters.type === ct.value ? 'border-cyan-500 bg-cyan-500/5 text-white' : 'border-transparent text-slate-500 hover:text-slate-300'}`}>
+                      <button key={ct.value} onClick={() => setState((s) => ({ ...s, filters: { ...s.filters, type: ct.value } }))} className={`py-1 md:py-2 px-2 md:px-3 mono text-[9px] md:text-xs font-bold uppercase text-left transition-all border-l-2 ${state.filters.type === ct.value ? 'border-cyan-500 bg-cyan-500/5 text-white' : 'border-transparent text-slate-500 hover:text-slate-300'} whitespace-nowrap`}>
                         {ct.label}
                       </button>
                     ))}
                   </div>
                </div>
-               <div className="space-y-3">
-                  <label className="mono text-[10px] uppercase text-slate-600 tracking-widest font-bold">Genre_Axis</label>
-                  <select value={state.filters.genre} onChange={(e) => setState((s) => ({ ...s, filters: { ...s.filters, genre: e.target.value } }))} className="w-full bg-black/40 border border-white/10 p-4 mono text-xs uppercase text-white outline-none focus:border-cyan-500/50 appearance-none rounded-none">
+               <div className="space-y-1 md:space-y-3">
+                  <label className="mono text-[8px] md:text-[10px] uppercase text-slate-600 tracking-widest font-bold">Genre_Axis</label>
+                  <select value={state.filters.genre} onChange={(e) => setState((s) => ({ ...s, filters: { ...s.filters, genre: e.target.value } }))} className="w-full bg-black/40 border border-white/10 p-2 md:p-4 mono text-[10px] md:text-xs uppercase text-white outline-none focus:border-cyan-500/50 appearance-none rounded-none">
                     <option value="">ALL_CHANNELS</option>
                     {GENRES.map((g) => <option key={g} value={g}>{g.toUpperCase()}</option>)}
                   </select>
                </div>
-               <div className="space-y-3">
-                  <label className="mono text-[10px] uppercase text-slate-600 tracking-widest font-bold">Affective_State</label>
-                  <select value={state.filters.mood} onChange={(e) => setState((s) => ({ ...s, filters: { ...s.filters, mood: e.target.value } }))} className="w-full bg-black/40 border border-white/10 p-4 mono text-xs uppercase text-white outline-none focus:border-cyan-500/50 appearance-none rounded-none">
+               <div className="space-y-1 md:space-y-3 sm:col-span-2 lg:col-span-1">
+                  <label className="mono text-[8px] md:text-[10px] uppercase text-slate-600 tracking-widest font-bold">Affective_State</label>
+                  <select value={state.filters.mood} onChange={(e) => setState((s) => ({ ...s, filters: { ...s.filters, mood: e.target.value } }))} className="w-full bg-black/40 border border-white/10 p-2 md:p-4 mono text-[10px] md:text-xs uppercase text-white outline-none focus:border-cyan-500/50 appearance-none rounded-none">
                     <option value="">UNCALIBRATED</option>
                     {MOODS.map((m) => <option key={m} value={m}>{m.toUpperCase()}</option>)}
                   </select>
@@ -483,18 +490,18 @@ const App: React.FC = () => {
             </div>
           </div>
 
-          <button onClick={() => fetchRecommendations()} disabled={state.isLoading} className="mt-12 w-full py-6 border border-cyan-500/30 hover:bg-cyan-500 text-cyan-400 hover:text-black mono font-black text-sm uppercase tracking-[0.6em] transition-all relative group overflow-hidden">
+          <button onClick={() => fetchRecommendations()} disabled={state.isLoading} className="mt-6 md:mt-12 w-full py-3 md:py-6 border border-cyan-500/30 hover:bg-cyan-500 text-cyan-400 hover:text-black mono font-black text-[10px] md:text-sm uppercase tracking-[0.3em] md:tracking-[0.6em] transition-all relative group overflow-hidden">
             <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
             {state.isLoading ? (
-              <span className="flex items-center justify-center gap-4">
-                <i className="fa-solid fa-microchip animate-spin text-lg"></i>
-                SYNTHESIZING_NODES...
+              <span className="flex items-center justify-center gap-2 md:gap-4">
+                <i className="fa-solid fa-microchip animate-spin text-sm md:text-lg"></i>
+                SYNTHESIZING...
               </span>
             ) : (
-              <span className="flex items-center justify-center gap-4">
-                <i className="fa-solid fa-bolt text-xs"></i>
+              <span className="flex items-center justify-center gap-2 md:gap-4">
+                <i className="fa-solid fa-bolt text-[10px] md:text-xs"></i>
                 [ INITIATE_NEURAL_UPLINK ]
-                <i className="fa-solid fa-bolt text-xs"></i>
+                <i className="fa-solid fa-bolt text-[10px] md:text-xs"></i>
               </span>
             )}
           </button>
@@ -505,22 +512,23 @@ const App: React.FC = () => {
             <NeuralLoader />
           </div>
         ) : state.recommendations.length > 0 && (
-          <section className="space-y-10 animate-in fade-in slide-in-from-bottom-8 duration-1000">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-white/10 pb-8">
+          <section className="space-y-6 md:space-y-10 animate-in fade-in slide-in-from-bottom-8 duration-1000">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-white/10 pb-4 md:pb-8">
               <div className="space-y-1">
-                <div className="mono text-[10px] text-cyan-500 uppercase tracking-widest font-bold">Output_Matrix</div>
-                <h3 className="text-xl font-black uppercase text-white italic">Verified_Matches</h3>
+                <div className="mono text-[8px] md:text-[10px] text-cyan-500 uppercase tracking-widest font-bold">Output_Matrix</div>
+                <h3 className="text-base md:text-xl font-black uppercase text-white italic">Verified_Matches</h3>
               </div>
-              <div className="flex flex-wrap gap-2">
-                {state.sources.length > 0 && state.sources.slice(0, 4).map((s, i) => (
-                  <a key={i} href={s.web?.uri || '#'} target="_blank" className="mono text-[10px] px-3 py-1.5 bg-cyan-500/5 text-cyan-500/60 border border-cyan-500/10 hover:border-cyan-500/50 hover:text-cyan-400 transition-all uppercase">
-                    DATA_REF_{i+1}
+              <div className="flex flex-wrap gap-1 md:gap-2">
+                {state.sources.length > 0 && state.sources.slice(0, 3).map((s, i) => (
+                  <a key={i} href={s.web?.uri || '#'} target="_blank" className="mono text-[8px] md:text-[10px] px-2 md:px-3 py-1 md:py-1.5 bg-cyan-500/5 text-cyan-500/60 border border-cyan-500/10 hover:border-cyan-500/50 hover:text-cyan-400 transition-all uppercase">
+                    DATA_{i+1}
                   </a>
                 ))}
               </div>
             </div>
             
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 items-stretch">
+            {/* Single column on mobile, growing as viewport expands */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8 items-stretch">
               {state.recommendations.map((movie) => (
                 <MovieCard key={movie.id} movie={movie} isRecommendation onLikeSimilar={(seed) => fetchRecommendations(seed)} onMarkWatched={(m) => markAsWatched(m)} onFeedback={(m, f) => handleFeedback(m, f)} />
               ))}
