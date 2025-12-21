@@ -6,7 +6,6 @@ import { getRecommendations, searchMovieForHistory } from './services/geminiServ
 import { MovieCard } from './components/MovieCard';
 import { NeuralLoader } from './components/NeuralLoader';
 
-// Using process.env instead of import.meta.env to resolve environment variable access errors in the current context
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://vplgyzzwgbgwudbtdgfk.supabase.co';
 const SUPABASE_KEY = process.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZwbGd5enp3Z2Jnd3VkYnRkZ2ZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYxNzM0ODksImV4cCI6MjA4MTc0OTQ4OX0.90zVerWUdgekP_MWRiViKC80bDy46UkZau6MZ6ANrKE';
 
@@ -26,6 +25,7 @@ const App: React.FC = () => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [verificationSent, setVerificationSent] = useState(false);
   const [authLoading, setAuthLoading] = useState(false);
+  const [isApproved, setIsApproved] = useState<boolean | null>(null);
   const [syncStatus, setSyncStatus] = useState<'IDLE' | 'SYNCING' | 'ERROR' | 'OFFLINE'>('IDLE');
 
   const [state, setState] = useState<AppState>({
@@ -69,22 +69,29 @@ const App: React.FC = () => {
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('state')
+          .select('state, is_approved')
           .eq('id', user.id)
           .single();
 
-        if (data?.state) {
-          skipSync.current = true;
-          setState({
-            ...data.state,
-            isLoggedIn: true,
-            isLoading: false
-          });
+        if (data) {
+          setIsApproved(data.is_approved === true);
+          if (data.state) {
+            skipSync.current = true;
+            setState({
+              ...data.state,
+              isLoggedIn: true,
+              isLoading: false
+            });
+          } else {
+            setState((s) => ({ ...s, isLoggedIn: true, isLoading: false }));
+          }
         } else {
+          setIsApproved(false);
           setState((s) => ({ ...s, isLoggedIn: true, isLoading: false }));
         }
       } catch (err) {
         console.error("Hydration Error:", err);
+        setIsApproved(false);
         setState((s) => ({ ...s, isLoggedIn: true, isLoading: false }));
       }
     };
@@ -93,7 +100,7 @@ const App: React.FC = () => {
   }, [user]);
 
   useEffect(() => {
-    if (!user || !supabase || state.isLoading) return;
+    if (!user || !supabase || state.isLoading || isApproved === false) return;
     if (skipSync.current) {
       skipSync.current = false;
       return;
@@ -121,7 +128,7 @@ const App: React.FC = () => {
 
     const debounceTimer = setTimeout(syncToCloud, 2000);
     return () => clearTimeout(debounceTimer);
-  }, [state, user]);
+  }, [state, user, isApproved]);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -325,12 +332,18 @@ const App: React.FC = () => {
                 <div className="bg-black/40 border border-white/5 p-4 text-left space-y-3">
                   <div className="mono text-[9px] text-slate-500 uppercase font-bold border-b border-white/5 pb-2">Protocol_Verification_Steps</div>
                   <div className="space-y-2">
-                    {['ACCESS YOUR INBOX', 'LOCATE ENCRYPTED HANDSHAKE LINK', 'AUTHORIZE UPLINK'].map((step, i) => (
-                      <div key={i} className="flex items-start gap-3">
-                        <span className="mono text-[10px] text-cyan-500">0{i+1}</span>
-                        <span className="mono text-[10px] text-slate-400 uppercase">{step}</span>
-                      </div>
-                    ))}
+                    <div className="flex items-start gap-3">
+                      <span className="mono text-[10px] text-cyan-500">01</span>
+                      <span className="mono text-[10px] text-slate-400 uppercase">ACCESS YOUR INBOX & VERIFY EMAIL</span>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <span className="mono text-[10px] text-amber-500">02</span>
+                      <span className="mono text-[10px] text-slate-400 uppercase">AWAIT SYSTEM ADMINISTRATOR REVIEW</span>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <span className="mono text-[10px] text-green-500">03</span>
+                      <span className="mono text-[10px] text-slate-400 uppercase">AUTHORIZE FULL NEURAL UPLINK</span>
+                    </div>
                   </div>
                 </div>
                 <button onClick={() => setVerificationSent(false)} className="w-full py-3 border border-white/10 hover:border-cyan-500/50 text-slate-500 hover:text-cyan-400 mono text-xs uppercase font-black tracking-widest transition-all">
@@ -358,12 +371,79 @@ const App: React.FC = () => {
                     {authLoading ? 'ESTABLISHING...' : (isSignUp ? '[ SIGN_UP ]' : '[ AUTHORIZE ]')}
                   </button>
                   <div className="flex justify-between mono text-[10px] text-slate-500 uppercase">
-                    <button type="button" onClick={(e) => setIsSignUp(!isSignUp)} className="hover:text-cyan-400">{isSignUp ? 'EXISTING_MEMBER?' : 'NEED_NEW_IDENT?'}</button>
+                    <button type="button" onClick={() => setIsSignUp(!isSignUp)} className="hover:text-cyan-400">{isSignUp ? 'EXISTING_MEMBER?' : 'NEED_NEW_IDENT?'}</button>
                     <span className="opacity-30">SYS_AUTH_SECURE</span>
                   </div>
                 </form>
               </>
             )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (isApproved === false) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6 bg-slate-950">
+        <div className="max-w-lg w-full tech-border bg-slate-900/40 p-10 overflow-hidden shadow-2xl relative text-center">
+          <div className="scanline opacity-30"></div>
+          <div className="space-y-10 relative z-20">
+            <div className="relative inline-block">
+              <div className="w-24 h-24 border-2 border-amber-500/30 rounded-full flex items-center justify-center mx-auto bg-amber-500/5">
+                 <i className="fa-solid fa-fingerprint text-4xl text-amber-500 animate-pulse"></i>
+              </div>
+              <div className="absolute inset-0 border border-amber-500/20 rounded-full animate-ping"></div>
+            </div>
+            
+            <div className="space-y-3">
+              <h1 className="text-4xl font-black text-white uppercase italic tracking-tighter">Identity_<span className="text-amber-500">Under_Review</span></h1>
+              <div className="flex items-center justify-center gap-2 mono text-[10px] text-slate-500 uppercase tracking-widest font-bold">
+                 <span className="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></span>
+                 Awaiting Manual Admin Clearance
+              </div>
+            </div>
+            
+            <div className="bg-black/60 border border-white/5 p-6 text-left space-y-5 relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-2 opacity-10">
+                 <i className="fa-solid fa-lock text-4xl"></i>
+              </div>
+              <div className="flex justify-between items-center border-b border-white/5 pb-3">
+                <span className="mono text-[10px] text-slate-500 uppercase">Neural_Ident</span>
+                <span className="mono text-[11px] text-cyan-400 font-bold truncate max-w-[200px]">{user.email}</span>
+              </div>
+              <div className="flex justify-between items-center border-b border-white/5 pb-3">
+                <span className="mono text-[10px] text-slate-500 uppercase">Verification_Status</span>
+                <span className="mono text-[11px] text-green-500 font-black flex items-center gap-2">
+                   <i className="fa-solid fa-check-circle"></i> EMAIL_CONFIRMED
+                </span>
+              </div>
+              <div className="flex justify-between items-center border-b border-white/5 pb-3">
+                <span className="mono text-[10px] text-slate-500 uppercase">Security_Tier</span>
+                <span className="mono text-[11px] text-amber-500 font-black animate-pulse flex items-center gap-2">
+                   <i className="fa-solid fa-user-clock"></i> PENDING_APPROVAL
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="mono text-[10px] text-slate-500 uppercase">System_Access</span>
+                <span className="mono text-[11px] text-red-500 font-bold uppercase tracking-widest">RESTRICTED</span>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <p className="mono text-[10px] text-slate-400 uppercase leading-relaxed text-center px-8 border-l-2 border-amber-500/30 italic">
+                "Resource consumption is monitored. Your account is currently in the queue for manual vetting to manage API expenditures."
+              </p>
+              
+              <div className="grid grid-cols-1 gap-3">
+                <button onClick={() => window.location.reload()} className="w-full py-4 bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500 hover:text-black text-amber-500 mono text-xs uppercase font-black tracking-widest transition-all">
+                  [ CHECK_UPLINK_STATUS ]
+                </button>
+                <button onClick={() => supabase.auth.signOut()} className="w-full py-4 border border-white/5 hover:bg-red-500/10 hover:border-red-500/30 text-slate-600 hover:text-red-500 mono text-xs uppercase font-black tracking-widest transition-all">
+                  [ TERMINATE_CONNECTION ]
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -403,7 +483,6 @@ const App: React.FC = () => {
             </div>
             <span className="text-sm md:text-2xl font-black tracking-tighter uppercase italic leading-tight whitespace-nowrap">Neural<span className="text-cyan-400">Stream</span></span>
           </div>
-          {/* Hidden quick search on small mobile to avoid header collapse */}
           <div className="hidden sm:flex items-center h-full">
             <form onSubmit={handleQuickAdd} className="flex items-center gap-2 border border-white/10 bg-black/40 px-2 md:px-4 h-8 md:h-11 rounded-sm">
                <i className="fa-solid fa-search text-[10px] text-slate-600"></i>
@@ -430,7 +509,6 @@ const App: React.FC = () => {
           <div className="scanline opacity-10"></div>
           
           <div className="space-y-4 md:space-y-10">
-            {/* Unified Tuning Parameters & Command Bar */}
             <div className="space-y-2 md:space-y-6">
               <div className="flex items-center justify-between">
                 <div className="mono text-[8px] md:text-[10px] text-cyan-500 uppercase font-black tracking-[0.2em] flex items-center gap-2">
@@ -461,7 +539,6 @@ const App: React.FC = () => {
               </div>
             </div>
 
-            {/* Manual Controls Grid - More compact for mobile */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-8 pt-0 md:pt-4">
                <div className="space-y-1 md:space-y-3">
                   <label className="mono text-[8px] md:text-[10px] uppercase text-slate-600 tracking-widest font-bold">Modality</label>
@@ -527,7 +604,6 @@ const App: React.FC = () => {
               </div>
             </div>
             
-            {/* Single column on mobile, growing as viewport expands */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8 items-stretch">
               {state.recommendations.map((movie) => (
                 <MovieCard key={movie.id} movie={movie} isRecommendation onLikeSimilar={(seed) => fetchRecommendations(seed)} onMarkWatched={(m) => markAsWatched(m)} onFeedback={(m, f) => handleFeedback(m, f)} />

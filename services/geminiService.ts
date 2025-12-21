@@ -1,9 +1,6 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 import { RecommendationRequest, Movie, ContentType } from "../types";
 
-// The Gemini API key is obtained exclusively from process.env.API_KEY
-// In development, you can create a .env file with VITE_API_KEY=your_key
 const API_KEY = process.env.API_KEY;
 
 let ai: any = null;
@@ -87,22 +84,29 @@ export async function searchMovieForHistory(query: string): Promise<Movie | null
 export async function getRecommendations(request: RecommendationRequest): Promise<{ movies: Movie[], sources: any[] }> {
   if (!ai) throw new Error("NEURAL_ENGINE_OFFLINE: Missing API_KEY");
   
-  const { watchedHistory, targetType, genre, mood, seedMovie, naturalLanguageQuery } = request;
+  const { watchedHistory, feedbackHistory, targetType, genre, mood, seedMovie, naturalLanguageQuery } = request;
 
   const context = watchedHistory
     .filter(m => (m.userRating || 0) >= 8)
-    .map(m => m.title)
-    .slice(0, 15)
+    .map(m => `${m.title} (${m.year})`)
+    .slice(0, 20)
     .join(', ');
+
+  const feedbackContext = feedbackHistory
+    .map(f => `${f.feedback.type.toUpperCase()}: "${f.title}"${f.feedback.reason ? ` because ${f.feedback.reason}` : ''}`)
+    .join(' | ');
 
   const prompt = `
     TASK: GENERATE 8 PRECISE RECOMMENDATIONS.
-    USER_HISTORY_NODES: [${context}]
+    USER_WATCHED_HISTORY: [${context}]
+    USER_FEEDBACK_SIGNALS: [${feedbackContext || "No feedback yet"}]
     NEURAL_OVERRIDE_SIGNAL: ${naturalLanguageQuery || "NONE"}
     MODALITY: ${targetType}
     GENRE: ${genre || "ALL"}
     MOOD: ${mood || "UNCALIBRATED"}
-    ${seedMovie ? `SEED: Similar to "${seedMovie.title}"` : ""}
+    ${seedMovie ? `SEED: Provide options strictly similar to "${seedMovie.title}"` : ""}
+
+    INSTRUCTION: Use the feedback signals to pivot recommendations. If a user disliked something for a specific reason, avoid that trait. If they liked it, amplify those traits. Do NOT recommend anything already in the USER_WATCHED_HISTORY.
   `;
 
   try {
@@ -111,7 +115,7 @@ export async function getRecommendations(request: RecommendationRequest): Promis
       contents: prompt,
       config: {
         tools: [{ googleSearch: {} }],
-        systemInstruction: "You are the core logic of NeuralStream AI. Interpret history and fuzzy queries to find perfect matches.",
+        systemInstruction: "You are the core logic of NeuralStream AI. You specialize in deep taste analysis. Return high-quality, non-obvious recommendations.",
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.ARRAY,
