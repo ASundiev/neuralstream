@@ -44,14 +44,14 @@ const App: React.FC = () => {
 
   useEffect(() => {
     if (!supabase) {
-      setState(s => ({ ...s, isLoading: false }));
+      setState((s) => ({ ...s, isLoading: false }));
       setSyncStatus('OFFLINE');
       return;
     }
 
     supabase.auth.getSession().then(({ data: { session } }: any) => {
       setUser(session?.user ?? null);
-      if (!session) setState(s => ({ ...s, isLoading: false }));
+      if (!session) setState((s) => ({ ...s, isLoading: false }));
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: string, session: any) => {
@@ -64,7 +64,7 @@ const App: React.FC = () => {
   useEffect(() => {
     const fetchProfile = async () => {
       if (!user || !supabase) return;
-      setState(s => ({ ...s, isLoading: true }));
+      setState((s) => ({ ...s, isLoading: true }));
       
       try {
         const { data, error } = await supabase
@@ -81,11 +81,11 @@ const App: React.FC = () => {
             isLoading: false
           });
         } else {
-          setState(s => ({ ...s, isLoggedIn: true, isLoading: false }));
+          setState((s) => ({ ...s, isLoggedIn: true, isLoading: false }));
         }
       } catch (err) {
         console.error("Hydration Error:", err);
-        setState(s => ({ ...s, isLoggedIn: true, isLoading: false }));
+        setState((s) => ({ ...s, isLoggedIn: true, isLoading: false }));
       }
     };
 
@@ -148,7 +148,7 @@ const App: React.FC = () => {
     const lines = csvText.split('\n');
     if (lines.length < 2) return [];
     const headers = lines[0].split(',');
-    const getIndex = (name: string) => headers.findIndex(h => h.trim().replace(/^"|"$/g, '') === name);
+    const getIndex = (name: string) => headers.findIndex((h) => h.trim().replace(/^"|"$/g, '') === name);
     
     const idxRating = getIndex('Your Rating');
     const idxTitle = getIndex('Title');
@@ -187,7 +187,7 @@ const App: React.FC = () => {
           userRating,
           rating: userRating,
           type: cols[idxType]?.toLowerCase().includes('tv') ? ContentType.SERIES : ContentType.MOVIE,
-          genres: cols[idxGenres]?.replace(/^"|"$/g, '').split(',').map(g => g.trim()) || [],
+          genres: cols[idxGenres]?.replace(/^"|"$/g, '').split(',').map((g) => g.trim()) || [],
           posterUrl: `[SIGNAL_LOST]` 
         });
       }
@@ -198,16 +198,16 @@ const App: React.FC = () => {
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setState(prev => ({ ...prev, isLoading: true }));
+    setState((prev) => ({ ...prev, isLoading: true }));
     const reader = new FileReader();
     reader.onload = (event) => {
       const text = event.target?.result as string;
       const movies = parseImdbCsv(text);
       if (movies.length > 0) {
-        setState(prev => ({ ...prev, isLoggedIn: true, userMovies: movies, isLoading: false }));
+        setState((prev) => ({ ...prev, isLoggedIn: true, userMovies: movies, isLoading: false }));
       } else {
         alert("CRITICAL: NO VALID (7+) RATINGS DETECTED IN CSV STREAM.");
-        setState(prev => ({ ...prev, isLoading: false }));
+        setState((prev) => ({ ...prev, isLoading: false }));
       }
     };
     reader.readAsText(file);
@@ -219,9 +219,9 @@ const App: React.FC = () => {
     setIsQuickAdding(true);
     const result = await searchMovieForHistory(quickSearch);
     if (result) {
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
-        userMovies: [result, ...prev.userMovies.filter(m => m.title.toLowerCase() !== result.title.toLowerCase())]
+        userMovies: [result, ...prev.userMovies.filter((m) => m.title.toLowerCase() !== result.title.toLowerCase())]
       }));
       setQuickSearch('');
     } else {
@@ -231,16 +231,16 @@ const App: React.FC = () => {
   };
 
   const markAsWatched = (movie: Movie) => {
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
       userMovies: [{ ...movie, userRating: 8 }, ...prev.userMovies],
-      recommendations: prev.recommendations.filter(m => m.title.toLowerCase() !== movie.title.toLowerCase())
+      recommendations: prev.recommendations.filter((m) => m.title.toLowerCase() !== movie.title.toLowerCase())
     }));
   };
 
   const handleFeedback = (movie: Movie, feedback: Feedback) => {
-    setState(prev => {
-      const updatedRecs = prev.recommendations.map(r => 
+    setState((prev) => {
+      const updatedRecs = prev.recommendations.map((r) => 
         r.id === movie.id ? { ...r, feedback } : r
       );
       return {
@@ -252,7 +252,7 @@ const App: React.FC = () => {
   };
 
   const fetchRecommendations = useCallback(async (seed?: Movie) => {
-    setState(prev => ({ ...prev, isLoading: true }));
+    setState((prev) => ({ ...prev, isLoading: true }));
     try {
       const { movies, sources: newSources } = await getRecommendations({
         watchedHistory: state.userMovies,
@@ -265,12 +265,12 @@ const App: React.FC = () => {
       });
 
       const watchedTitlesNormalized = new Set(
-        state.userMovies.map(m => m.title.toLowerCase().trim())
+        state.userMovies.map((m) => m.title.toLowerCase().trim())
       );
 
-      const verifiedMovies = movies.filter(m => !watchedTitlesNormalized.has(m.title.toLowerCase().trim()));
+      const verifiedMovies = movies.filter((m) => !watchedTitlesNormalized.has(m.title.toLowerCase().trim()));
 
-      setState(prev => ({ 
+      setState((prev) => ({ 
         ...prev, 
         recommendations: verifiedMovies, 
         sources: newSources,
@@ -278,7 +278,7 @@ const App: React.FC = () => {
       }));
     } catch (error) {
       alert("ENGINE_FAILURE: API HANDSHAKE TIMEOUT.");
-      setState(prev => ({ ...prev, isLoading: false }));
+      setState((prev) => ({ ...prev, isLoading: false }));
     }
   }, [state.userMovies, state.feedbackHistory, state.filters]);
 
@@ -347,11 +347,11 @@ const App: React.FC = () => {
                   <div className="space-y-4">
                     <div className="space-y-1">
                       <label className="mono text-[10px] text-slate-500 uppercase font-bold pl-1">Ident_Email</label>
-                      <input type="email" required value={authEmail} onChange={e => setAuthEmail(e.target.value)} className="w-full bg-black/40 border border-white/10 p-3 mono text-sm text-white outline-none focus:border-cyan-500/50 rounded-none uppercase" placeholder="ENTER_EMAIL..." />
+                      <input type="email" required value={authEmail} onChange={(e) => setAuthEmail(e.target.value)} className="w-full bg-black/40 border border-white/10 p-3 mono text-sm text-white outline-none focus:border-cyan-500/50 rounded-none uppercase" placeholder="ENTER_EMAIL..." />
                     </div>
                     <div className="space-y-1">
                       <label className="mono text-[10px] text-slate-500 uppercase font-bold pl-1">Access_Key</label>
-                      <input type="password" required value={authPassword} onChange={e => setAuthPassword(e.target.value)} className="w-full bg-black/40 border border-white/10 p-3 mono text-sm text-white outline-none focus:border-cyan-500/50 rounded-none uppercase" placeholder="ENTER_PASSWORD..." />
+                      <input type="password" required value={authPassword} onChange={(e) => setAuthPassword(e.target.value)} className="w-full bg-black/40 border border-white/10 p-3 mono text-sm text-white outline-none focus:border-cyan-500/50 rounded-none uppercase" placeholder="ENTER_PASSWORD..." />
                     </div>
                   </div>
                   <button type="submit" disabled={authLoading} className="w-full py-4 bg-cyan-500 text-black mono font-black text-sm uppercase tracking-[0.4em] hover:bg-white transition-colors">
@@ -406,7 +406,7 @@ const App: React.FC = () => {
           <div className="hidden md:flex items-center h-full">
             <form onSubmit={handleQuickAdd} className="flex items-center gap-2 border border-white/10 bg-black/40 px-4 h-11 rounded-sm">
                <i className="fa-solid fa-search text-xs text-slate-600"></i>
-               <input type="text" placeholder="QUICK_ADD_WATCHED..." className="bg-transparent mono text-xs outline-none w-64 text-white placeholder-slate-700 uppercase" value={quickSearch} onChange={e => setQuickSearch(e.target.value)} disabled={isQuickAdding} />
+               <input type="text" placeholder="QUICK_ADD_WATCHED..." className="bg-transparent mono text-xs outline-none w-64 text-white placeholder-slate-700 uppercase" value={quickSearch} onChange={(e) => setQuickSearch(e.target.value)} disabled={isQuickAdding} />
                <button type="submit" className="bg-white/5 hover:bg-cyan-500 hover:text-black px-4 h-8 mono text-xs uppercase font-bold transition-all ml-2">{isQuickAdding ? '...' : '[ ADD ]'}</button>
             </form>
           </div>
@@ -442,7 +442,7 @@ const App: React.FC = () => {
                 <input 
                   type="text"
                   value={state.filters.query}
-                  onChange={(e) => setState(s => ({ ...s, filters: { ...s.filters, query: e.target.value } }))}
+                  onChange={(e) => setState((s) => ({ ...s, filters: { ...s.filters, query: e.target.value } }))}
                   onKeyDown={(e) => e.key === 'Enter' && fetchRecommendations()}
                   placeholder="SPECIFY_NEURAL_OVERRIDE... (E.G. 'NON-STUPID CHRISTMAS MOVIE, LIKE HOLDOVERS')"
                   className="w-full bg-black/40 border border-white/10 group-hover:border-cyan-500/40 focus:border-cyan-500/60 p-5 pl-20 mono text-sm text-white outline-none transition-all uppercase placeholder-slate-800 rounded-sm"
@@ -459,8 +459,8 @@ const App: React.FC = () => {
                <div className="space-y-3">
                   <label className="mono text-[10px] uppercase text-slate-600 tracking-widest font-bold">Modality</label>
                   <div className="flex flex-col gap-1">
-                    {CONTENT_TYPES.map(ct => (
-                      <button key={ct.value} onClick={() => setState(s => ({ ...s, filters: { ...s.filters, type: ct.value } }))} className={`py-2 px-3 mono text-xs font-bold uppercase text-left transition-all border-l-2 ${state.filters.type === ct.value ? 'border-cyan-500 bg-cyan-500/5 text-white' : 'border-transparent text-slate-500 hover:text-slate-300'}`}>
+                    {CONTENT_TYPES.map((ct) => (
+                      <button key={ct.value} onClick={() => setState((s) => ({ ...s, filters: { ...s.filters, type: ct.value } }))} className={`py-2 px-3 mono text-xs font-bold uppercase text-left transition-all border-l-2 ${state.filters.type === ct.value ? 'border-cyan-500 bg-cyan-500/5 text-white' : 'border-transparent text-slate-500 hover:text-slate-300'}`}>
                         {ct.label}
                       </button>
                     ))}
@@ -468,16 +468,16 @@ const App: React.FC = () => {
                </div>
                <div className="space-y-3">
                   <label className="mono text-[10px] uppercase text-slate-600 tracking-widest font-bold">Genre_Axis</label>
-                  <select value={state.filters.genre} onChange={(e) => setState(s => ({ ...s, filters: { ...s.filters, genre: e.target.value } }))} className="w-full bg-black/40 border border-white/10 p-4 mono text-xs uppercase text-white outline-none focus:border-cyan-500/50 appearance-none rounded-none">
+                  <select value={state.filters.genre} onChange={(e) => setState((s) => ({ ...s, filters: { ...s.filters, genre: e.target.value } }))} className="w-full bg-black/40 border border-white/10 p-4 mono text-xs uppercase text-white outline-none focus:border-cyan-500/50 appearance-none rounded-none">
                     <option value="">ALL_CHANNELS</option>
-                    {GENRES.map(g => <option key={g} value={g}>{g.toUpperCase()}</option>)}
+                    {GENRES.map((g) => <option key={g} value={g}>{g.toUpperCase()}</option>)}
                   </select>
                </div>
                <div className="space-y-3">
                   <label className="mono text-[10px] uppercase text-slate-600 tracking-widest font-bold">Affective_State</label>
-                  <select value={state.filters.mood} onChange={(e) => setState(s => ({ ...s, filters: { ...s.filters, mood: e.target.value } }))} className="w-full bg-black/40 border border-white/10 p-4 mono text-xs uppercase text-white outline-none focus:border-cyan-500/50 appearance-none rounded-none">
+                  <select value={state.filters.mood} onChange={(e) => setState((s) => ({ ...s, filters: { ...s.filters, mood: e.target.value } }))} className="w-full bg-black/40 border border-white/10 p-4 mono text-xs uppercase text-white outline-none focus:border-cyan-500/50 appearance-none rounded-none">
                     <option value="">UNCALIBRATED</option>
-                    {MOODS.map(m => <option key={m} value={m}>{m.toUpperCase()}</option>)}
+                    {MOODS.map((m) => <option key={m} value={m}>{m.toUpperCase()}</option>)}
                   </select>
                </div>
             </div>
@@ -521,7 +521,7 @@ const App: React.FC = () => {
             </div>
             
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 items-stretch">
-              {state.recommendations.map(movie => (
+              {state.recommendations.map((movie) => (
                 <MovieCard key={movie.id} movie={movie} isRecommendation onLikeSimilar={(seed) => fetchRecommendations(seed)} onMarkWatched={(m) => markAsWatched(m)} onFeedback={(m, f) => handleFeedback(m, f)} />
               ))}
             </div>
