@@ -427,9 +427,9 @@ const App: React.FC = () => {
         <section className="tech-border p-8 bg-slate-900/10 backdrop-blur-md relative overflow-hidden">
           <div className="scanline opacity-10"></div>
           
-          <div className="space-y-12">
-            {/* Tuning Parameters Header & Input */}
-            <div className="space-y-4">
+          <div className="space-y-10">
+            {/* Unified Tuning Parameters & Command Bar */}
+            <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <div className="mono text-[10px] text-cyan-500 uppercase font-black tracking-[0.2em] flex items-center gap-2">
                    <span className="w-1.5 h-1.5 bg-cyan-500 rounded-full animate-pulse"></span>
@@ -454,8 +454,8 @@ const App: React.FC = () => {
               </div>
             </div>
 
-            {/* Manual Controls Row */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Manual Controls Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-4">
                <div className="space-y-3">
                   <label className="mono text-[10px] uppercase text-slate-600 tracking-widest font-bold">Modality</label>
                   <div className="flex flex-col gap-1">
