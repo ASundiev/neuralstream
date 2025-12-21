@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { ContentType, Movie, AppState, Feedback } from './types';
@@ -388,7 +387,7 @@ const App: React.FC = () => {
               </div>
               <input type="file" className="hidden" accept=".csv" onChange={handleFileUpload} />
             </label>
-            <button onClick={() => setState(s => ({ ...s, isLoggedIn: true, userMovies: [{ id: 'init', title: 'Example Data', year: '2024', rating: 10, type: ContentType.MOVIE, genres: ['Sci-Fi'] }] }))} className="mono text-[10px] text-slate-500 uppercase hover:text-white">[ SKIP_AND_START_CLEAN ]</button>
+            <button onClick={() => setState((s) => ({ ...s, isLoggedIn: true, userMovies: [{ id: 'init', title: 'Example Data', year: '2024', rating: 10, type: ContentType.MOVIE, genres: ['Sci-Fi'] }] }))} className="mono text-[10px] text-slate-500 uppercase hover:text-white">[ SKIP_AND_START_CLEAN ]</button>
          </div>
       </div>
     );
@@ -439,7 +438,7 @@ const App: React.FC = () => {
               </div>
               
               <div className="relative group flex items-center">
-                <div className="absolute left-6 mono text-cyan-500/60 font-black text-sm select-none">CMD_></div>
+                <div className="absolute left-6 mono text-cyan-500/60 font-black text-sm select-none">CMD_&gt;</div>
                 <input 
                   type="text"
                   value={state.filters.query}
