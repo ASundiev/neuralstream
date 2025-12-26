@@ -43,7 +43,7 @@ export const PromoHero: React.FC<PromoHeroProps> = ({ onLogin, onSignUp }) => {
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-10">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-6 md:gap-10">
             <button 
               onClick={onLogin}
               className="w-full sm:w-auto px-10 py-4 bg-cyan-500 text-black mono font-black text-sm uppercase tracking-widest hover:bg-white transition-all shadow-[0_0_40px_rgba(0,245,255,0.3)] hover:shadow-cyan-400/60 relative overflow-hidden group/btn"

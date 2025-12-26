@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { ContentType, Movie, AppState, Feedback } from './types';
@@ -539,7 +540,7 @@ const App: React.FC = () => {
           ) : (
               <>
               {(user || !state.guestSearchUsed) && (
-                <section className={`tech-border p-8 bg-slate-900/80 backdrop-blur-xl space-y-10 relative z-30 shadow-[0_-20px_50px_rgba(0,0,0,0.5)] ${(!user && state.recommendations.length === 0) ? '-mt-12 md:-mt-16 mx-6 md:mx-12' : ''}`}>
+                <section className={`tech-border p-8 bg-slate-900/80 backdrop-blur-xl space-y-10 relative z-30 shadow-[0_-20px_50px_rgba(0,0,0,0.5)] ${(!user && state.recommendations.length === 0) ? '-mt-6 md:-mt-16 mx-2 md:mx-12' : ''}`}>
                   <div className="space-y-6">
                     <div className="space-y-1">
                       <div className="mono text-[10px] text-cyan-500 uppercase font-black tracking-widest flex items-center gap-2">
@@ -599,7 +600,7 @@ const App: React.FC = () => {
                     className={`w-full py-6 border border-cyan-500/30 text-cyan-400 mono font-black text-sm uppercase tracking-[0.6em] transition-all relative group overflow-hidden ${state.isRecsLoading ? 'bg-black/50 cursor-wait' : 'hover:bg-cyan-500 hover:text-black'}`}
                   >
                     <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                    {state.isRecsLoading ? <span className="flex items-center justify-center gap-4"><i className="fa-solid fa-microchip animate-spin text-lg"></i>SYNTHESIZING...</span> : <span className="flex items-center justify-center gap-4"><i className="fa-solid fa-bolt text-xs"></i>[ INITIATE_NEURAL_UPLINK ]<i className="fa-solid fa-bolt text-xs"></i></span>}
+                    {state.isRecsLoading ? <span className="flex items-center justify-center gap-4"><i className="fa-solid fa-microchip animate-spin text-lg"></i>SYNTHESIZING...</span> : <span className="flex items-center justify-center gap-4"><i className="fa-solid fa-bolt text-xs"></i>Initiate<i className="fa-solid fa-bolt text-xs"></i></span>}
                   </button>
                 </section>
               )}
