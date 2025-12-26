@@ -63,6 +63,7 @@ const App: React.FC = () => {
   const handleLogout = async () => {
     if (window.confirm("TERMINATE_NEURAL_UPLINK? ANY UNSYNCED LOCAL CACHE WILL BE FLUSHED.")) {
       await supabase.auth.signOut();
+      setIsMenuOpen(false);
     }
   };
 
@@ -431,6 +432,61 @@ const App: React.FC = () => {
         </div>
       )}
 
+      {/* Mobile Menu Overlay */}
+      {isMenuOpen && (
+        <div className="fixed inset-0 z-[90] flex flex-col bg-slate-950/95 backdrop-blur-xl animate-in fade-in slide-in-from-right duration-300">
+           <div className="flex items-center justify-between p-6 border-b border-white/5">
+              <div className="flex items-center gap-2">
+                 <div className="w-6 h-6 flex items-center justify-center bg-cyan-500"><i className="fa-solid fa-dna text-[10px] text-black"></i></div>
+                 <span className="text-lg font-black tracking-tighter uppercase italic leading-tight">Neural<span className="text-cyan-400">Menu</span></span>
+              </div>
+              <button onClick={() => setIsMenuOpen(false)} className="text-cyan-500 text-xl px-2">X</button>
+           </div>
+           
+           <div className="flex-1 overflow-y-auto p-6 space-y-10">
+              <div className="space-y-4">
+                 <div className="mono text-[10px] text-slate-500 uppercase tracking-widest">Neural_Handshake</div>
+                 <div className="grid grid-cols-2 gap-4">
+                    <div className="p-4 bg-white/5 border border-white/5 space-y-1">
+                       <div className="mono text-[8px] text-slate-600 uppercase">Nodes</div>
+                       <div className="text-xl font-black text-cyan-400">{state.userMovies.length}</div>
+                    </div>
+                    <div className="p-4 bg-white/5 border border-white/5 space-y-1">
+                       <div className="mono text-[8px] text-slate-600 uppercase">Signals</div>
+                       <div className="text-xl font-black text-cyan-400">{state.feedbackHistory.length}</div>
+                    </div>
+                 </div>
+                 <button onClick={() => { setShowStatsModal(true); setIsMenuOpen(false); }} className="w-full py-4 tech-border bg-cyan-500/5 text-cyan-400 mono text-xs font-black uppercase tracking-widest">
+                    [ DIAGNOSTIC_REPORT ]
+                 </button>
+              </div>
+
+              <div className="space-y-4">
+                 <div className="mono text-[10px] text-slate-500 uppercase tracking-widest">Quick_Add_Vector</div>
+                 <form onSubmit={handleQuickAdd} className="flex flex-col gap-2">
+                    <div className="flex items-center gap-2 border border-white/10 bg-black/40 px-4 h-12">
+                       <i className="fa-solid fa-search text-xs text-slate-600"></i>
+                       <input type="text" placeholder="ENTER_TITLE..." className="bg-transparent mono text-xs outline-none flex-1 text-white uppercase placeholder-slate-700" value={quickSearch} onChange={(e) => setQuickSearch(e.target.value)} disabled={isQuickAdding} />
+                    </div>
+                    <button type="submit" disabled={isQuickAdding} className="bg-white/5 hover:bg-cyan-500 hover:text-black py-4 border border-white/10 mono text-xs uppercase font-bold transition-all">
+                       {isQuickAdding ? 'SEARCHING...' : '[ ADD_TO_MATRIX ]'}
+                    </button>
+                 </form>
+              </div>
+
+              <div className="pt-10 border-t border-white/5">
+                 <button onClick={handleLogout} className="w-full py-4 border border-red-500/20 text-red-500/60 mono text-xs font-black uppercase tracking-widest">
+                    [ TERMINATE_SESSION ]
+                 </button>
+              </div>
+           </div>
+
+           <div className="p-6 text-center opacity-20">
+              <div className="mono text-[8px] text-slate-500 uppercase tracking-widest">NeuralStream_Core_v1.0.9</div>
+           </div>
+        </div>
+      )}
+
       {user && (
         <header className="sticky top-0 z-50 backdrop-blur-2xl border-b px-4 md:px-8 flex items-center justify-between h-14 md:h-20 bg-slate-950/95 border-white/5">
             <div className="flex items-center gap-2 md:gap-10">
@@ -453,7 +509,7 @@ const App: React.FC = () => {
                           <span className={`w-1.5 h-1.5 ${syncStatus === 'SYNCING' ? 'bg-cyan-500 animate-ping' : 'bg-green-500'} rounded-full`}></span>
                           CLOUD_SYNC :: ACTIVE
                       </div>
-                      <div className="mono text-[10px] text-cyan-400 font-bold uppercase">{state.userMovies.length} DATA_POINTS</div>
+                      <div className="mono text-[10px] text-cyan-400 font-bold uppercase">NODES: {state.userMovies.length} // SIGNALS: {state.feedbackHistory.length}</div>
                   </button>
                   <button onClick={handleLogout} className="mono text-xs text-red-400/50 hover:text-red-400 px-6 h-11 border border-red-500/20 transition-all uppercase font-bold tracking-widest">[ EXIT ]</button>
               </div>
