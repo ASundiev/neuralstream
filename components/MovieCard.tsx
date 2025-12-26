@@ -67,7 +67,6 @@ export const MovieCard: React.FC<MovieCardProps> = ({
           />
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center relative bg-gradient-to-br from-slate-950 via-slate-900 to-black border-b border-cyan-500/10">
-            {/* Cyberpunk Pattern Background */}
             <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[radial-gradient(#00f5ff_1px,transparent_1px)] [background-size:16px_16px]"></div>
             
             <div className="relative z-10 flex flex-col items-center w-full">
@@ -75,7 +74,6 @@ export const MovieCard: React.FC<MovieCardProps> = ({
                 <div className="w-14 h-14 rounded-full border border-cyan-500/20 flex items-center justify-center bg-cyan-500/5 group-hover:bg-cyan-500/10 transition-colors">
                   <i className="fa-solid fa-satellite-dish text-cyan-500/30 text-xl group-hover:text-cyan-400 group-hover:animate-pulse transition-all"></i>
                 </div>
-                {/* Decorative scanning rings */}
                 <div className="absolute inset-[-4px] rounded-full border border-cyan-500/5 animate-[ping_3s_infinite]"></div>
               </div>
               
@@ -88,18 +86,23 @@ export const MovieCard: React.FC<MovieCardProps> = ({
                 <span className="mono text-xs text-slate-500 uppercase tracking-widest font-bold">{movie.year}</span>
                 <div className="h-[1px] w-6 bg-cyan-500/20"></div>
               </div>
-
-              <div className="mono text-[10px] text-cyan-500/30 uppercase tracking-[0.2em] space-y-0.5">
-                <div>MODALITY::{movie.type.toUpperCase()}</div>
-                <div>SIGNAL_STRENGTH::LOW</div>
-              </div>
             </div>
-            
             <div className="absolute bottom-4 left-0 right-0 mono text-[9px] text-slate-800 uppercase tracking-[0.5em] font-bold">Neural_Override_Active</div>
           </div>
         )}
         
-        <div className="absolute top-2 left-2 right-2 flex justify-end items-start pointer-events-none z-20">
+        <div className="absolute top-2 left-2 right-2 flex justify-between items-start pointer-events-none z-20">
+          <div className="flex flex-wrap gap-1">
+             {movie.providers?.slice(0, 3).map(p => (
+               <img 
+                 key={p.provider_id} 
+                 src={`https://image.tmdb.org/t/p/original${p.logo_path}`} 
+                 alt={p.provider_name}
+                 className="w-6 h-6 rounded-sm border border-white/20 shadow-lg pointer-events-auto"
+                 title={`Available on ${p.provider_name}`}
+               />
+             ))}
+          </div>
           <div className="mono text-xs bg-cyan-500 text-black px-1.5 py-0.5 font-bold shadow-lg shadow-cyan-500/40">
             {movie.rating ? movie.rating.toFixed(1) : '8.0'}
           </div>
@@ -203,12 +206,6 @@ export const MovieCard: React.FC<MovieCardProps> = ({
           </div>
         )}
       </div>
-      <style>{`
-        @keyframes shimmer {
-          0% { transform: translateX(-100%); }
-          100% { transform: translateX(100%); }
-        }
-      `}</style>
     </div>
   );
 };

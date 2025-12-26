@@ -1,10 +1,13 @@
+
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { createClient } from '@supabase/supabase-js';
-import { ContentType, Movie, AppState, Feedback } from './types';
-import { GENRES, MOODS, CONTENT_TYPES } from './constants';
+import { ContentType, Movie, AppState, Feedback, ViewMode } from './types';
+import { GENRES, MOODS, CONTENT_TYPES, MAJOR_PLATFORMS } from './constants';
 import { getRecommendations, searchMovieForHistory } from './services/geminiService';
 import { MovieCard } from './components/MovieCard';
 import { NeuralLoader } from './components/NeuralLoader';
+import { PromoHero } from './components/PromoHero';
+import { ShareModal } from './components/ShareModal';
 
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://vplgyzzwgbgwudbtdgfk.supabase.co';
 const SUPABASE_KEY = process.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZwbGd5enp3Z2Jnd3VkYnRkZ2ZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYxNzM0ODksImV4cCI6MjA4MTc0OTQ4OX0.90zVerWUdgekP_MWRiViKC80bDy46UkZau6MZ6ANrKE';
@@ -18,6 +21,14 @@ try {
   console.error("CRITICAL_CONFIG_ERROR: Supabase client initialization failed.", e);
 }
 
+const INITIAL_FILTERS = {
+  type: ContentType.BOTH,
+  genre: '',
+  mood: '',
+  query: '',
+  providers: []
+};
+
 const App: React.FC = () => {
   const [user, setUser] = useState<any>(null);
   const [authEmail, setAuthEmail] = useState('');
@@ -27,15 +38,24 @@ const App: React.FC = () => {
   const [authLoading, setAuthLoading] = useState(false);
   const [isApproved, setIsApproved] = useState<boolean | null>(null);
   const [syncStatus, setSyncStatus] = useState<'IDLE' | 'SYNCING' | 'ERROR' | 'OFFLINE'>('IDLE');
+  
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showStatsModal, setShowStatsModal] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
 
   const [state, setState] = useState<AppState>({
+    viewMode: ViewMode.PERSONAL,
     isLoggedIn: false,
     userMovies: [],
     feedbackHistory: [],
     recommendations: [],
     isLoading: true,
-    filters: { type: ContentType.BOTH, genre: '', mood: '', query: '' },
-    sources: []
+    filters: INITIAL_FILTERS,
+    sources: [],
+    guestSearchUsed: !!localStorage.getItem('neural_guest_search')
   });
 
   const [quickSearch, setQuickSearch] = useState('');
@@ -43,31 +63,67 @@ const App: React.FC = () => {
   const skipSync = useRef(false);
 
   useEffect(() => {
-    if (!supabase) {
-      setState((s) => ({ ...s, isLoading: false }));
-      setSyncStatus('OFFLINE');
-      return;
-    }
+    const initApp = async () => {
+      if (!supabase) {
+        setState((s) => ({ ...s, isLoading: false }));
+        setSyncStatus('OFFLINE');
+        return;
+      }
 
-    supabase.auth.getSession().then(({ data: { session } }: any) => {
-      setUser(session?.user ?? null);
-      if (!session) setState((s) => ({ ...s, isLoading: false }));
-    });
+      const params = new URLSearchParams(window.location.search);
+      const shareId = params.get('share');
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: string, session: any) => {
-      setUser(session?.user ?? null);
-    });
+      if (shareId) {
+        try {
+          const { data, error } = await supabase
+            .from('shared_feeds')
+            .select('content')
+            .eq('id', shareId)
+            .single();
 
-    return () => subscription.unsubscribe();
+          if (data && data.content) {
+            setState(s => ({
+              ...s,
+              recommendations: data.content.recommendations || [],
+              filters: data.content.filters || INITIAL_FILTERS,
+              viewMode: ViewMode.PUBLIC,
+              isLoading: false
+            }));
+          } else {
+             window.history.replaceState({}, '', '/');
+          }
+        } catch (err) {
+          console.error("Share Fetch Error:", err);
+        }
+      }
+
+      supabase.auth.getSession().then(({ data: { session } }: any) => {
+        setUser(session?.user ?? null);
+        if (!session && !shareId) setState((s) => ({ ...s, isLoading: false }));
+      });
+
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: string, session: any) => {
+        setUser(session?.user ?? null);
+        if (session) {
+           setShowAuthModal(false);
+        }
+      });
+
+      return () => subscription.unsubscribe();
+    };
+
+    initApp();
   }, []);
 
   useEffect(() => {
     const fetchProfile = async () => {
       if (!user || !supabase) return;
+      if (state.viewMode === ViewMode.PUBLIC) return;
+
       setState((s) => ({ ...s, isLoading: true }));
       
       try {
-        const { data, error } = await supabase
+        const { data } = await supabase
           .from('profiles')
           .select('state, is_approved')
           .eq('id', user.id)
@@ -79,11 +135,14 @@ const App: React.FC = () => {
             skipSync.current = true;
             setState({
               ...data.state,
+              filters: { ...INITIAL_FILTERS, ...(data.state.filters || {}) },
               isLoggedIn: true,
-              isLoading: false
+              isLoading: false,
+              viewMode: ViewMode.PERSONAL,
+              guestSearchUsed: true
             });
           } else {
-            setState((s) => ({ ...s, isLoggedIn: true, isLoading: false }));
+            setState((s) => ({ ...s, isLoggedIn: true, isLoading: false, guestSearchUsed: true }));
           }
         } else {
           setIsApproved(false);
@@ -100,7 +159,7 @@ const App: React.FC = () => {
   }, [user]);
 
   useEffect(() => {
-    if (!user || !supabase || state.isLoading || isApproved === false) return;
+    if (!user || !supabase || state.isLoading || isApproved === false || state.viewMode === ViewMode.PUBLIC) return;
     if (skipSync.current) {
       skipSync.current = false;
       return;
@@ -108,7 +167,7 @@ const App: React.FC = () => {
 
     const syncToCloud = async () => {
       setSyncStatus('SYNCING');
-      const { isLoading, ...persistableState } = state;
+      const { isLoading, viewMode, ...persistableState } = state;
       
       const { error } = await supabase
         .from('profiles')
@@ -132,10 +191,7 @@ const App: React.FC = () => {
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!supabase) {
-      alert("SYS_ERROR: BACKEND_CONNECTION_LOST");
-      return;
-    }
+    if (!supabase) return;
     setAuthLoading(true);
     try {
       const { error } = isSignUp 
@@ -144,12 +200,140 @@ const App: React.FC = () => {
 
       if (error) throw error;
       if (isSignUp) setVerificationSent(true);
+      else setShowAuthModal(false);
     } catch (err: any) {
       alert(`AUTH_FAILURE: ${err.message}`);
     } finally {
       setAuthLoading(false);
     }
   };
+
+  const gateInteraction = (callback: () => void) => {
+    if (user) {
+      callback();
+    } else {
+      setShowAuthModal(true);
+    }
+  };
+
+  const handleShare = async () => {
+    if (!supabase || !user) {
+      setShowAuthModal(true);
+      return;
+    }
+    
+    setIsSharing(true);
+    try {
+      const payload = {
+        filters: state.filters,
+        recommendations: state.recommendations,
+        timestamp: new Date().toISOString()
+      };
+
+      const { data, error } = await supabase
+        .from('shared_feeds')
+        .insert({ content: payload })
+        .select('id')
+        .single();
+
+      if (error) throw error;
+      
+      if (data) {
+        const url = `${window.location.origin}?share=${data.id}`;
+        setShareUrl(url);
+        setShowShareModal(true);
+      }
+    } catch (e) {
+      console.error("Share Failed:", e);
+      alert("SHARE_SYSTEM_ERROR: Could not uplink to public feed.");
+    } finally {
+      setIsSharing(false);
+    }
+  };
+
+  const handleQuickAdd = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!quickSearch.trim()) return;
+    
+    gateInteraction(async () => {
+      setIsQuickAdding(true);
+      const result = await searchMovieForHistory(quickSearch);
+      if (result) {
+        setState((prev) => ({
+          ...prev,
+          userMovies: [result, ...prev.userMovies.filter((m) => m.title.toLowerCase() !== result.title.toLowerCase())]
+        }));
+        setQuickSearch('');
+      } else {
+        alert("TITLE NOT FOUND IN DATABASE.");
+      }
+      setIsQuickAdding(false);
+    });
+  };
+
+  const markAsWatched = (movie: Movie) => {
+    gateInteraction(() => {
+      setState((prev) => ({
+        ...prev,
+        userMovies: [{ ...movie, userRating: 8 }, ...prev.userMovies],
+        recommendations: prev.recommendations.filter((m) => m.title.toLowerCase() !== movie.title.toLowerCase())
+      }));
+    });
+  };
+
+  const handleFeedback = (movie: Movie, feedback: Feedback) => {
+    gateInteraction(() => {
+      setState((prev) => {
+        const updatedRecs = prev.recommendations.map((r) => 
+          r.id === movie.id ? { ...r, feedback } : r
+        );
+        return {
+          ...prev,
+          recommendations: updatedRecs,
+          feedbackHistory: [{ title: movie.title, feedback }, ...prev.feedbackHistory].slice(0, 200)
+        };
+      });
+    });
+  };
+
+  const fetchRecommendations = useCallback(async (seed?: Movie) => {
+    if (!user) {
+      if (state.guestSearchUsed) {
+        setShowAuthModal(true);
+        return;
+      }
+    }
+
+    setState((prev) => ({ ...prev, isLoading: true }));
+    try {
+      const { movies, sources: newSources } = await getRecommendations({
+        watchedHistory: state.userMovies,
+        feedbackHistory: state.feedbackHistory,
+        targetType: state.filters.type,
+        genre: state.filters.genre,
+        mood: state.filters.mood,
+        seedMovie: seed,
+        naturalLanguageQuery: state.filters.query,
+        preferredProviders: state.filters.providers,
+        isGuest: !user
+      });
+
+      if (!user) {
+        localStorage.setItem('neural_guest_search', 'true');
+      }
+
+      setState((prev) => ({ 
+        ...prev, 
+        recommendations: movies, 
+        sources: newSources,
+        isLoading: false,
+        guestSearchUsed: !user ? true : prev.guestSearchUsed
+      }));
+    } catch (error) {
+      alert("ENGINE_FAILURE: API HANDSHAKE TIMEOUT.");
+      setState((prev) => ({ ...prev, isLoading: false }));
+    }
+  }, [state.userMovies, state.feedbackHistory, state.filters, state.guestSearchUsed, user]);
 
   const parseImdbCsv = (csvText: string): Movie[] => {
     const lines = csvText.split('\n');
@@ -205,185 +389,30 @@ const App: React.FC = () => {
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setState((prev) => ({ ...prev, isLoading: true }));
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const text = event.target?.result as string;
-      const movies = parseImdbCsv(text);
-      if (movies.length > 0) {
-        setState((prev) => ({ ...prev, isLoggedIn: true, userMovies: movies, isLoading: false }));
-      } else {
-        alert("CRITICAL: NO VALID (7+) RATINGS DETECTED IN CSV STREAM.");
-        setState((prev) => ({ ...prev, isLoading: false }));
-      }
-    };
-    reader.readAsText(file);
-  };
-
-  const handleQuickAdd = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!quickSearch.trim()) return;
-    setIsQuickAdding(true);
-    const result = await searchMovieForHistory(quickSearch);
-    if (result) {
-      setState((prev) => ({
-        ...prev,
-        userMovies: [result, ...prev.userMovies.filter((m) => m.title.toLowerCase() !== result.title.toLowerCase())]
-      }));
-      setQuickSearch('');
-    } else {
-      alert("TITLE NOT FOUND IN DATABASE.");
-    }
-    setIsQuickAdding(false);
-  };
-
-  const markAsWatched = (movie: Movie) => {
-    setState((prev) => ({
-      ...prev,
-      userMovies: [{ ...movie, userRating: 8 }, ...prev.userMovies],
-      recommendations: prev.recommendations.filter((m) => m.title.toLowerCase() !== movie.title.toLowerCase())
-    }));
-  };
-
-  const handleFeedback = (movie: Movie, feedback: Feedback) => {
-    setState((prev) => {
-      const updatedRecs = prev.recommendations.map((r) => 
-        r.id === movie.id ? { ...r, feedback } : r
-      );
-      return {
-        ...prev,
-        recommendations: updatedRecs,
-        feedbackHistory: [{ title: movie.title, feedback }, ...prev.feedbackHistory].slice(0, 50)
-      };
+    gateInteraction(() => {
+        setState((prev) => ({ ...prev, isLoading: true }));
+        const reader = new FileReader();
+        reader.onload = (event) => {
+        const text = event.target?.result as string;
+        const movies = parseImdbCsv(text);
+        if (movies.length > 0) {
+            setState((prev) => ({ ...prev, isLoggedIn: true, userMovies: movies, isLoading: false }));
+        } else {
+            alert("CRITICAL: NO VALID (7+) RATINGS DETECTED IN CSV STREAM.");
+            setState((prev) => ({ ...prev, isLoading: false }));
+        }
+        };
+        reader.readAsText(file);
     });
   };
 
-  const fetchRecommendations = useCallback(async (seed?: Movie) => {
-    setState((prev) => ({ ...prev, isLoading: true }));
-    try {
-      const { movies, sources: newSources } = await getRecommendations({
-        watchedHistory: state.userMovies,
-        feedbackHistory: state.feedbackHistory,
-        targetType: state.filters.type,
-        genre: state.filters.genre,
-        mood: state.filters.mood,
-        seedMovie: seed,
-        naturalLanguageQuery: state.filters.query
-      });
+  if (!supabase) return (<div className="min-h-screen flex items-center justify-center p-6 bg-slate-950"><div className="text-white">CONFIG MISSING</div></div>);
 
-      const watchedTitlesNormalized = new Set(
-        state.userMovies.map((m) => m.title.toLowerCase().trim())
-      );
-
-      const verifiedMovies = movies.filter((m) => !watchedTitlesNormalized.has(m.title.toLowerCase().trim()));
-
-      setState((prev) => ({ 
-        ...prev, 
-        recommendations: verifiedMovies, 
-        sources: newSources,
-        isLoading: false 
-      }));
-    } catch (error) {
-      alert("ENGINE_FAILURE: API HANDSHAKE TIMEOUT.");
-      setState((prev) => ({ ...prev, isLoading: false }));
-    }
-  }, [state.userMovies, state.feedbackHistory, state.filters]);
-
-  if (!supabase) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-6 bg-slate-950">
-        <div className="max-w-md w-full tech-border bg-slate-900/40 p-10 overflow-hidden shadow-2xl relative text-center space-y-6">
-          <div className="scanline opacity-30"></div>
-          <div className="space-y-4">
-            <i className="fa-solid fa-triangle-exclamation text-red-500 text-5xl animate-pulse"></i>
-            <h1 className="text-2xl font-black text-white uppercase italic">Config_<span className="text-red-500">Missing</span></h1>
-            <p className="mono text-xs text-slate-400 leading-relaxed uppercase">
-              Supabase Project URL and Anon Key are required for operation. Check your environment variables.
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (state.isLoading && !state.isLoggedIn) {
+  if (state.isLoading && !state.isLoggedIn && state.viewMode !== ViewMode.PUBLIC) {
      return <div className="min-h-screen bg-slate-950 flex items-center justify-center"><NeuralLoader /></div>;
   }
-
-  if (!user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-6 bg-slate-950">
-        <div className="max-w-md w-full tech-border bg-slate-900/40 p-10 overflow-hidden shadow-2xl relative">
-          <div className="scanline opacity-30"></div>
-          <div className="space-y-8 relative z-20">
-            {verificationSent ? (
-              <div className="space-y-8 text-center py-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <div className="space-y-3">
-                  <div className="w-16 h-16 border border-cyan-500/30 rounded-full flex items-center justify-center mx-auto bg-cyan-500/5 animate-pulse">
-                    <i className="fa-solid fa-envelope-open-text text-2xl text-cyan-400"></i>
-                  </div>
-                  <h2 className="text-2xl font-black text-white uppercase italic tracking-tight">Handshake_Pending</h2>
-                  <p className="mono text-[11px] text-slate-400 uppercase leading-relaxed">
-                    A secure authentication link has been dispatched to:
-                    <br />
-                    <span className="text-cyan-400 font-bold break-all mt-2 block">{authEmail}</span>
-                  </p>
-                </div>
-                <div className="bg-black/40 border border-white/5 p-4 text-left space-y-3">
-                  <div className="mono text-[9px] text-slate-500 uppercase font-bold border-b border-white/5 pb-2">Protocol_Verification_Steps</div>
-                  <div className="space-y-2">
-                    <div className="flex items-start gap-3">
-                      <span className="mono text-[10px] text-cyan-500">01</span>
-                      <span className="mono text-[10px] text-slate-400 uppercase">ACCESS YOUR INBOX & VERIFY EMAIL</span>
-                    </div>
-                    <div className="flex items-start gap-3">
-                      <span className="mono text-[10px] text-amber-500">02</span>
-                      <span className="mono text-[10px] text-slate-400 uppercase">AWAIT SYSTEM ADMINISTRATOR REVIEW</span>
-                    </div>
-                    <div className="flex items-start gap-3">
-                      <span className="mono text-[10px] text-green-500">03</span>
-                      <span className="mono text-[10px] text-slate-400 uppercase">AUTHORIZE FULL NEURAL UPLINK</span>
-                    </div>
-                  </div>
-                </div>
-                <button onClick={() => setVerificationSent(false)} className="w-full py-3 border border-white/10 hover:border-cyan-500/50 text-slate-500 hover:text-cyan-400 mono text-xs uppercase font-black tracking-widest transition-all">
-                  [ BACK_TO_AUTHORIZE ]
-                </button>
-              </div>
-            ) : (
-              <>
-                <div className="text-center space-y-2">
-                  <div className="mono text-xs text-cyan-500 uppercase tracking-[0.3em] font-bold">Uplink_Node_v3.1.2</div>
-                  <h1 className="text-4xl font-black tracking-tighter text-white uppercase italic">Neural<span className="text-cyan-400">Stream</span></h1>
-                </div>
-                <form onSubmit={handleAuth} className="space-y-6">
-                  <div className="space-y-4">
-                    <div className="space-y-1">
-                      <label className="mono text-[10px] text-slate-500 uppercase font-bold pl-1">Ident_Email</label>
-                      <input type="email" required value={authEmail} onChange={(e) => setAuthEmail(e.target.value)} className="w-full bg-black/40 border border-white/10 p-3 mono text-sm text-white outline-none focus:border-cyan-500/50 rounded-none uppercase" placeholder="ENTER_EMAIL..." />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="mono text-[10px] text-slate-500 uppercase font-bold pl-1">Access_Key</label>
-                      <input type="password" required value={authPassword} onChange={(e) => setAuthPassword(e.target.value)} className="w-full bg-black/40 border border-white/10 p-3 mono text-sm text-white outline-none focus:border-cyan-500/50 rounded-none uppercase" placeholder="ENTER_PASSWORD..." />
-                    </div>
-                  </div>
-                  <button type="submit" disabled={authLoading} className="w-full py-4 bg-cyan-500 text-black mono font-black text-sm uppercase tracking-[0.4em] hover:bg-white transition-colors">
-                    {authLoading ? 'ESTABLISHING...' : (isSignUp ? '[ SIGN_UP ]' : '[ AUTHORIZE ]')}
-                  </button>
-                  <div className="flex justify-between mono text-[10px] text-slate-500 uppercase">
-                    <button type="button" onClick={() => setIsSignUp(!isSignUp)} className="hover:text-cyan-400">{isSignUp ? 'EXISTING_MEMBER?' : 'NEED_NEW_IDENT?'}</button>
-                    <span className="opacity-30">SYS_AUTH_SECURE</span>
-                  </div>
-                </form>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (isApproved === false) {
+  
+  if (user && isApproved === false) {
     return (
       <div className="min-h-screen flex items-center justify-center p-6 bg-slate-950">
         <div className="max-w-lg w-full tech-border bg-slate-900/40 p-10 overflow-hidden shadow-2xl relative text-center">
@@ -395,7 +424,6 @@ const App: React.FC = () => {
               </div>
               <div className="absolute inset-0 border border-amber-500/20 rounded-full animate-ping"></div>
             </div>
-            
             <div className="space-y-3">
               <h1 className="text-4xl font-black text-white uppercase italic tracking-tighter">Identity_<span className="text-amber-500">Under_Review</span></h1>
               <div className="flex items-center justify-center gap-2 mono text-[10px] text-slate-500 uppercase tracking-widest font-bold">
@@ -403,255 +431,449 @@ const App: React.FC = () => {
                  Awaiting Manual Admin Clearance
               </div>
             </div>
-            
-            <div className="bg-black/60 border border-white/5 p-6 text-left space-y-5 relative overflow-hidden">
-              <div className="absolute top-0 right-0 p-2 opacity-10">
-                 <i className="fa-solid fa-lock text-4xl"></i>
-              </div>
-              <div className="flex justify-between items-center border-b border-white/5 pb-3">
-                <span className="mono text-[10px] text-slate-500 uppercase">Neural_Ident</span>
-                <span className="mono text-[11px] text-cyan-400 font-bold truncate max-w-[200px]">{user.email}</span>
-              </div>
-              <div className="flex justify-between items-center border-b border-white/5 pb-3">
-                <span className="mono text-[10px] text-slate-500 uppercase">Verification_Status</span>
-                <span className="mono text-[11px] text-green-500 font-black flex items-center gap-2">
-                   <i className="fa-solid fa-check-circle"></i> EMAIL_CONFIRMED
-                </span>
-              </div>
-              <div className="flex justify-between items-center border-b border-white/5 pb-3">
-                <span className="mono text-[10px] text-slate-500 uppercase">Security_Tier</span>
-                <span className="mono text-[11px] text-amber-500 font-black animate-pulse flex items-center gap-2">
-                   <i className="fa-solid fa-user-clock"></i> PENDING_APPROVAL
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="mono text-[10px] text-slate-500 uppercase">System_Access</span>
-                <span className="mono text-[11px] text-red-500 font-bold uppercase tracking-widest">RESTRICTED</span>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <p className="mono text-[10px] text-slate-400 uppercase leading-relaxed text-center px-8 border-l-2 border-amber-500/30 italic">
-                "Resource consumption is monitored. Your account is currently in the queue for manual vetting to manage API expenditures."
-              </p>
-              
-              <div className="grid grid-cols-1 gap-3">
-                <button onClick={() => window.location.reload()} className="w-full py-4 bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500 hover:text-black text-amber-500 mono text-xs uppercase font-black tracking-widest transition-all">
-                  [ CHECK_UPLINK_STATUS ]
-                </button>
-                <button onClick={() => supabase.auth.signOut()} className="w-full py-4 border border-white/5 hover:bg-red-500/10 hover:border-red-500/30 text-slate-600 hover:text-red-500 mono text-xs uppercase font-black tracking-widest transition-all">
-                  [ TERMINATE_CONNECTION ]
-                </button>
-              </div>
-            </div>
+            <div className="text-white text-center">ACCOUNT UNDER REVIEW</div>
+            <button onClick={() => supabase.auth.signOut()} className="mt-4 text-red-500">[ LOGOUT ]</button>
           </div>
         </div>
       </div>
     );
   }
 
-  if (state.userMovies.length === 0 && !state.isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-6 bg-slate-950">
-         <div className="max-w-xl w-full tech-border bg-slate-900/40 p-12 text-center space-y-10 relative">
-            <div className="scanline opacity-10"></div>
-            <div className="space-y-4">
-               <div className="mono text-xs text-cyan-400 uppercase tracking-widest animate-pulse">Neural_Profile_Empty</div>
-               <h2 className="text-3xl font-black uppercase tracking-tighter text-white italic">Calibrate Your <span className="text-cyan-400">Matrix</span></h2>
-            </div>
-            <label className="group relative w-full flex flex-col items-center justify-center gap-6 py-16 px-8 border border-cyan-500/20 hover:border-cyan-500/60 bg-cyan-500/5 hover:bg-cyan-500/10 cursor-pointer transition-all duration-500">
-              <i className="fa-solid fa-cloud-arrow-up text-5xl text-cyan-400 group-hover:scale-110 transition-transform"></i>
-              <div className="space-y-1">
-                <span className="mono text-sm text-cyan-400 font-black uppercase tracking-[0.3em]">[ UPLOAD IMDB CSV ]</span>
-                <p className="mono text-[10px] text-slate-600 uppercase">Cloud Sync will activate post-import</p>
-              </div>
-              <input type="file" className="hidden" accept=".csv" onChange={handleFileUpload} />
-            </label>
-            <button onClick={() => setState((s) => ({ ...s, isLoggedIn: true, userMovies: [{ id: 'init', title: 'Example Data', year: '2024', rating: 10, type: ContentType.MOVIE, genres: ['Sci-Fi'] }] }))} className="mono text-[10px] text-slate-500 uppercase hover:text-white">[ SKIP_AND_START_CLEAN ]</button>
-         </div>
-      </div>
-    );
-  }
+  const showUploadScreen = user && state.userMovies.length === 0 && !state.isLoading;
 
   return (
-    <div className="min-h-screen pb-20">
-      <header className="sticky top-0 z-50 bg-slate-950/95 backdrop-blur-2xl border-b border-white/5 px-4 md:px-8 flex items-center justify-between h-14 md:h-20">
-        <div className="flex items-center gap-2 md:gap-10 overflow-hidden">
-          <div className="flex items-center gap-2 shrink-0">
-            <div className="w-5 h-5 md:w-8 md:h-8 bg-cyan-500 flex items-center justify-center">
-              <i className="fa-solid fa-dna text-black text-[8px] md:text-sm"></i>
+    <div className="min-h-screen pb-20 relative">
+      {/* Auth Modal */}
+      {showAuthModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="max-w-md w-full tech-border bg-slate-900 p-8 shadow-2xl relative">
+            <button onClick={() => setShowAuthModal(false)} className="absolute top-2 right-2 text-slate-500 hover:text-white px-2">X</button>
+            <div className="text-center space-y-4 mb-6">
+              <i className="fa-solid fa-lock text-3xl text-cyan-500"></i>
+              <h2 className="text-xl font-black text-white uppercase italic">Authentication_Required</h2>
+              <p className="mono text-xs text-slate-400">
+                {state.guestSearchUsed ? "GUEST_TRIALS_EXHAUSTED." : "INTERACTION_GATED."} ESTABLISH NEURAL LINK TO CONTINUE.
+              </p>
             </div>
-            <span className="text-sm md:text-2xl font-black tracking-tighter uppercase italic leading-tight whitespace-nowrap">Neural<span className="text-cyan-400">Stream</span></span>
-          </div>
-          <div className="hidden sm:flex items-center h-full">
-            <form onSubmit={handleQuickAdd} className="flex items-center gap-2 border border-white/10 bg-black/40 px-2 md:px-4 h-8 md:h-11 rounded-sm">
-               <i className="fa-solid fa-search text-[10px] text-slate-600"></i>
-               <input type="text" placeholder="QUICK_ADD..." className="bg-transparent mono text-[10px] md:text-xs outline-none w-24 md:w-48 lg:w-64 text-white placeholder-slate-700 uppercase" value={quickSearch} onChange={(e) => setQuickSearch(e.target.value)} disabled={isQuickAdding} />
-               <button type="submit" className="bg-white/5 hover:bg-cyan-500 hover:text-black px-2 md:px-4 h-6 md:h-8 mono text-[9px] md:text-xs uppercase font-bold transition-all ml-1 md:ml-2">{isQuickAdding ? '...' : '[ ADD ]'}</button>
-            </form>
+            
+            {verificationSent ? (
+               <div className="text-center py-4 bg-green-500/10 border border-green-500/30">
+                  <p className="text-green-400 mono text-xs font-bold">VERIFICATION LINK SENT TO {authEmail}</p>
+                  <button onClick={() => setVerificationSent(false)} className="mt-2 text-[10px] underline text-slate-400">Back</button>
+               </div>
+            ) : (
+              <form onSubmit={handleAuth} className="space-y-4">
+                <input type="email" required value={authEmail} onChange={(e) => setAuthEmail(e.target.value)} className="w-full bg-black/40 border border-white/10 p-3 mono text-sm text-white outline-none focus:border-cyan-500/50 uppercase" placeholder="EMAIL_ADDRESS..." />
+                <input type="password" required value={authPassword} onChange={(e) => setAuthPassword(e.target.value)} className="w-full bg-black/40 border border-white/10 p-3 mono text-sm text-white outline-none focus:border-cyan-500/50 uppercase" placeholder="ACCESS_KEY..." />
+                <button type="submit" disabled={authLoading} className="w-full py-3 bg-cyan-500 text-black mono font-black text-sm uppercase tracking-widest hover:bg-white transition-colors">
+                  {authLoading ? 'CONNECTING...' : (isSignUp ? 'INIT_REGISTRATION' : 'LOGIN')}
+                </button>
+                <div className="text-center">
+                  <button type="button" onClick={() => setIsSignUp(!isSignUp)} className="mono text-[10px] text-slate-500 hover:text-cyan-400 uppercase">
+                    {isSignUp ? 'HAS_EXISTING_ID?' : 'CREATE_NEW_NEURAL_ID'}
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
-        
-        <div className="flex items-center gap-2 md:gap-10">
-          <div className="hidden lg:flex flex-col items-end leading-tight justify-center">
-             <div className="mono text-[10px] text-slate-600 uppercase tracking-widest flex items-center gap-2">
-                <span className={`w-1.5 h-1.5 ${syncStatus === 'SYNCING' ? 'bg-cyan-500 animate-ping' : syncStatus === 'ERROR' ? 'bg-red-500' : 'bg-green-500'} rounded-full`}></span>
-                {syncStatus === 'SYNCING' ? 'CLOUD_SYNCING...' : syncStatus === 'ERROR' ? 'SYNC_ERROR' : 'CLOUD_SYNC::ENCRYPTED'}
+      )}
+
+      {/* Share Modal */}
+      {showShareModal && shareUrl && (
+        <ShareModal url={shareUrl} onClose={() => setShowShareModal(false)} />
+      )}
+
+      {/* Stats Modal */}
+      {showStatsModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in zoom-in duration-300">
+           <div className="max-w-2xl w-full tech-border bg-slate-900 p-8 shadow-2xl relative overflow-hidden">
+              <div className="scanline opacity-5"></div>
+              <button onClick={() => setShowStatsModal(false)} className="absolute top-4 right-4 text-slate-500 hover:text-white px-2 z-30">X</button>
+              
+              <div className="flex flex-col gap-8 relative z-20">
+                 <div className="space-y-1">
+                    <div className="mono text-[10px] text-cyan-500 uppercase tracking-[0.4em] font-black">Neural_DNA_Profile</div>
+                    <h2 className="text-3xl font-black text-white italic uppercase tracking-tighter">Diagnostic_Report</h2>
+                 </div>
+
+                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="p-4 bg-black/40 border border-white/5 space-y-1">
+                       <div className="mono text-[9px] text-slate-500 uppercase">Historical_Nodes</div>
+                       <div className="text-2xl font-black text-cyan-400">{state.userMovies.length}</div>
+                    </div>
+                    <div className="p-4 bg-black/40 border border-white/5 space-y-1">
+                       <div className="mono text-[9px] text-slate-500 uppercase">Refinement_Signals</div>
+                       <div className="text-2xl font-black text-cyan-400">{state.feedbackHistory.length}</div>
+                    </div>
+                    <div className="p-4 bg-black/40 border border-white/5 space-y-1">
+                       <div className="mono text-[9px] text-slate-500 uppercase">Profile_Sync</div>
+                       <div className="text-xs font-black text-green-400 uppercase">100%_ACTIVE</div>
+                    </div>
+                 </div>
+
+                 <div className="space-y-4">
+                    <div className="mono text-[10px] text-slate-400 border-b border-white/10 pb-2 uppercase tracking-widest font-bold">Genre_Channel_Distribution</div>
+                    <div className="flex flex-wrap gap-2">
+                       {Array.from(new Set(state.userMovies.flatMap(m => m.genres))).slice(0, 15).map(genre => (
+                          <div key={genre} className="px-3 py-1 bg-white/5 border border-white/5 mono text-[9px] text-slate-300 uppercase">
+                             {genre} // {state.userMovies.filter(m => m.genres.includes(genre)).length}
+                          </div>
+                       ))}
+                    </div>
+                 </div>
+
+                 <div className="space-y-4">
+                    <div className="mono text-[10px] text-slate-400 border-b border-white/10 pb-2 uppercase tracking-widest font-bold">Recent_Neural_Feedback</div>
+                    <div className="max-h-40 overflow-y-auto custom-scrollbar space-y-2 pr-2">
+                       {state.feedbackHistory.slice(0, 10).map((f, i) => (
+                          <div key={i} className="flex items-center justify-between text-[10px] mono border-b border-white/5 pb-1">
+                             <span className="text-slate-400 truncate uppercase">{f.title}</span>
+                             <span className={f.feedback.type === 'like' ? 'text-cyan-500' : 'text-red-500'}>{f.feedback.type.toUpperCase()}</span>
+                          </div>
+                       ))}
+                       {state.feedbackHistory.length === 0 && <div className="text-[10px] mono text-slate-600">NO_FEEDBACK_SIGNALS_DETECTED.</div>}
+                    </div>
+                 </div>
+
+                 <div className="pt-4 border-t border-white/10 flex justify-between items-center">
+                    <div className="mono text-[8px] text-slate-700 uppercase">Matrix_ID:: {user?.id?.slice(0, 12)}...</div>
+                    <button onClick={() => setShowStatsModal(false)} className="mono text-xs bg-cyan-500 text-black px-6 py-2 font-black uppercase tracking-widest">[ DISMISS ]</button>
+                 </div>
+              </div>
+           </div>
+        </div>
+      )}
+
+      {/* Sliding Mobile Menu Overlay */}
+      <div className={`fixed inset-0 z-[60] transition-opacity duration-300 ${isMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsMenuOpen(false)}></div>
+          <div className={`absolute top-0 right-0 w-80 h-full bg-slate-950 border-l border-white/5 shadow-2xl transition-transform duration-300 ease-out transform ${isMenuOpen ? 'translate-x-0' : 'translate-x-full'} overflow-hidden`}>
+             <div className="scanline opacity-10"></div>
+             <div className="p-6 flex flex-col h-full space-y-12">
+                <div className="flex items-center justify-between">
+                   <span className="mono text-[10px] text-cyan-500 uppercase tracking-widest font-black">Neural_Control_Panel</span>
+                   <button onClick={() => setIsMenuOpen(false)} className="text-white hover:text-cyan-400 transition-colors">
+                      <i className="fa-solid fa-xmark text-xl"></i>
+                   </button>
+                </div>
+
+                <div className="flex flex-col gap-8 flex-1">
+                    {user ? (
+                      <>
+                        <div className="space-y-4">
+                           <div className="mono text-[8px] text-slate-600 uppercase tracking-widest font-bold">Identity_Profile</div>
+                           <div className="p-4 bg-white/5 border border-white/5 space-y-1">
+                              <div className="mono text-[10px] text-slate-400 truncate uppercase">{user.email}</div>
+                              <div className="mono text-[8px] text-slate-600 uppercase">Authenticated_Uplink</div>
+                           </div>
+                        </div>
+
+                        <div className="space-y-4">
+                           <div className="mono text-[8px] text-slate-600 uppercase tracking-widest font-bold">Neural_Statistics</div>
+                           <button 
+                             onClick={() => { setShowStatsModal(true); setIsMenuOpen(false); }}
+                             className="w-full p-4 bg-cyan-500/5 border border-cyan-500/20 text-left space-y-1 group"
+                           >
+                              <div className="flex items-center justify-between">
+                                 <div className="text-xl font-black text-cyan-400">{state.userMovies.length}</div>
+                                 <i className="fa-solid fa-chevron-right text-[10px] text-cyan-500/50 group-hover:translate-x-1 transition-transform"></i>
+                              </div>
+                              <div className="mono text-[8px] text-slate-500 uppercase tracking-widest">Historical_Data_Nodes</div>
+                           </button>
+                        </div>
+
+                        <div className="space-y-4">
+                           <div className="mono text-[8px] text-slate-600 uppercase tracking-widest font-bold">Quick_Action</div>
+                           <form onSubmit={handleQuickAdd} className="flex flex-col gap-2">
+                              <input 
+                                type="text" 
+                                placeholder="QUICK_ADD_TITLE..." 
+                                className="w-full bg-black/40 border border-white/10 p-3 mono text-[10px] text-white outline-none focus:border-cyan-500/50 uppercase rounded-sm" 
+                                value={quickSearch} 
+                                onChange={(e) => setQuickSearch(e.target.value)} 
+                                disabled={isQuickAdding} 
+                              />
+                              <button type="submit" disabled={isQuickAdding} className="w-full py-2 bg-white/5 hover:bg-cyan-500 hover:text-black mono text-[10px] font-bold uppercase transition-all border border-white/5">
+                                 {isQuickAdding ? 'SYNCING...' : '[ INITIALIZE_ENTRY ]'}
+                              </button>
+                           </form>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="space-y-6">
+                        <div className="mono text-xs text-slate-500 text-center uppercase leading-relaxed">
+                          Establishing connection required for neural synthesis.
+                        </div>
+                        <button onClick={() => { setShowAuthModal(true); setIsMenuOpen(false); }} className="w-full py-4 bg-cyan-500 text-black mono font-black text-xs uppercase tracking-widest hover:bg-white transition-colors">
+                          [ LOGIN / SIGNUP ]
+                        </button>
+                      </div>
+                    )}
+                </div>
+
+                <div className="pt-8 border-t border-white/5">
+                   {user && (
+                      <button onClick={() => supabase.auth.signOut()} className="w-full py-3 border border-red-500/20 text-red-400/50 hover:text-red-400 hover:bg-red-400/10 transition-all mono text-[10px] uppercase font-black tracking-widest">
+                         [ EXIT_PROTOCOL ]
+                      </button>
+                   )}
+                   <div className="mt-4 flex justify-between items-center mono text-[8px] text-slate-800 uppercase">
+                      <span>Neural_Stream_v1.0</span>
+                      <span>Ready_Signal</span>
+                   </div>
+                </div>
              </div>
-             <div className="mono text-xs font-bold text-cyan-400 uppercase tracking-tighter">{state.userMovies.length} DATA_POINTS // {state.feedbackHistory.length} FEEDBACKS</div>
           </div>
-          <button onClick={() => supabase.auth.signOut()} className="mono text-[9px] md:text-xs text-red-400/50 hover:text-red-400 hover:bg-red-400/10 px-2 md:px-6 h-8 md:h-11 border border-red-500/20 transition-all uppercase font-bold flex items-center justify-center">[ EXIT ]</button>
+      </div>
+
+      <header className={`sticky top-0 z-50 backdrop-blur-2xl border-b px-4 md:px-8 flex items-center justify-between h-14 md:h-20 transition-colors ${state.viewMode === ViewMode.PUBLIC ? 'bg-cyan-950/30 border-cyan-500/20' : 'bg-slate-950/95 border-white/5'}`}>
+        <div className="flex items-center gap-2 md:gap-10 overflow-hidden">
+          <div className="flex items-center gap-2 shrink-0">
+            <div className={`w-5 h-5 md:w-8 md:h-8 flex items-center justify-center ${state.viewMode === ViewMode.PUBLIC ? 'bg-white' : 'bg-cyan-500'}`}>
+              <i className={`fa-solid fa-dna text-[8px] md:text-sm text-black`}></i>
+            </div>
+            <span className="text-sm md:text-2xl font-black tracking-tighter uppercase italic leading-tight whitespace-nowrap">
+              Neural<span className={state.viewMode === ViewMode.PUBLIC ? 'text-white' : 'text-cyan-400'}>Stream</span>
+              {state.viewMode === ViewMode.PUBLIC && <span className="text-[10px] ml-2 opacity-50 not-italic tracking-widest border border-white/20 px-1">PUBLIC_FEED</span>}
+            </span>
+          </div>
+          
+          {user && (
+            <div className="hidden lg:flex items-center h-full">
+                <form onSubmit={handleQuickAdd} className="flex items-center gap-2 border border-white/10 bg-black/40 px-2 md:px-4 h-8 md:h-11 rounded-sm">
+                <i className="fa-solid fa-search text-[10px] text-slate-600"></i>
+                <input type="text" placeholder="QUICK_ADD..." className="bg-transparent mono text-[10px] md:text-xs outline-none w-24 md:w-48 lg:w-64 text-white placeholder-slate-700 uppercase" value={quickSearch} onChange={(e) => setQuickSearch(e.target.value)} disabled={isQuickAdding} />
+                <button type="submit" className="bg-white/5 hover:bg-cyan-500 hover:text-black px-2 md:px-4 h-6 md:h-8 mono text-[9px] md:text-xs uppercase font-bold transition-all ml-1 md:ml-2">{isQuickAdding ? '...' : '[ ADD ]'}</button>
+                </form>
+            </div>
+          )}
+        </div>
+        
+        {/* Responsive Navbar Controls */}
+        <div className="flex items-center gap-4">
+          {/* Desktop Only Controls */}
+          <div className="hidden lg:flex items-center gap-6">
+            {user ? (
+               <>
+                 <div className="flex items-center gap-6 h-10">
+                    <button 
+                      onClick={() => setShowStatsModal(true)}
+                      className="flex flex-col items-end leading-tight group/stats text-right hover:opacity-80 transition-opacity"
+                    >
+                      <div className="mono text-[8px] text-slate-500 uppercase tracking-widest flex items-center gap-2 mb-0.5">
+                        <span className={`w-1.5 h-1.5 ${syncStatus === 'SYNCING' ? 'bg-cyan-500 animate-ping' : 'bg-green-500'} rounded-full`}></span>
+                        CLOUD_SYNC :: ENCRYPTED
+                      </div>
+                      <div className="mono text-[10px] text-cyan-400 font-bold uppercase tracking-tight">
+                        {state.userMovies.length} DATA_POINTS // {state.feedbackHistory.length} FEEDBACKS
+                      </div>
+                    </button>
+                 </div>
+                 <button onClick={() => supabase.auth.signOut()} className="mono text-[9px] md:text-xs text-red-400/50 hover:text-red-400 hover:bg-red-400/10 px-2 md:px-6 h-8 md:h-11 border border-red-500/20 transition-all uppercase font-bold flex items-center justify-center tracking-widest">[ EXIT ]</button>
+               </>
+            ) : (
+               <button onClick={() => setShowAuthModal(true)} className="mono text-xs bg-cyan-500 text-black px-4 py-2 font-black uppercase hover:bg-white transition-colors">
+                 [ LOGIN / SIGNUP ]
+               </button>
+            )}
+          </div>
+
+          {/* Mobile/Tablet Hamburger Toggle */}
+          <button 
+            onClick={() => setIsMenuOpen(true)}
+            className="lg:hidden flex items-center justify-center w-10 h-10 text-cyan-500 border border-cyan-500/20 hover:bg-cyan-500/10 transition-all rounded-sm"
+          >
+            <i className="fa-solid fa-bars-staggered text-lg"></i>
+          </button>
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto px-4 md:px-8 py-4 md:py-10 space-y-6 md:space-y-16">
-        <section className="tech-border p-3 md:p-8 bg-slate-900/10 backdrop-blur-md relative overflow-hidden">
-          <div className="scanline opacity-10"></div>
-          
-          <div className="space-y-4 md:space-y-10">
-            <div className="space-y-2 md:space-y-6">
-              <div className="flex items-center justify-between">
-                <div className="mono text-[8px] md:text-[10px] text-cyan-500 uppercase font-black tracking-[0.2em] flex items-center gap-2">
-                   <span className="w-1 h-1 md:w-1.5 md:h-1.5 bg-cyan-500 rounded-full animate-pulse"></span>
-                   TUNING PARAMETERS
-                </div>
-              </div>
-              
-              <div className="relative group flex items-start">
-                <div className="absolute left-4 md:left-6 top-4 md:top-5 mono text-cyan-500/60 font-black text-xs md:text-sm select-none">CMD_&gt;</div>
-                <textarea 
-                  rows={2}
-                  value={state.filters.query}
-                  onChange={(e) => setState((s) => ({ ...s, filters: { ...s.filters, query: e.target.value } }))}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      fetchRecommendations();
-                    }
-                  }}
-                  placeholder="SPECIFY_NEURAL_OVERRIDE..."
-                  className="w-full bg-black/40 border border-white/10 group-hover:border-cyan-500/40 focus:border-cyan-500/60 p-4 md:p-5 pl-12 md:pl-20 mono text-[11px] md:text-sm text-white outline-none transition-all uppercase placeholder-slate-800 rounded-sm resize-none min-h-[80px] md:min-h-0"
-                />
-                <div className="absolute right-4 md:right-6 bottom-4 flex items-center gap-2 md:gap-3">
-                   <div className="mono text-[8px] text-slate-700 uppercase hidden lg:block tracking-widest">Syntax::FUZZY</div>
-                   <div className={`w-1.5 h-1.5 rounded-full ${state.filters.query ? 'bg-cyan-500 shadow-[0_0_8px_cyan]' : 'bg-slate-800'}`}></div>
-                </div>
-              </div>
-            </div>
+        
+        {/* Promo Hero for Guests */}
+        {!user && <PromoHero onLogin={() => setShowAuthModal(true)} />}
 
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-              <div className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-8 pt-0 md:pt-4">
-                 <div className="space-y-1 md:space-y-3">
-                    <label className="mono text-[8px] md:text-[10px] uppercase text-slate-600 tracking-widest font-bold">Modality</label>
-                    <div className="flex flex-row sm:flex-col flex-wrap gap-1">
-                      {CONTENT_TYPES.map((ct) => (
-                        <button key={ct.value} onClick={() => setState((s) => ({ ...s, filters: { ...s.filters, type: ct.value } }))} className={`py-1 md:py-2 px-2 md:px-3 mono text-[9px] md:text-xs font-bold uppercase text-left transition-all border-l-2 ${state.filters.type === ct.value ? 'border-cyan-500 bg-cyan-500/5 text-white' : 'border-transparent text-slate-500 hover:text-slate-300'} whitespace-nowrap`}>
-                          {ct.label}
-                        </button>
-                      ))}
+        {showUploadScreen ? (
+             <div className="max-w-xl mx-auto tech-border bg-slate-900/40 p-12 text-center space-y-10 relative mt-10">
+                <div className="scanline opacity-10"></div>
+                <div className="space-y-4">
+                   <div className="mono text-xs text-cyan-400 uppercase tracking-widest animate-pulse">Neural_Profile_Empty</div>
+                   <h2 className="text-3xl font-black uppercase tracking-tighter text-white italic">Calibrate Your <span className="text-cyan-400">Matrix</span></h2>
+                </div>
+                <label className="group relative w-full flex flex-col items-center justify-center gap-6 py-16 px-8 border border-cyan-500/20 hover:border-cyan-500/60 bg-cyan-500/5 hover:bg-cyan-500/10 cursor-pointer transition-all duration-500">
+                  <i className="fa-solid fa-cloud-arrow-up text-5xl text-cyan-400 group-hover:scale-110 transition-transform"></i>
+                  <div className="space-y-1">
+                    <span className="mono text-sm text-cyan-400 font-black uppercase tracking-[0.3em]">[ UPLOAD IMDB CSV ]</span>
+                    <p className="mono text-[10px] text-slate-600 uppercase">Cloud Sync will activate post-import</p>
+                  </div>
+                  <input type="file" className="hidden" accept=".csv" onChange={handleFileUpload} />
+                </label>
+                <div className="space-y-2">
+                    <p className="mono text-[10px] text-slate-500">OR START MANUAL ENTRY</p>
+                    <button onClick={() => setState((s) => ({ ...s, userMovies: [{ id: 'init', title: 'Start Adding...', year: '2024', rating: 10, type: ContentType.MOVIE, genres: [] }] }))} className="mono text-xs text-white border-b border-cyan-500/50 hover:text-cyan-400 pb-1">
+                        INITIALIZE EMPTY PROFILE
+                    </button>
+                </div>
+             </div>
+        ) : (
+            <>
+            <section className={`tech-border p-3 md:p-8 backdrop-blur-md relative overflow-hidden transition-colors ${state.viewMode === ViewMode.PUBLIC ? 'bg-cyan-900/5 border-cyan-500/20' : 'bg-slate-900/10'}`}>
+            <div className="scanline opacity-10"></div>
+            <div className="space-y-4 md:space-y-10">
+                <div className="space-y-2 md:space-y-6">
+                <div className="flex items-center justify-between">
+                    <div className="mono text-[8px] md:text-[10px] text-cyan-500 uppercase font-black tracking-[0.2em] flex items-center gap-2">
+                    <span className="w-1 h-1 md:w-1.5 md:h-1.5 bg-cyan-500 rounded-full animate-pulse"></span>
+                    {state.viewMode === ViewMode.PUBLIC ? 'READ_ONLY_PARAMETERS' : 'TUNING_PARAMETERS'}
                     </div>
-                 </div>
-                 <div className="space-y-1 md:space-y-3">
+                    {!user && !state.guestSearchUsed && <div className="mono text-[9px] text-green-400 animate-pulse">GUEST_MODE::1_SEARCH_REMAINING</div>}
+                </div>
+                <div className="relative group flex items-start">
+                    <div className="absolute left-4 md:left-6 top-4 md:top-5 mono text-cyan-500/60 font-black text-xs md:text-sm select-none">CMD_&gt;</div>
+                    <textarea 
+                    rows={2}
+                    value={state.filters.query}
+                    onChange={(e) => setState((s) => ({ ...s, filters: { ...s.filters, query: e.target.value } }))}
+                    disabled={state.viewMode === ViewMode.PUBLIC || (!user && state.guestSearchUsed)}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        fetchRecommendations();
+                        }
+                    }}
+                    placeholder={!user && state.guestSearchUsed ? "GUEST LIMIT REACHED. PLEASE LOGIN." : "SPECIFY_NEURAL_OVERRIDE..."}
+                    className="w-full bg-black/40 border border-white/10 group-hover:border-cyan-500/40 focus:border-cyan-500/60 p-4 md:p-5 pl-12 md:pl-20 mono text-[11px] md:text-sm text-white outline-none transition-all uppercase placeholder-slate-800 rounded-sm resize-none min-h-[80px] md:min-h-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                    />
+                </div>
+                </div>
+                <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8 pt-0 md:pt-4 ${state.viewMode === ViewMode.PUBLIC ? 'opacity-50 pointer-events-none' : ''}`}>
+                <div className="space-y-1 md:space-y-3">
+                    <label className="mono text-[8px] md:text-[10px] uppercase text-slate-600 tracking-widest font-bold">Modality</label>
+                    <div className="flex flex-row flex-wrap gap-1">
+                        {CONTENT_TYPES.map((ct) => (
+                        <button key={ct.value} onClick={() => setState((s) => ({ ...s, filters: { ...s.filters, type: ct.value } }))} className={`py-1 md:py-2 px-2 md:px-3 mono text-[9px] md:text-xs font-bold uppercase text-left transition-all border-l-2 ${state.filters.type === ct.value ? 'border-cyan-500 bg-cyan-500/5 text-white' : 'border-transparent text-slate-500 hover:text-slate-300'} whitespace-nowrap`}>
+                            {ct.label}
+                        </button>
+                        ))}
+                    </div>
+                </div>
+                <div className="space-y-1 md:space-y-3">
                     <label className="mono text-[8px] md:text-[10px] uppercase text-slate-600 tracking-widest font-bold">Genre_Axis</label>
                     <select value={state.filters.genre} onChange={(e) => setState((s) => ({ ...s, filters: { ...s.filters, genre: e.target.value } }))} className="w-full bg-black/40 border border-white/10 p-2 md:p-4 mono text-[10px] md:text-xs uppercase text-white outline-none focus:border-cyan-500/50 appearance-none rounded-none">
-                      <option value="">ALL_CHANNELS</option>
-                      {GENRES.map((g) => <option key={g} value={g}>{g.toUpperCase()}</option>)}
+                        <option value="">ALL_CHANNELS</option>
+                        {GENRES.map((g) => <option key={g} value={g}>{g.toUpperCase()}</option>)}
                     </select>
-                 </div>
-                 <div className="space-y-1 md:space-y-3">
+                </div>
+                <div className="space-y-1 md:space-y-3">
                     <label className="mono text-[8px] md:text-[10px] uppercase text-slate-600 tracking-widest font-bold">Affective_State</label>
                     <select value={state.filters.mood} onChange={(e) => setState((s) => ({ ...s, filters: { ...s.filters, mood: e.target.value } }))} className="w-full bg-black/40 border border-white/10 p-2 md:p-4 mono text-[10px] md:text-xs uppercase text-white outline-none focus:border-cyan-500/50 appearance-none rounded-none">
-                      <option value="">UNCALIBRATED</option>
-                      {MOODS.map((m) => <option key={m} value={m}>{m.toUpperCase()}</option>)}
+                        <option value="">UNCALIBRATED</option>
+                        {MOODS.map((m) => <option key={m} value={m}>{m.toUpperCase()}</option>)}
                     </select>
-                 </div>
-              </div>
-
-              {/* Bias Monitor */}
-              <div className="bg-black/40 border border-white/5 p-4 space-y-4">
-                 <div className="flex items-center justify-between border-b border-white/5 pb-2">
-                    <span className="mono text-[9px] text-slate-500 uppercase font-black tracking-widest">Neural_Bias_Monitor</span>
-                    <i className="fa-solid fa-microchip text-[10px] text-cyan-500 animate-pulse"></i>
-                 </div>
-                 <div className="space-y-3 max-h-[160px] overflow-y-auto pr-2 custom-scrollbar">
-                    {state.feedbackHistory.length === 0 ? (
-                      <div className="mono text-[9px] text-slate-700 uppercase italic py-4 text-center">NO_SIGNALS_DETECTED</div>
+                </div>
+                <div className="space-y-1 md:space-y-3">
+                    <label className="mono text-[8px] md:text-[10px] uppercase text-slate-600 tracking-widest font-bold">Availability_Matrix</label>
+                    <select 
+                        value={state.filters.providers?.[0] || ''} 
+                        onChange={(e) => setState((s) => ({ ...s, filters: { ...s.filters, providers: e.target.value ? [e.target.value] : [] } }))} 
+                        className="w-full bg-black/40 border border-white/10 p-2 md:p-4 mono text-[10px] md:text-xs uppercase text-white outline-none focus:border-cyan-500/50 appearance-none rounded-none"
+                    >
+                        <option value="">GLOBAL_STREAM</option>
+                        {MAJOR_PLATFORMS.map((p) => <option key={p.id} value={p.name}>{p.name.toUpperCase()}</option>)}
+                    </select>
+                </div>
+                </div>
+            </div>
+            {state.viewMode !== ViewMode.PUBLIC && (
+                <button 
+                    onClick={() => fetchRecommendations()} 
+                    disabled={state.isLoading || (!user && state.guestSearchUsed)} 
+                    className={`mt-6 md:mt-12 w-full py-3 md:py-6 border border-cyan-500/30 text-cyan-400 mono font-black text-[10px] md:text-sm uppercase tracking-[0.3em] md:tracking-[0.6em] transition-all relative group overflow-hidden ${(!user && state.guestSearchUsed) ? 'opacity-50 cursor-not-allowed bg-black' : 'hover:bg-cyan-500 hover:text-black'}`}
+                >
+                    <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    {state.isLoading ? (
+                    <span className="flex items-center justify-center gap-2 md:gap-4">
+                        <i className="fa-solid fa-microchip animate-spin text-sm md:text-lg"></i>
+                        SYNTHESIZING...
+                    </span>
                     ) : (
-                      state.feedbackHistory.slice(0, 5).map((f, i) => (
-                        <div key={i} className="flex flex-col gap-1 border-l border-white/5 pl-2 group">
-                          <div className="flex items-center gap-2">
-                            <i className={`fa-solid ${f.feedback.type === 'like' ? 'fa-circle-up text-cyan-500' : 'fa-circle-down text-red-500'} text-[8px]`}></i>
-                            <span className="mono text-[9px] text-slate-400 uppercase font-bold truncate group-hover:text-white transition-colors">{f.title}</span>
-                          </div>
-                          {f.feedback.reason && (
-                            <div className="mono text-[8px] text-slate-600 uppercase italic pl-4 truncate">"{(f.feedback.reason as string).slice(0, 30)}..."</div>
-                          )}
-                        </div>
-                      ))
+                    <span className="flex items-center justify-center gap-2 md:gap-4">
+                        <i className="fa-solid fa-bolt text-[10px] md:text-xs"></i>
+                        {(!user && state.guestSearchUsed) ? 'GUEST LIMIT REACHED // LOGIN REQUIRED' : '[ INITIATE_NEURAL_UPLINK ]'}
+                        <i className="fa-solid fa-bolt text-[10px] md:text-xs"></i>
+                    </span>
                     )}
-                 </div>
-                 <div className="pt-2 border-t border-white/5">
-                    <div className="flex justify-between items-center text-[8px] mono text-slate-600 uppercase">
-                       <span>Stability</span>
-                       <span className="text-cyan-500">98.4%</span>
-                    </div>
-                    <div className="h-0.5 bg-white/5 mt-1">
-                       <div className="h-full bg-cyan-500/40 w-[98.4%]"></div>
-                    </div>
-                 </div>
-              </div>
-            </div>
-          </div>
-
-          <button onClick={() => fetchRecommendations()} disabled={state.isLoading} className="mt-6 md:mt-12 w-full py-3 md:py-6 border border-cyan-500/30 hover:bg-cyan-500 text-cyan-400 hover:text-black mono font-black text-[10px] md:text-sm uppercase tracking-[0.3em] md:tracking-[0.6em] transition-all relative group overflow-hidden">
-            <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-            {state.isLoading ? (
-              <span className="flex items-center justify-center gap-2 md:gap-4">
-                <i className="fa-solid fa-microchip animate-spin text-sm md:text-lg"></i>
-                SYNTHESIZING...
-              </span>
-            ) : (
-              <span className="flex items-center justify-center gap-2 md:gap-4">
-                <i className="fa-solid fa-bolt text-[10px] md:text-xs"></i>
-                [ INITIATE_NEURAL_UPLINK ]
-                <i className="fa-solid fa-bolt text-[10px] md:text-xs"></i>
-              </span>
+                </button>
             )}
-          </button>
-        </section>
-
-        {state.isLoading ? (
-          <div className="animate-in fade-in duration-700">
-            <NeuralLoader />
-          </div>
-        ) : state.recommendations.length > 0 && (
-          <section className="space-y-6 md:space-y-10 animate-in fade-in slide-in-from-bottom-8 duration-1000">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-white/10 pb-4 md:pb-8">
-              <div className="space-y-1">
-                <div className="mono text-[8px] md:text-[10px] text-cyan-500 uppercase tracking-widest font-bold">Output_Matrix</div>
-                <h3 className="text-base md:text-xl font-black uppercase text-white italic">Verified_Matches</h3>
-              </div>
-              <div className="flex flex-wrap gap-1 md:gap-2">
-                {state.sources.length > 0 && state.sources.slice(0, 3).map((s, i) => (
-                  <a key={i} href={s.web?.uri || '#'} target="_blank" className="mono text-[8px] md:text-[10px] px-2 md:px-3 py-1 md:py-1.5 bg-cyan-500/5 text-cyan-500/60 border border-cyan-500/10 hover:border-cyan-500/50 hover:text-cyan-400 transition-all uppercase">
-                    DATA_{i+1}
-                  </a>
+            </section>
+            {state.isLoading && (
+            <div className="animate-in fade-in duration-700">
+                <NeuralLoader />
+            </div>
+            )}
+            {!state.isLoading && state.recommendations.length > 0 && (
+            <section className="space-y-6 md:space-y-10 animate-in fade-in slide-in-from-bottom-8 duration-1000">
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-white/10 pb-4 md:pb-8">
+                <div className="space-y-1 flex flex-col md:flex-row md:items-end gap-4 w-full">
+                    <div>
+                        <div className="mono text-[8px] md:text-[10px] text-cyan-500 uppercase tracking-widest font-bold">Output_Matrix</div>
+                        <h3 className="text-base md:text-xl font-black uppercase text-white italic">
+                            {state.viewMode === ViewMode.PUBLIC ? 'SHARED_DATA_STREAM' : 'VERIFIED_MATCHES'}
+                        </h3>
+                    </div>
+                    {user && state.viewMode === ViewMode.PERSONAL && (
+                        <div className="md:ml-auto flex flex-col items-end gap-1">
+                          <button 
+                              onClick={handleShare} 
+                              disabled={isSharing}
+                              className="flex items-center gap-2 mono text-[10px] text-cyan-400 border border-cyan-500/20 px-4 py-1.5 hover:bg-cyan-500/10 transition-all uppercase bg-cyan-500/5 mb-1"
+                          >
+                              {isSharing ? <i className="fa-solid fa-spinner animate-spin"></i> : <i className="fa-solid fa-share-nodes"></i>}
+                              SHARE_FEED
+                          </button>
+                        </div>
+                    )}
+                </div>
+                {!user && (
+                    <div className="mono text-[9px] bg-cyan-900/40 border border-cyan-500/30 text-cyan-200 px-3 py-2 animate-pulse">
+                        <i className="fa-solid fa-circle-info mr-2"></i>
+                        LOGIN TO SAVE & INTERACT
+                    </div>
+                )}
+                <div className="flex flex-wrap gap-1 md:gap-2">
+                    {state.sources.length > 0 && state.sources.slice(0, 3).map((s, i) => (
+                    <a key={i} href={s.web?.uri || '#'} target="_blank" className="mono text-[8px] md:text-[10px] px-2 md:px-3 py-1 md:py-1.5 bg-cyan-500/5 text-cyan-500/60 border border-cyan-500/10 hover:border-cyan-500/50 hover:text-cyan-400 transition-all uppercase">
+                        DATA_{i+1}
+                    </a>
+                    ))}
+                </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8 items-stretch">
+                {state.recommendations.map((movie) => (
+                    <MovieCard 
+                        key={movie.id} 
+                        movie={movie} 
+                        isRecommendation 
+                        onLikeSimilar={(seed) => gateInteraction(() => fetchRecommendations(seed))} 
+                        onMarkWatched={(m) => markAsWatched(m)} 
+                        onFeedback={(m, f) => handleFeedback(m, f)} 
+                    />
                 ))}
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8 items-stretch">
-              {state.recommendations.map((movie) => (
-                <MovieCard key={movie.id} movie={movie} isRecommendation onLikeSimilar={(seed) => fetchRecommendations(seed)} onMarkWatched={(m) => markAsWatched(m)} onFeedback={(m, f) => handleFeedback(m, f)} />
-              ))}
-            </div>
-          </section>
+                </div>
+            </section>
+            )}
+            </>
         )}
       </main>
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 2px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(0, 245, 255, 0.2); }
+        @keyframes shimmer {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(100%); }
+        }
       `}</style>
     </div>
   );

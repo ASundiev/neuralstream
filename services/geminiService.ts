@@ -1,18 +1,14 @@
+
 import { GoogleGenAI, Type } from "@google/genai";
-import { RecommendationRequest, Movie, ContentType } from "../types";
+import { RecommendationRequest, Movie, ContentType, WatchProvider } from "../types";
 
-const API_KEY = process.env.API_KEY;
-
-let ai: any = null;
-if (API_KEY && API_KEY !== 'undefined') {
-  ai = new GoogleGenAI({ apiKey: API_KEY });
-}
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 const TMDB_TOKEN = process.env.VITE_TMDB_TOKEN;
 
-async function fetchPosterFromTmdb(title: string, year?: string): Promise<string | null> {
+async function fetchTmdbMetadata(title: string, year?: string): Promise<{ posterUrl: string | null, providers: WatchProvider[], tmdbId: number | null }> {
   if (!TMDB_TOKEN || TMDB_TOKEN === 'undefined') {
-    return null;
+    return { posterUrl: null, providers: [], tmdbId: null };
   }
 
   try {
@@ -27,25 +23,40 @@ async function fetchPosterFromTmdb(title: string, year?: string): Promise<string
       }
     });
 
-    if (!response.ok) return null;
+    if (!response.ok) return { posterUrl: null, providers: [], tmdbId: null };
 
     const data = await response.json();
     const match = data.results?.find((r: any) => 
       (r.title || r.name)?.toLowerCase() === title.toLowerCase()
     ) || data.results?.[0];
 
-    if (match?.poster_path) {
-      return `https://image.tmdb.org/t/p/w600_and_h900_bestv2${match.poster_path}`;
+    if (!match) return { posterUrl: null, providers: [], tmdbId: null };
+
+    // Fetch Providers
+    const mediaType = match.media_type === 'tv' ? 'tv' : 'movie';
+    const providerUrl = `https://api.themoviedb.org/3/${mediaType}/${match.id}/watch/providers`;
+    const providerResponse = await fetch(providerUrl, {
+      headers: { Authorization: `Bearer ${TMDB_TOKEN}`, accept: 'application/json' }
+    });
+
+    let providers: WatchProvider[] = [];
+    if (providerResponse.ok) {
+      const pData = await providerResponse.json();
+      providers = pData.results?.US?.flatrate || [];
     }
+
+    return {
+      posterUrl: match.poster_path ? `https://image.tmdb.org/t/p/w600_and_h900_bestv2${match.poster_path}` : null,
+      providers,
+      tmdbId: match.id
+    };
   } catch (error) {
     console.error(`TMDB Handshake Error for ${title}:`, error);
   }
-  return null;
+  return { posterUrl: null, providers: [], tmdbId: null };
 }
 
 export async function searchMovieForHistory(query: string): Promise<Movie | null> {
-  if (!ai) throw new Error("NEURAL_ENGINE_OFFLINE: Missing API_KEY");
-  
   try {
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
@@ -66,14 +77,16 @@ export async function searchMovieForHistory(query: string): Promise<Movie | null
     });
 
     const data = JSON.parse(response.text);
-    const posterUrl = await fetchPosterFromTmdb(data.title, data.year);
+    const metadata = await fetchTmdbMetadata(data.title, data.year);
 
     return {
       ...data,
       id: Math.random().toString(36).substr(2, 9),
+      tmdbId: metadata.tmdbId || undefined,
       userRating: 8,
       rating: 8,
-      posterUrl: posterUrl || `[SIGNAL_LOST]`
+      posterUrl: metadata.posterUrl || `[SIGNAL_LOST]`,
+      providers: metadata.providers
     };
   } catch (error) {
     console.error("Neural Search Failed:", error);
@@ -82,9 +95,7 @@ export async function searchMovieForHistory(query: string): Promise<Movie | null
 }
 
 export async function getRecommendations(request: RecommendationRequest): Promise<{ movies: Movie[], sources: any[] }> {
-  if (!ai) throw new Error("NEURAL_ENGINE_OFFLINE: Missing API_KEY");
-  
-  const { watchedHistory, feedbackHistory, targetType, genre, mood, seedMovie, naturalLanguageQuery } = request;
+  const { watchedHistory, feedbackHistory, targetType, genre, mood, seedMovie, naturalLanguageQuery, preferredProviders, isGuest } = request;
 
   const context = watchedHistory
     .filter(m => (m.userRating || 0) >= 8)
@@ -96,17 +107,24 @@ export async function getRecommendations(request: RecommendationRequest): Promis
     .map(f => `${f.feedback.type.toUpperCase()}: "${f.title}"${f.feedback.reason ? ` because ${f.feedback.reason}` : ''}`)
     .join(' | ');
 
+  const systemInstruction = isGuest 
+    ? "You are NeuralStream Guest AI. Provide popular, highly-rated recommendations based on the query. Keep descriptions brief."
+    : "You are the core logic of NeuralStream AI. You specialize in deep taste analysis. Return high-quality, non-obvious recommendations.";
+
   const prompt = `
-    TASK: GENERATE 8 PRECISE RECOMMENDATIONS.
+    TASK: GENERATE ${isGuest ? '6' : '8'} RECOMMENDATIONS.
     USER_WATCHED_HISTORY: [${context}]
     USER_FEEDBACK_SIGNALS: [${feedbackContext || "No feedback yet"}]
     NEURAL_OVERRIDE_SIGNAL: ${naturalLanguageQuery || "NONE"}
     MODALITY: ${targetType}
     GENRE: ${genre || "ALL"}
     MOOD: ${mood || "UNCALIBRATED"}
+    PREFERRED_NETWORKS: ${preferredProviders?.join(', ') || "ANY"}
     ${seedMovie ? `SEED: Provide options strictly similar to "${seedMovie.title}"` : ""}
 
-    INSTRUCTION: Use the feedback signals to pivot recommendations. If a user disliked something for a specific reason, avoid that trait. If they liked it, amplify those traits. Do NOT recommend anything already in the USER_WATCHED_HISTORY.
+    INSTRUCTION: ${isGuest ? 'Focus on generally acclaimed hits matching the query.' : 'Use the feedback signals to pivot recommendations. If a user disliked something for a specific reason, avoid that trait.'}
+    AVAILABILITY: Prioritize content known to be on ${preferredProviders?.length ? preferredProviders.join(' or ') : 'major streaming platforms'}.
+    Do NOT recommend anything already in the USER_WATCHED_HISTORY.
   `;
 
   try {
@@ -114,8 +132,8 @@ export async function getRecommendations(request: RecommendationRequest): Promis
       model: "gemini-3-flash-preview",
       contents: prompt,
       config: {
-        tools: [{ googleSearch: {} }],
-        systemInstruction: "You are the core logic of NeuralStream AI. You specialize in deep taste analysis. Return high-quality, non-obvious recommendations.",
+        tools: [{ googleSearch: {} }], 
+        systemInstruction: systemInstruction,
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.ARRAY,
@@ -139,16 +157,18 @@ export async function getRecommendations(request: RecommendationRequest): Promis
     const results = JSON.parse(response.text);
     const sources = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
 
-    const moviesWithPosters = await Promise.all(results.map(async (item: any) => {
-      const posterUrl = await fetchPosterFromTmdb(item.title, item.year);
+    const moviesWithMetadata = await Promise.all(results.map(async (item: any) => {
+      const metadata = await fetchTmdbMetadata(item.title, item.year);
       return {
         ...item,
         id: Math.random().toString(36).substr(2, 9),
-        posterUrl: posterUrl || `[SIGNAL_LOST]`
+        tmdbId: metadata.tmdbId,
+        posterUrl: metadata.posterUrl || `[SIGNAL_LOST]`,
+        providers: metadata.providers
       };
     }));
 
-    return { movies: moviesWithPosters, sources };
+    return { movies: moviesWithMetadata, sources };
   } catch (error) {
     console.error("Neural Stream Interrupt:", error);
     throw error;

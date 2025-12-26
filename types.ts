@@ -5,13 +5,25 @@ export enum ContentType {
   BOTH = 'both'
 }
 
+export enum ViewMode {
+  PERSONAL = 'personal',
+  PUBLIC = 'public'
+}
+
 export interface Feedback {
   type: 'like' | 'dislike';
   reason?: string;
 }
 
+export interface WatchProvider {
+  provider_id: number;
+  provider_name: string;
+  logo_path: string;
+}
+
 export interface Movie {
   id: string;
+  tmdbId?: number;
   title: string;
   year: string;
   rating: number;
@@ -22,6 +34,7 @@ export interface Movie {
   reason?: string;
   posterUrl?: string;
   feedback?: Feedback;
+  providers?: WatchProvider[];
 }
 
 export interface RecommendationRequest {
@@ -32,9 +45,12 @@ export interface RecommendationRequest {
   mood?: string;
   seedMovie?: Movie;
   naturalLanguageQuery?: string;
+  preferredProviders?: string[];
+  isGuest?: boolean;
 }
 
 export interface AppState {
+  viewMode: ViewMode;
   isLoggedIn: boolean;
   userMovies: Movie[];
   feedbackHistory: { title: string, feedback: Feedback }[];
@@ -45,6 +61,8 @@ export interface AppState {
     genre: string;
     mood: string;
     query: string;
+    providers: string[];
   };
   sources: any[];
+  guestSearchUsed: boolean;
 }
