@@ -8,42 +8,13 @@ interface PromoHeroProps {
 
 export const PromoHero: React.FC<PromoHeroProps> = ({ onLogin, onSignUp }) => {
   return (
-    <div className="relative w-full tech-border bg-slate-900/20 overflow-hidden py-12 md:py-20 px-6 md:px-12 group flex items-center justify-center min-h-[450px] md:min-h-[550px]">
-      {/* Sophisticated Background Layers */}
+    <div className="relative w-full tech-border bg-slate-900/10 overflow-hidden py-12 md:py-20 px-6 md:px-12 group flex items-center justify-center min-h-[450px] md:min-h-[550px] backdrop-blur-[2px]">
+      {/* HUD Background elements */}
       <div className="scanline opacity-10"></div>
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,245,255,0.08)_0%,transparent_70%)]"></div>
       
       {/* Decorative Grid */}
       <div className="absolute inset-0 opacity-[0.05] pointer-events-none bg-[linear-gradient(rgba(0,245,255,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(0,245,255,0.1)_1px,transparent_1px)] bg-[size:60px_60px]"></div>
-
-      {/* "Cinematic DNA" Helix Background Animation */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-20 flex justify-around">
-        <div className="h-full w-24 relative hidden md:block">
-           <svg className="w-full h-full" viewBox="0 0 100 800" preserveAspectRatio="none">
-             <path d="M50 0 Q 80 100 50 200 T 50 400 T 50 600 T 50 800" fill="none" stroke="#00f5ff" strokeWidth="0.5" className="animate-[dna-twist_8s_linear_infinite]" />
-             <path d="M50 0 Q 20 100 50 200 T 50 400 T 50 600 T 50 800" fill="none" stroke="#00f5ff" strokeWidth="0.5" className="animate-[dna-twist_8s_linear_infinite_reverse]" />
-           </svg>
-        </div>
-        <div className="h-full w-48 relative opacity-30">
-           <svg className="w-full h-full" viewBox="0 0 100 800" preserveAspectRatio="none">
-              {[...Array(20)].map((_, i) => (
-                <line 
-                  key={i} 
-                  x1="10" y1={40 * i} x2="90" y2={40 * i + 10} 
-                  stroke="#00f5ff" strokeWidth="0.2" 
-                  className="animate-pulse" 
-                  style={{ animationDelay: `${i * 0.2}s` }}
-                />
-              ))}
-           </svg>
-        </div>
-        <div className="h-full w-24 relative hidden md:block">
-           <svg className="w-full h-full" viewBox="0 0 100 800" preserveAspectRatio="none">
-             <path d="M50 0 Q 80 100 50 200 T 50 400 T 50 600 T 50 800" fill="none" stroke="#00f5ff" strokeWidth="0.5" className="animate-[dna-twist_10s_linear_infinite]" />
-             <path d="M50 0 Q 20 100 50 200 T 50 400 T 50 600 T 50 800" fill="none" stroke="#00f5ff" strokeWidth="0.5" className="animate-[dna-twist_10s_linear_infinite_reverse]" />
-           </svg>
-        </div>
-      </div>
 
       {/* Central Scanning Element */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-10">
@@ -88,29 +59,7 @@ export const PromoHero: React.FC<PromoHeroProps> = ({ onLogin, onSignUp }) => {
             </button>
           </div>
         </div>
-
-        {/* Sophisticated Data Stream Display */}
-        <div className="pt-8 flex items-center justify-center gap-8 opacity-40">
-           <div className="flex items-center gap-2 mono text-[8px] text-cyan-500 font-bold uppercase tracking-widest">
-              <span className="animate-pulse">STREAMS::ACTIVE</span>
-              <div className="flex gap-0.5">
-                 {[...Array(5)].map((_, i) => <div key={i} className="w-1 h-3 bg-cyan-500/20" style={{ height: `${Math.random() * 12 + 4}px` }}></div>)}
-              </div>
-           </div>
-           <div className="h-[1px] w-12 bg-white/10 hidden sm:block"></div>
-           <div className="mono text-[8px] text-slate-500 uppercase tracking-widest font-bold">
-              BIT_RATE_SYNC::2.4GBPS
-           </div>
-        </div>
       </div>
-
-      <style>{`
-        @keyframes dna-twist {
-          0% { transform: translateY(-20px); }
-          50% { transform: translateY(20px); }
-          100% { transform: translateY(-20px); }
-        }
-      `}</style>
     </div>
   );
 };

@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { ContentType, Movie, AppState, Feedback } from './types';
@@ -7,6 +6,7 @@ import { getRecommendations, searchMovieForHistory } from './services/geminiServ
 import { MovieCard } from './components/MovieCard';
 import { NeuralLoader } from './components/NeuralLoader';
 import { PromoHero } from './components/PromoHero';
+import { NeuralBackground } from './components/NeuralBackground';
 
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://vplgyzzwgbgwudbtdgfk.supabase.co';
 const SUPABASE_KEY = process.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZwbGd5enp3Z2Jnd3VkYnRkZ2ZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYxNzM0ODksImV4cCI6MjA4MTc0OTQ4OX0.90zVerWUdgekP_MWRiViKC80bDy46UkZau6MZ6ANrKE';
@@ -313,7 +313,9 @@ const App: React.FC = () => {
   if (state.isLoading) return <div className="min-h-screen bg-slate-950 flex items-center justify-center"><NeuralLoader /></div>;
 
   return (
-    <div className="min-h-screen pb-20 relative">
+    <div className="min-h-screen pb-20 relative bg-slate-950">
+      <NeuralBackground />
+      
       {showAuthModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
           <div className="max-w-md w-full tech-border bg-slate-900 p-8 shadow-2xl relative">
@@ -488,7 +490,7 @@ const App: React.FC = () => {
       )}
 
       {user && (
-        <header className="sticky top-0 z-50 backdrop-blur-2xl border-b px-4 md:px-8 flex items-center justify-between h-14 md:h-20 bg-slate-950/95 border-white/5">
+        <header className="sticky top-0 z-50 backdrop-blur-2xl border-b px-4 md:px-8 flex items-center justify-between h-14 md:h-20 bg-slate-950/80 border-white/5">
             <div className="flex items-center gap-2 md:gap-10">
               <div className="flex items-center gap-2 shrink-0">
                   <div className="w-5 h-5 md:w-8 md:h-8 flex items-center justify-center bg-cyan-500"><i className="fa-solid fa-dna text-[8px] md:text-sm text-black"></i></div>
@@ -518,105 +520,111 @@ const App: React.FC = () => {
         </header>
       )}
 
-      <main className="max-w-7xl mx-auto px-4 md:px-8 py-10 space-y-16">
-        {!user && state.recommendations.length === 0 && <PromoHero onLogin={() => openAuth(false)} onSignUp={() => openAuth(true)} />}
+      <main className="max-w-7xl mx-auto px-4 md:px-8 py-10 space-y-16 relative z-10">
+        <div className="relative">
+          {!user && state.recommendations.length === 0 && <PromoHero onLogin={() => openAuth(false)} onSignUp={() => openAuth(true)} />}
 
-        {showUploadScreen ? (
-             <div className="max-w-xl mx-auto tech-border bg-slate-900/40 p-12 text-center space-y-10 relative mt-10">
-                <div className="space-y-4">
-                   <div className="mono text-xs text-cyan-400 uppercase tracking-widest animate-pulse">Neural_Profile_Empty</div>
-                   <h2 className="text-3xl font-black uppercase text-white italic">Initialize Your <span className="text-cyan-400">Matrix</span></h2>
-                </div>
-                <label className="group relative w-full flex flex-col items-center justify-center gap-6 py-16 border border-cyan-500/20 hover:border-cyan-500/60 bg-cyan-500/5 cursor-pointer transition-all">
-                  <i className="fa-solid fa-cloud-arrow-up text-5xl text-cyan-400"></i>
-                  <span className="mono text-sm text-cyan-400 font-black uppercase tracking-widest">[ UPLOAD IMDB CSV ]</span>
-                  <input type="file" className="hidden" accept=".csv" onChange={handleFileUpload} />
-                </label>
-             </div>
-        ) : (
-            <>
-            {(user || !state.guestSearchUsed) && (
-              <section className="tech-border p-8 bg-slate-900/10 backdrop-blur-md space-y-10">
-                <div className="space-y-6">
-                  <div className="mono text-[10px] text-cyan-500 uppercase font-black tracking-widest flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 bg-cyan-500 rounded-full animate-pulse"></span>
-                    TUNING_PARAMETERS
+          {showUploadScreen ? (
+              <div className="max-w-xl mx-auto tech-border bg-slate-900/40 p-12 text-center space-y-10 relative mt-10 backdrop-blur-md">
+                  <div className="space-y-4">
+                    <div className="mono text-xs text-cyan-400 uppercase tracking-widest animate-pulse">Neural_Profile_Empty</div>
+                    <h2 className="text-3xl font-black uppercase text-white italic">Initialize Your <span className="text-cyan-400">Matrix</span></h2>
                   </div>
-                  <div className="relative flex items-start group">
-                      <div className="absolute left-6 top-5 mono text-cyan-500/60 font-black text-sm select-none">CMD_&gt;</div>
-                      <textarea 
-                        rows={2}
-                        value={state.filters.query}
-                        onChange={(e) => setState((s) => ({ ...s, filters: { ...s.filters, query: e.target.value } }))}
-                        placeholder="SPECIFY_NEURAL_OVERRIDE..."
-                        className="w-full bg-black/40 border border-white/10 group-hover:border-cyan-500/40 focus:border-cyan-500/60 p-5 pl-20 mono text-sm text-white outline-none uppercase placeholder-slate-800 rounded-sm resize-none"
-                      />
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                  <div className="space-y-3">
-                    <label className="mono text-[10px] uppercase text-slate-600 font-bold tracking-widest">Modality</label>
-                    <div className="flex gap-2">
-                        {CONTENT_TYPES.map((ct) => (
-                        <button key={ct.value} onClick={() => setState((s) => ({ ...s, filters: { ...s.filters, type: ct.value } }))} className={`py-2 px-4 mono text-xs font-bold uppercase transition-all border-l-2 ${state.filters.type === ct.value ? 'border-cyan-500 bg-cyan-500/5 text-white' : 'border-transparent text-slate-500 hover:text-slate-300'}`}>
-                            {ct.label}
-                        </button>
-                        ))}
+                  <label className="group relative w-full flex flex-col items-center justify-center gap-6 py-16 border border-cyan-500/20 hover:border-cyan-500/60 bg-cyan-500/5 cursor-pointer transition-all">
+                    <i className="fa-solid fa-cloud-arrow-up text-5xl text-cyan-400"></i>
+                    <span className="mono text-sm text-cyan-400 font-black uppercase tracking-widest">[ UPLOAD IMDB CSV ]</span>
+                    <input type="file" className="hidden" accept=".csv" onChange={handleFileUpload} />
+                  </label>
+              </div>
+          ) : (
+              <>
+              {(user || !state.guestSearchUsed) && (
+                <section className={`tech-border p-8 bg-slate-900/80 backdrop-blur-xl space-y-10 relative z-30 shadow-[0_-20px_50px_rgba(0,0,0,0.5)] ${(!user && state.recommendations.length === 0) ? '-mt-12 md:-mt-16 mx-6 md:mx-12' : ''}`}>
+                  <div className="space-y-6">
+                    <div className="space-y-1">
+                      <div className="mono text-[10px] text-cyan-500 uppercase font-black tracking-widest flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 bg-cyan-500 rounded-full animate-pulse"></span>
+                        Neural_Uplink_Console
+                      </div>
+                      <h2 className="text-2xl font-black text-white italic uppercase tracking-tight">Tuning Parameters</h2>
+                    </div>
+                    
+                    <div className="relative flex items-start group">
+                        <div className="absolute left-6 top-5 mono text-cyan-500/60 font-black text-sm select-none">CMD_&gt;</div>
+                        <textarea 
+                          rows={2}
+                          value={state.filters.query}
+                          onChange={(e) => setState((s) => ({ ...s, filters: { ...s.filters, query: e.target.value } }))}
+                          placeholder="SPECIFY_NEURAL_OVERRIDE..."
+                          className="w-full bg-black/40 border border-white/10 group-hover:border-cyan-500/40 focus:border-cyan-500/60 p-5 pl-20 mono text-sm text-white outline-none uppercase placeholder-slate-800 rounded-sm resize-none"
+                        />
                     </div>
                   </div>
-                  <div className="space-y-3">
-                    <label className="mono text-[10px] uppercase text-slate-600 font-bold tracking-widest">Genre_Axis</label>
-                    <select value={state.filters.genre} onChange={(e) => setState((s) => ({ ...s, filters: { ...s.filters, genre: e.target.value } }))} className="w-full bg-black/40 border border-white/10 p-4 mono text-xs uppercase text-white outline-none focus:border-cyan-500/50 appearance-none rounded-none">
-                        <option value="">ALL_CHANNELS</option>
-                        {GENRES.map((g) => <option key={g} value={g}>{g.toUpperCase()}</option>)}
-                    </select>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                    <div className="space-y-3">
+                      <label className="mono text-[10px] uppercase text-slate-600 font-bold tracking-widest">Modality</label>
+                      <div className="flex gap-2">
+                          {CONTENT_TYPES.map((ct) => (
+                          <button key={ct.value} onClick={() => setState((s) => ({ ...s, filters: { ...s.filters, type: ct.value } }))} className={`py-2 px-4 mono text-xs font-bold uppercase transition-all border-l-2 ${state.filters.type === ct.value ? 'border-cyan-500 bg-cyan-500/5 text-white' : 'border-transparent text-slate-500 hover:text-slate-300'}`}>
+                              {ct.label}
+                          </button>
+                          ))}
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      <label className="mono text-[10px] uppercase text-slate-600 font-bold tracking-widest">Genre_Axis</label>
+                      <select value={state.filters.genre} onChange={(e) => setState((s) => ({ ...s, filters: { ...s.filters, genre: e.target.value } }))} className="w-full bg-black/40 border border-white/10 p-4 mono text-xs uppercase text-white outline-none focus:border-cyan-500/50 appearance-none rounded-none">
+                          <option value="">ALL_CHANNELS</option>
+                          {GENRES.map((g) => <option key={g} value={g}>{g.toUpperCase()}</option>)}
+                      </select>
+                    </div>
+                    <div className="space-y-3">
+                      <label className="mono text-[10px] uppercase text-slate-600 font-bold tracking-widest">Affective_State</label>
+                      <select value={state.filters.mood} onChange={(e) => setState((s) => ({ ...s, filters: { ...s.filters, mood: e.target.value } }))} className="w-full bg-black/40 border border-white/10 p-4 mono text-xs uppercase text-white outline-none focus:border-cyan-500/50 appearance-none rounded-none">
+                          <option value="">UNCALIBRATED</option>
+                          {MOODS.map((m) => <option key={m} value={m}>{m.toUpperCase()}</option>)}
+                      </select>
+                    </div>
+                    <div className="space-y-3">
+                      <label className="mono text-[10px] uppercase text-slate-600 font-bold tracking-widest">Availability_Matrix</label>
+                      <select value={state.filters.providers?.[0] || ''} onChange={(e) => setState((s) => ({ ...s, filters: { ...s.filters, providers: e.target.value ? [e.target.value] : [] } }))} className="w-full bg-black/40 border border-white/10 p-4 mono text-xs uppercase text-white outline-none focus:border-cyan-500/50 appearance-none rounded-none">
+                          <option value="">GLOBAL_STREAM</option>
+                          {MAJOR_PLATFORMS.map((p) => <option key={p.id} value={p.name}>{p.name.toUpperCase()}</option>)}
+                      </select>
+                    </div>
                   </div>
-                  <div className="space-y-3">
-                    <label className="mono text-[10px] uppercase text-slate-600 font-bold tracking-widest">Affective_State</label>
-                    <select value={state.filters.mood} onChange={(e) => setState((s) => ({ ...s, filters: { ...s.filters, mood: e.target.value } }))} className="w-full bg-black/40 border border-white/10 p-4 mono text-xs uppercase text-white outline-none focus:border-cyan-500/50 appearance-none rounded-none">
-                        <option value="">UNCALIBRATED</option>
-                        {MOODS.map((m) => <option key={m} value={m}>{m.toUpperCase()}</option>)}
-                    </select>
+                  <button 
+                    onClick={() => fetchRecommendations()} 
+                    disabled={state.isRecsLoading} 
+                    className={`w-full py-6 border border-cyan-500/30 text-cyan-400 mono font-black text-sm uppercase tracking-[0.6em] transition-all relative group overflow-hidden ${state.isRecsLoading ? 'bg-black/50 cursor-wait' : 'hover:bg-cyan-500 hover:text-black'}`}
+                  >
+                    <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    {state.isRecsLoading ? <span className="flex items-center justify-center gap-4"><i className="fa-solid fa-microchip animate-spin text-lg"></i>SYNTHESIZING...</span> : <span className="flex items-center justify-center gap-4"><i className="fa-solid fa-bolt text-xs"></i>[ INITIATE_NEURAL_UPLINK ]<i className="fa-solid fa-bolt text-xs"></i></span>}
+                  </button>
+                </section>
+              )}
+              
+              {state.isRecsLoading && <div className="mt-10 animate-in fade-in duration-700"><NeuralLoader /></div>}
+              
+              {!state.isRecsLoading && state.recommendations.length > 0 && (
+              <section className="space-y-10 animate-in fade-in slide-in-from-bottom-8 duration-1000 mt-10">
+                  <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-white/10 pb-8">
+                    <div>
+                      <div className="mono text-[10px] text-cyan-500 uppercase tracking-widest font-bold">Output_Matrix</div>
+                      <h3 className="text-xl font-black uppercase text-white italic">VERIFIED_MATCHES</h3>
+                    </div>
+                    {!user && <div className="mono text-[9px] bg-cyan-900/40 border border-cyan-500/30 text-cyan-200 px-3 py-2 animate-pulse uppercase tracking-widest">GUEST_TRIAL_RESULTS. LOGIN TO SAVE.</div>}
                   </div>
-                  <div className="space-y-3">
-                    <label className="mono text-[10px] uppercase text-slate-600 font-bold tracking-widest">Availability_Matrix</label>
-                    <select value={state.filters.providers?.[0] || ''} onChange={(e) => setState((s) => ({ ...s, filters: { ...s.filters, providers: e.target.value ? [e.target.value] : [] } }))} className="w-full bg-black/40 border border-white/10 p-4 mono text-xs uppercase text-white outline-none focus:border-cyan-500/50 appearance-none rounded-none">
-                        <option value="">GLOBAL_STREAM</option>
-                        {MAJOR_PLATFORMS.map((p) => <option key={p.id} value={p.name}>{p.name.toUpperCase()}</option>)}
-                    </select>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 items-stretch">
+                  {state.recommendations.map((movie) => (
+                      <MovieCard key={movie.id} movie={movie} isRecommendation onLikeSimilar={(seed) => fetchRecommendations(seed)} onMarkWatched={(m) => markAsWatched(m)} onFeedback={(m, f) => handleFeedback(m, f)} />
+                  ))}
                   </div>
-                </div>
-                <button 
-                  onClick={() => fetchRecommendations()} 
-                  disabled={state.isRecsLoading} 
-                  className={`w-full py-6 border border-cyan-500/30 text-cyan-400 mono font-black text-sm uppercase tracking-[0.6em] transition-all relative group overflow-hidden ${state.isRecsLoading ? 'bg-black/50 cursor-wait' : 'hover:bg-cyan-500 hover:text-black'}`}
-                >
-                  <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                  {state.isRecsLoading ? <span className="flex items-center justify-center gap-4"><i className="fa-solid fa-microchip animate-spin text-lg"></i>SYNTHESIZING...</span> : <span className="flex items-center justify-center gap-4"><i className="fa-solid fa-bolt text-xs"></i>[ INITIATE_NEURAL_UPLINK ]<i className="fa-solid fa-bolt text-xs"></i></span>}
-                </button>
               </section>
-            )}
-            
-            {state.isRecsLoading && <div className="mt-10 animate-in fade-in duration-700"><NeuralLoader /></div>}
-            
-            {!state.isRecsLoading && state.recommendations.length > 0 && (
-            <section className="space-y-10 animate-in fade-in slide-in-from-bottom-8 duration-1000 mt-10">
-                <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-white/10 pb-8">
-                  <div>
-                    <div className="mono text-[10px] text-cyan-500 uppercase tracking-widest font-bold">Output_Matrix</div>
-                    <h3 className="text-xl font-black uppercase text-white italic">VERIFIED_MATCHES</h3>
-                  </div>
-                  {!user && <div className="mono text-[9px] bg-cyan-900/40 border border-cyan-500/30 text-cyan-200 px-3 py-2 animate-pulse uppercase tracking-widest">GUEST_TRIAL_RESULTS. LOGIN TO SAVE.</div>}
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 items-stretch">
-                {state.recommendations.map((movie) => (
-                    <MovieCard key={movie.id} movie={movie} isRecommendation onLikeSimilar={(seed) => fetchRecommendations(seed)} onMarkWatched={(m) => markAsWatched(m)} onFeedback={(m, f) => handleFeedback(m, f)} />
-                ))}
-                </div>
-            </section>
-            )}
-            </>
-        )}
+              )}
+              </>
+          )}
+        </div>
       </main>
     </div>
   );
