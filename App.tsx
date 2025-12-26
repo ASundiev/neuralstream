@@ -58,7 +58,7 @@ const App: React.FC = () => {
   const [isQuickAdding, setIsQuickAdding] = useState(false);
   const skipSync = useRef(false);
 
-  // Fix: Define showUploadScreen variable to resolve reference error
+  // showUploadScreen logic
   const showUploadScreen = !!user && state.userMovies.length === 0;
 
   useEffect(() => {
@@ -71,13 +71,20 @@ const App: React.FC = () => {
 
       const { data: { session } } = await supabase.auth.getSession();
       setUser(session?.user ?? null);
+      
+      // Safety: If no session exists, we must release the loading screen immediately
       if (!session) {
         setState((s) => ({ ...s, isLoading: false }));
       }
 
       const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: string, session: any) => {
         setUser(session?.user ?? null);
-        if (session) setShowAuthModal(false);
+        if (session) {
+          setShowAuthModal(false);
+        } else {
+          // If user logs out, reset loading state to landing mode
+          setState((s) => ({ ...s, isLoading: false }));
+        }
       });
 
       return () => subscription.unsubscribe();
@@ -87,7 +94,12 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const fetchProfile = async () => {
-      if (!user || !supabase) return;
+      if (!user || !supabase) {
+        // Ensure that if user is null, we are not stuck in a loading state
+        if (!user) setState(s => ({ ...s, isLoading: false }));
+        return;
+      }
+
       setState((s) => ({ ...s, isLoading: true }));
       try {
         const { data, error } = await supabase
@@ -96,7 +108,8 @@ const App: React.FC = () => {
           .eq('id', user.id)
           .single();
 
-        if (error) throw error;
+        if (error && error.code !== 'PGRST116') throw error; // Handle "No rows" gracefully
+
         if (data) {
           setIsApproved(data.is_approved === true);
           if (data.state) {
@@ -112,8 +125,13 @@ const App: React.FC = () => {
           } else {
             setState((s) => ({ ...s, isLoggedIn: true, isLoading: false, isRecsLoading: false, guestSearchUsed: true }));
           }
+        } else {
+          // Handle new profile
+          setIsApproved(null); // Or true depending on default policy
+          setState((s) => ({ ...s, isLoggedIn: true, isLoading: false }));
         }
       } catch (err) {
+        console.error("Hydration Failure:", err);
         setIsApproved(false);
         setState((s) => ({ ...s, isLoggedIn: true, isLoading: false, isRecsLoading: false }));
       }
@@ -249,7 +267,6 @@ const App: React.FC = () => {
       const reader = new FileReader();
       reader.onload = (event) => {
         const text = event.target?.result as string;
-        // Simple IMDB CSV parsing logic
         const lines = text.split('\n');
         if (lines.length < 2) {
           setState((prev) => ({ ...prev, isLoading: false }));
@@ -348,70 +365,37 @@ const App: React.FC = () => {
         </div>
       )}
 
-      <div className={`fixed inset-0 z-[60] transition-opacity duration-300 ${isMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsMenuOpen(false)}></div>
-          <div className={`absolute top-0 right-0 w-80 h-full bg-slate-950 border-l border-white/5 shadow-2xl transition-transform duration-300 ease-out transform ${isMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}>
-             <div className="p-6 flex flex-col h-full space-y-12">
-                <div className="flex items-center justify-between">
-                   <span className="mono text-[10px] text-cyan-500 uppercase tracking-widest font-black">Control_Panel</span>
-                   <button onClick={() => setIsMenuOpen(false)} className="text-white hover:text-cyan-400 transition-colors"><i className="fa-solid fa-xmark text-xl"></i></button>
-                </div>
-                <div className="flex flex-col gap-8 flex-1">
-                    {user ? (
-                      <>
-                        <div className="p-4 bg-white/5 border border-white/5 space-y-1">
-                           <div className="mono text-[10px] text-slate-400 truncate uppercase">{user.email}</div>
-                           <div className="mono text-[8px] text-slate-600 uppercase tracking-widest">Authenticated</div>
-                        </div>
-                        <button onClick={() => { setShowStatsModal(true); setIsMenuOpen(false); }} className="w-full p-4 bg-cyan-500/5 border border-cyan-500/20 text-left mono text-xs text-cyan-400 uppercase font-black">[ DATA_DIAGNOSTICS ]</button>
-                      </>
-                    ) : (
-                      <button onClick={() => { setShowAuthModal(true); setIsMenuOpen(false); }} className="w-full py-4 bg-cyan-500 text-black mono font-black text-xs uppercase tracking-widest hover:bg-white transition-colors">[ LOGIN ]</button>
-                    )}
-                </div>
-                <div className="pt-8 border-t border-white/5">
-                   {user && <button onClick={() => supabase.auth.signOut()} className="w-full py-3 border border-red-500/20 text-red-400/50 hover:text-red-400 mono text-[10px] uppercase font-black tracking-widest">[ EXIT ]</button>}
-                </div>
-             </div>
-          </div>
-      </div>
-
-      <header className={`sticky top-0 z-50 backdrop-blur-2xl border-b px-4 md:px-8 flex items-center justify-between h-14 md:h-20 bg-slate-950/95 border-white/5`}>
-          <div className="flex items-center gap-2 md:gap-10">
-            <div className="flex items-center gap-2 shrink-0">
-                <div className="w-5 h-5 md:w-8 md:h-8 flex items-center justify-center bg-cyan-500"><i className="fa-solid fa-dna text-[8px] md:text-sm text-black"></i></div>
-                <span className="text-sm md:text-2xl font-black tracking-tighter uppercase italic leading-tight">Neural<span className="text-cyan-400">Stream</span></span>
+      {/* Conditionally remove the entire top navbar from the non-authorised landing page */}
+      {user && (
+        <header className="sticky top-0 z-50 backdrop-blur-2xl border-b px-4 md:px-8 flex items-center justify-between h-14 md:h-20 bg-slate-950/95 border-white/5">
+            <div className="flex items-center gap-2 md:gap-10">
+              <div className="flex items-center gap-2 shrink-0">
+                  <div className="w-5 h-5 md:w-8 md:h-8 flex items-center justify-center bg-cyan-500"><i className="fa-solid fa-dna text-[8px] md:text-sm text-black"></i></div>
+                  <span className="text-sm md:text-2xl font-black tracking-tighter uppercase italic leading-tight">Neural<span className="text-cyan-400">Stream</span></span>
+              </div>
+              <div className="hidden lg:flex items-center h-full">
+                  <form onSubmit={handleQuickAdd} className="flex items-center gap-2 border border-white/10 bg-black/40 px-4 h-11">
+                    <i className="fa-solid fa-search text-xs text-slate-600"></i>
+                    <input type="text" placeholder="QUICK_ADD..." className="bg-transparent mono text-xs outline-none w-64 text-white uppercase placeholder-slate-700" value={quickSearch} onChange={(e) => setQuickSearch(e.target.value)} disabled={isQuickAdding} />
+                    <button type="submit" className="bg-white/5 hover:bg-cyan-500 hover:text-black px-4 h-8 mono text-xs uppercase font-bold transition-all">{isQuickAdding ? '...' : '[ ADD ]'}</button>
+                  </form>
+              </div>
             </div>
-            {user && (
-                <div className="hidden lg:flex items-center h-full">
-                    <form onSubmit={handleQuickAdd} className="flex items-center gap-2 border border-white/10 bg-black/40 px-4 h-11">
-                      <i className="fa-solid fa-search text-xs text-slate-600"></i>
-                      <input type="text" placeholder="QUICK_ADD..." className="bg-transparent mono text-xs outline-none w-64 text-white uppercase placeholder-slate-700" value={quickSearch} onChange={(e) => setQuickSearch(e.target.value)} disabled={isQuickAdding} />
-                      <button type="submit" className="bg-white/5 hover:bg-cyan-500 hover:text-black px-4 h-8 mono text-xs uppercase font-bold transition-all">{isQuickAdding ? '...' : '[ ADD ]'}</button>
-                    </form>
-                </div>
-            )}
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="hidden lg:flex items-center gap-6">
-                {user ? (
-                <>
-                    <button onClick={() => setShowStatsModal(true)} className="flex flex-col items-end leading-tight text-right hover:opacity-80">
-                        <div className="mono text-[8px] text-slate-500 uppercase tracking-widest flex items-center gap-2">
-                            <span className={`w-1.5 h-1.5 ${syncStatus === 'SYNCING' ? 'bg-cyan-500 animate-ping' : 'bg-green-500'} rounded-full`}></span>
-                            CLOUD_SYNC :: ACTIVE
-                        </div>
-                        <div className="mono text-[10px] text-cyan-400 font-bold uppercase">{state.userMovies.length} DATA_POINTS</div>
-                    </button>
-                    <button onClick={() => supabase.auth.signOut()} className="mono text-xs text-red-400/50 hover:text-red-400 px-6 h-11 border border-red-500/20 transition-all uppercase font-bold tracking-widest">[ EXIT ]</button>
-                </>
-                ) : (
-                <button onClick={() => openAuth()} className="mono text-xs bg-cyan-500 text-black px-6 h-11 font-black uppercase hover:bg-white transition-colors">[ LOGIN ]</button>
-                )}
+            <div className="flex items-center gap-4">
+              <div className="hidden lg:flex items-center gap-6">
+                  <button onClick={() => setShowStatsModal(true)} className="flex flex-col items-end leading-tight text-right hover:opacity-80">
+                      <div className="mono text-[8px] text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                          <span className={`w-1.5 h-1.5 ${syncStatus === 'SYNCING' ? 'bg-cyan-500 animate-ping' : 'bg-green-500'} rounded-full`}></span>
+                          CLOUD_SYNC :: ACTIVE
+                      </div>
+                      <div className="mono text-[10px] text-cyan-400 font-bold uppercase">{state.userMovies.length} DATA_POINTS</div>
+                  </button>
+                  <button onClick={() => supabase.auth.signOut()} className="mono text-xs text-red-400/50 hover:text-red-400 px-6 h-11 border border-red-500/20 transition-all uppercase font-bold tracking-widest">[ EXIT ]</button>
+              </div>
+              <button onClick={() => setIsMenuOpen(true)} className="lg:hidden flex items-center justify-center w-10 h-10 text-cyan-500 border border-cyan-500/20"><i className="fa-solid fa-bars-staggered text-lg"></i></button>
             </div>
-            <button onClick={() => setIsMenuOpen(true)} className="lg:hidden flex items-center justify-center w-10 h-10 text-cyan-500 border border-cyan-500/20"><i className="fa-solid fa-bars-staggered text-lg"></i></button>
-          </div>
-      </header>
+        </header>
+      )}
 
       <main className="max-w-7xl mx-auto px-4 md:px-8 py-10 space-y-16">
         {!user && state.recommendations.length === 0 && <PromoHero onLogin={() => openAuth(false)} onSignUp={() => openAuth(true)} />}
