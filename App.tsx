@@ -1,13 +1,12 @@
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { createClient } from '@supabase/supabase-js';
-import { ContentType, Movie, AppState, Feedback, ViewMode } from './types';
+import { ContentType, Movie, AppState, Feedback } from './types';
 import { GENRES, MOODS, CONTENT_TYPES, MAJOR_PLATFORMS } from './constants';
 import { getRecommendations, searchMovieForHistory } from './services/geminiService';
 import { MovieCard } from './components/MovieCard';
 import { NeuralLoader } from './components/NeuralLoader';
 import { PromoHero } from './components/PromoHero';
-import { ShareModal } from './components/ShareModal';
 
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://vplgyzzwgbgwudbtdgfk.supabase.co';
 const SUPABASE_KEY = process.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZwbGd5enp3Z2Jnd3VkYnRkZ2ZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYxNzM0ODksImV4cCI6MjA4MTc0OTQ4OX0.90zVerWUdgekP_MWRiViKC80bDy46UkZau6MZ6ANrKE';
@@ -41,13 +40,9 @@ const App: React.FC = () => {
   
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showStatsModal, setShowStatsModal] = useState(false);
-  const [showShareModal, setShowShareModal] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isSharing, setIsSharing] = useState(false);
-  const [shareUrl, setShareUrl] = useState<string | null>(null);
 
   const [state, setState] = useState<AppState>({
-    viewMode: ViewMode.PERSONAL,
     isLoggedIn: false,
     userMovies: [],
     feedbackHistory: [],
@@ -70,36 +65,11 @@ const App: React.FC = () => {
         return;
       }
 
-      const params = new URLSearchParams(window.location.search);
-      const shareId = params.get('share');
-
-      if (shareId) {
-        try {
-          const { data, error } = await supabase
-            .from('shared_feeds')
-            .select('content')
-            .eq('id', shareId)
-            .single();
-
-          if (data && data.content) {
-            setState(s => ({
-              ...s,
-              recommendations: data.content.recommendations || [],
-              filters: data.content.filters || INITIAL_FILTERS,
-              viewMode: ViewMode.PUBLIC,
-              isLoading: false
-            }));
-          } else {
-             window.history.replaceState({}, '', '/');
-          }
-        } catch (err) {
-          console.error("Share Fetch Error:", err);
-        }
-      }
-
       supabase.auth.getSession().then(({ data: { session } }: any) => {
         setUser(session?.user ?? null);
-        if (!session && !shareId) setState((s) => ({ ...s, isLoading: false }));
+        if (!session) {
+          setState((s) => ({ ...s, isLoading: false }));
+        }
       });
 
       const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: string, session: any) => {
@@ -118,7 +88,6 @@ const App: React.FC = () => {
   useEffect(() => {
     const fetchProfile = async () => {
       if (!user || !supabase) return;
-      if (state.viewMode === ViewMode.PUBLIC) return;
 
       setState((s) => ({ ...s, isLoading: true }));
       
@@ -138,7 +107,6 @@ const App: React.FC = () => {
               filters: { ...INITIAL_FILTERS, ...(data.state.filters || {}) },
               isLoggedIn: true,
               isLoading: false,
-              viewMode: ViewMode.PERSONAL,
               guestSearchUsed: true
             });
           } else {
@@ -159,7 +127,7 @@ const App: React.FC = () => {
   }, [user]);
 
   useEffect(() => {
-    if (!user || !supabase || state.isLoading || isApproved === false || state.viewMode === ViewMode.PUBLIC) return;
+    if (!user || !supabase || state.isLoading || isApproved === false) return;
     if (skipSync.current) {
       skipSync.current = false;
       return;
@@ -167,7 +135,7 @@ const App: React.FC = () => {
 
     const syncToCloud = async () => {
       setSyncStatus('SYNCING');
-      const { isLoading, viewMode, ...persistableState } = state;
+      const { isLoading, ...persistableState } = state;
       
       const { error } = await supabase
         .from('profiles')
@@ -208,46 +176,16 @@ const App: React.FC = () => {
     }
   };
 
+  const openAuth = (signUp: boolean = false) => {
+    setIsSignUp(signUp);
+    setShowAuthModal(true);
+  };
+
   const gateInteraction = (callback: () => void) => {
     if (user) {
       callback();
     } else {
-      setShowAuthModal(true);
-    }
-  };
-
-  const handleShare = async () => {
-    if (!supabase || !user) {
-      setShowAuthModal(true);
-      return;
-    }
-    
-    setIsSharing(true);
-    try {
-      const payload = {
-        filters: state.filters,
-        recommendations: state.recommendations,
-        timestamp: new Date().toISOString()
-      };
-
-      const { data, error } = await supabase
-        .from('shared_feeds')
-        .insert({ content: payload })
-        .select('id')
-        .single();
-
-      if (error) throw error;
-      
-      if (data) {
-        const url = `${window.location.origin}?share=${data.id}`;
-        setShareUrl(url);
-        setShowShareModal(true);
-      }
-    } catch (e) {
-      console.error("Share Failed:", e);
-      alert("SHARE_SYSTEM_ERROR: Could not uplink to public feed.");
-    } finally {
-      setIsSharing(false);
+      openAuth();
     }
   };
 
@@ -299,7 +237,7 @@ const App: React.FC = () => {
   const fetchRecommendations = useCallback(async (seed?: Movie) => {
     if (!user) {
       if (state.guestSearchUsed) {
-        setShowAuthModal(true);
+        openAuth();
         return;
       }
     }
@@ -408,7 +346,7 @@ const App: React.FC = () => {
 
   if (!supabase) return (<div className="min-h-screen flex items-center justify-center p-6 bg-slate-950"><div className="text-white">CONFIG MISSING</div></div>);
 
-  if (state.isLoading && !state.isLoggedIn && state.viewMode !== ViewMode.PUBLIC) {
+  if (state.isLoading) {
      return <div className="min-h-screen bg-slate-950 flex items-center justify-center"><NeuralLoader /></div>;
   }
   
@@ -477,11 +415,6 @@ const App: React.FC = () => {
             )}
           </div>
         </div>
-      )}
-
-      {/* Share Modal */}
-      {showShareModal && shareUrl && (
-        <ShareModal url={shareUrl} onClose={() => setShowShareModal(false)} />
       )}
 
       {/* Stats Modal */}
@@ -627,72 +560,73 @@ const App: React.FC = () => {
           </div>
       </div>
 
-      <header className={`sticky top-0 z-50 backdrop-blur-2xl border-b px-4 md:px-8 flex items-center justify-between h-14 md:h-20 transition-colors ${state.viewMode === ViewMode.PUBLIC ? 'bg-cyan-950/30 border-cyan-500/20' : 'bg-slate-950/95 border-white/5'}`}>
-        <div className="flex items-center gap-2 md:gap-10 overflow-hidden">
-          <div className="flex items-center gap-2 shrink-0">
-            <div className={`w-5 h-5 md:w-8 md:h-8 flex items-center justify-center ${state.viewMode === ViewMode.PUBLIC ? 'bg-white' : 'bg-cyan-500'}`}>
-              <i className={`fa-solid fa-dna text-[8px] md:text-sm text-black`}></i>
+      {/* Conditionally hide header on unauthorized landing page */}
+      {user && (
+        <header className={`sticky top-0 z-50 backdrop-blur-2xl border-b px-4 md:px-8 flex items-center justify-between h-14 md:h-20 transition-colors bg-slate-950/95 border-white/5`}>
+            <div className="flex items-center gap-2 md:gap-10">
+            <div className="flex items-center gap-2 shrink-0">
+                <div className={`w-5 h-5 md:w-8 md:h-8 flex items-center justify-center bg-cyan-500`}>
+                <i className={`fa-solid fa-dna text-[8px] md:text-sm text-black`}></i>
+                </div>
+                <span className="text-sm md:text-2xl font-black tracking-tighter uppercase italic whitespace-nowrap leading-tight">
+                Neural<span className="text-cyan-400">Stream</span>
+                </span>
             </div>
-            <span className="text-sm md:text-2xl font-black tracking-tighter uppercase italic leading-tight whitespace-nowrap">
-              Neural<span className={state.viewMode === ViewMode.PUBLIC ? 'text-white' : 'text-cyan-400'}>Stream</span>
-              {state.viewMode === ViewMode.PUBLIC && <span className="text-[10px] ml-2 opacity-50 not-italic tracking-widest border border-white/20 px-1">PUBLIC_FEED</span>}
-            </span>
-          </div>
-          
-          {user && (
-            <div className="hidden lg:flex items-center h-full">
-                <form onSubmit={handleQuickAdd} className="flex items-center gap-2 border border-white/10 bg-black/40 px-2 md:px-4 h-8 md:h-11 rounded-sm">
-                <i className="fa-solid fa-search text-[10px] text-slate-600"></i>
-                <input type="text" placeholder="QUICK_ADD..." className="bg-transparent mono text-[10px] md:text-xs outline-none w-24 md:w-48 lg:w-64 text-white placeholder-slate-700 uppercase" value={quickSearch} onChange={(e) => setQuickSearch(e.target.value)} disabled={isQuickAdding} />
-                <button type="submit" className="bg-white/5 hover:bg-cyan-500 hover:text-black px-2 md:px-4 h-6 md:h-8 mono text-[9px] md:text-xs uppercase font-bold transition-all ml-1 md:ml-2">{isQuickAdding ? '...' : '[ ADD ]'}</button>
-                </form>
-            </div>
-          )}
-        </div>
-        
-        {/* Responsive Navbar Controls */}
-        <div className="flex items-center gap-4">
-          {/* Desktop Only Controls */}
-          <div className="hidden lg:flex items-center gap-6">
-            {user ? (
-               <>
-                 <div className="flex items-center gap-6 h-10">
-                    <button 
-                      onClick={() => setShowStatsModal(true)}
-                      className="flex flex-col items-end leading-tight group/stats text-right hover:opacity-80 transition-opacity"
-                    >
-                      <div className="mono text-[8px] text-slate-500 uppercase tracking-widest flex items-center gap-2 mb-0.5">
-                        <span className={`w-1.5 h-1.5 ${syncStatus === 'SYNCING' ? 'bg-cyan-500 animate-ping' : 'bg-green-500'} rounded-full`}></span>
-                        CLOUD_SYNC :: ENCRYPTED
-                      </div>
-                      <div className="mono text-[10px] text-cyan-400 font-bold uppercase tracking-tight">
-                        {state.userMovies.length} DATA_POINTS // {state.feedbackHistory.length} FEEDBACKS
-                      </div>
-                    </button>
-                 </div>
-                 <button onClick={() => supabase.auth.signOut()} className="mono text-[9px] md:text-xs text-red-400/50 hover:text-red-400 hover:bg-red-400/10 px-2 md:px-6 h-8 md:h-11 border border-red-500/20 transition-all uppercase font-bold flex items-center justify-center tracking-widest">[ EXIT ]</button>
-               </>
-            ) : (
-               <button onClick={() => setShowAuthModal(true)} className="mono text-xs bg-cyan-500 text-black px-4 py-2 font-black uppercase hover:bg-white transition-colors">
-                 [ LOGIN / SIGNUP ]
-               </button>
+            
+            {user && (
+                <div className="hidden lg:flex items-center h-full">
+                    <form onSubmit={handleQuickAdd} className="flex items-center gap-2 border border-white/10 bg-black/40 px-2 md:px-4 h-8 md:h-11 rounded-sm">
+                    <i className="fa-solid fa-search text-[10px] text-slate-600"></i>
+                    <input type="text" placeholder="QUICK_ADD..." className="bg-transparent mono text-[10px] md:text-xs outline-none w-24 md:w-48 lg:w-64 text-white placeholder-slate-700 uppercase" value={quickSearch} onChange={(e) => setQuickSearch(e.target.value)} disabled={isQuickAdding} />
+                    <button type="submit" className="bg-white/5 hover:bg-cyan-500 hover:text-black px-2 md:px-4 h-6 md:h-8 mono text-[9px] md:text-xs uppercase font-bold transition-all ml-1 md:ml-2">{isQuickAdding ? '...' : '[ ADD ]'}</button>
+                    </form>
+                </div>
             )}
-          </div>
+            </div>
+            
+            <div className="flex items-center gap-4">
+            <div className="hidden lg:flex items-center gap-6">
+                {user ? (
+                <>
+                    <div className="flex items-center gap-6 h-10">
+                        <button 
+                        onClick={() => setShowStatsModal(true)}
+                        className="flex flex-col items-end leading-tight group/stats text-right hover:opacity-80 transition-opacity"
+                        >
+                        <div className="mono text-[8px] text-slate-500 uppercase tracking-widest flex items-center gap-2 mb-0.5">
+                            <span className={`w-1.5 h-1.5 ${syncStatus === 'SYNCING' ? 'bg-cyan-500 animate-ping' : 'bg-green-500'} rounded-full`}></span>
+                            CLOUD_SYNC :: ENCRYPTED
+                        </div>
+                        <div className="mono text-[10px] text-cyan-400 font-bold uppercase tracking-tight">
+                            {state.userMovies.length} DATA_POINTS // {state.feedbackHistory.length} FEEDBACKS
+                        </div>
+                        </button>
+                    </div>
+                    <button onClick={() => supabase.auth.signOut()} className="mono text-[9px] md:text-xs text-red-400/50 hover:text-red-400 hover:bg-red-400/10 px-2 md:px-6 h-8 md:h-11 border border-red-500/20 transition-all uppercase font-bold flex items-center justify-center tracking-widest">[ EXIT ]</button>
+                </>
+                ) : (
+                <button onClick={() => openAuth()} className="mono text-xs bg-cyan-500 text-black px-4 py-2 font-black uppercase hover:bg-white transition-colors">
+                    [ LOGIN / SIGNUP ]
+                </button>
+                )}
+            </div>
 
-          {/* Mobile/Tablet Hamburger Toggle */}
-          <button 
-            onClick={() => setIsMenuOpen(true)}
-            className="lg:hidden flex items-center justify-center w-10 h-10 text-cyan-500 border border-cyan-500/20 hover:bg-cyan-500/10 transition-all rounded-sm"
-          >
-            <i className="fa-solid fa-bars-staggered text-lg"></i>
-          </button>
-        </div>
-      </header>
+            <button 
+                onClick={() => setIsMenuOpen(true)}
+                className="lg:hidden flex items-center justify-center w-10 h-10 text-cyan-500 border border-cyan-500/20 hover:bg-cyan-500/10 transition-all rounded-sm"
+            >
+                <i className="fa-solid fa-bars-staggered text-lg"></i>
+            </button>
+            </div>
+        </header>
+      )}
 
       <main className="max-w-7xl mx-auto px-4 md:px-8 py-4 md:py-10 space-y-6 md:space-y-16">
         
         {/* Promo Hero for Guests */}
-        {!user && <PromoHero onLogin={() => setShowAuthModal(true)} />}
+        {!user && state.recommendations.length === 0 && (
+          <PromoHero onLogin={() => openAuth(false)} onSignUp={() => openAuth(true)} />
+        )}
 
         {showUploadScreen ? (
              <div className="max-w-xl mx-auto tech-border bg-slate-900/40 p-12 text-center space-y-10 relative mt-10">
@@ -718,14 +652,14 @@ const App: React.FC = () => {
              </div>
         ) : (
             <>
-            <section className={`tech-border p-3 md:p-8 backdrop-blur-md relative overflow-hidden transition-colors ${state.viewMode === ViewMode.PUBLIC ? 'bg-cyan-900/5 border-cyan-500/20' : 'bg-slate-900/10'}`}>
+            <section className={`tech-border p-3 md:p-8 backdrop-blur-md relative overflow-hidden bg-slate-900/10`}>
             <div className="scanline opacity-10"></div>
             <div className="space-y-4 md:space-y-10">
                 <div className="space-y-2 md:space-y-6">
                 <div className="flex items-center justify-between">
                     <div className="mono text-[8px] md:text-[10px] text-cyan-500 uppercase font-black tracking-[0.2em] flex items-center gap-2">
                     <span className="w-1 h-1 md:w-1.5 md:h-1.5 bg-cyan-500 rounded-full animate-pulse"></span>
-                    {state.viewMode === ViewMode.PUBLIC ? 'READ_ONLY_PARAMETERS' : 'TUNING_PARAMETERS'}
+                    TUNING_PARAMETERS
                     </div>
                     {!user && !state.guestSearchUsed && <div className="mono text-[9px] text-green-400 animate-pulse">GUEST_MODE::1_SEARCH_REMAINING</div>}
                 </div>
@@ -735,7 +669,7 @@ const App: React.FC = () => {
                     rows={2}
                     value={state.filters.query}
                     onChange={(e) => setState((s) => ({ ...s, filters: { ...s.filters, query: e.target.value } }))}
-                    disabled={state.viewMode === ViewMode.PUBLIC || (!user && state.guestSearchUsed)}
+                    disabled={(!user && state.guestSearchUsed)}
                     onKeyDown={(e) => {
                         if (e.key === 'Enter' && !e.shiftKey) {
                         e.preventDefault();
@@ -747,7 +681,7 @@ const App: React.FC = () => {
                     />
                 </div>
                 </div>
-                <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8 pt-0 md:pt-4 ${state.viewMode === ViewMode.PUBLIC ? 'opacity-50 pointer-events-none' : ''}`}>
+                <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8 pt-0 md:pt-4`}>
                 <div className="space-y-1 md:space-y-3">
                     <label className="mono text-[8px] md:text-[10px] uppercase text-slate-600 tracking-widest font-bold">Modality</label>
                     <div className="flex flex-row flex-wrap gap-1">
@@ -785,33 +719,34 @@ const App: React.FC = () => {
                 </div>
                 </div>
             </div>
-            {state.viewMode !== ViewMode.PUBLIC && (
-                <button 
-                    onClick={() => fetchRecommendations()} 
-                    disabled={state.isLoading || (!user && state.guestSearchUsed)} 
-                    className={`mt-6 md:mt-12 w-full py-3 md:py-6 border border-cyan-500/30 text-cyan-400 mono font-black text-[10px] md:text-sm uppercase tracking-[0.3em] md:tracking-[0.6em] transition-all relative group overflow-hidden ${(!user && state.guestSearchUsed) ? 'opacity-50 cursor-not-allowed bg-black' : 'hover:bg-cyan-500 hover:text-black'}`}
-                >
-                    <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                    {state.isLoading ? (
-                    <span className="flex items-center justify-center gap-2 md:gap-4">
-                        <i className="fa-solid fa-microchip animate-spin text-sm md:text-lg"></i>
-                        SYNTHESIZING...
-                    </span>
-                    ) : (
-                    <span className="flex items-center justify-center gap-2 md:gap-4">
-                        <i className="fa-solid fa-bolt text-[10px] md:text-xs"></i>
-                        {(!user && state.guestSearchUsed) ? 'GUEST LIMIT REACHED // LOGIN REQUIRED' : '[ INITIATE_NEURAL_UPLINK ]'}
-                        <i className="fa-solid fa-bolt text-[10px] md:text-xs"></i>
-                    </span>
-                    )}
-                </button>
-            )}
+            
+            <button 
+                onClick={() => fetchRecommendations()} 
+                disabled={state.isLoading || (!user && state.guestSearchUsed)} 
+                className={`mt-6 md:mt-12 w-full py-3 md:py-6 border border-cyan-500/30 text-cyan-400 mono font-black text-[10px] md:text-sm uppercase tracking-[0.3em] md:tracking-[0.6em] transition-all relative group overflow-hidden ${(!user && state.guestSearchUsed) ? 'opacity-50 cursor-not-allowed bg-black' : 'hover:bg-cyan-500 hover:text-black'}`}
+            >
+                <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                {state.isLoading ? (
+                <span className="flex items-center justify-center gap-2 md:gap-4">
+                    <i className="fa-solid fa-microchip animate-spin text-sm md:text-lg"></i>
+                    SYNTHESIZING...
+                </span>
+                ) : (
+                <span className="flex items-center justify-center gap-2 md:gap-4">
+                    <i className="fa-solid fa-bolt text-[10px] md:text-xs"></i>
+                    {(!user && state.guestSearchUsed) ? 'GUEST LIMIT REACHED // LOGIN REQUIRED' : '[ INITIATE_NEURAL_UPLINK ]'}
+                    <i className="fa-solid fa-bolt text-[10px] md:text-xs"></i>
+                </span>
+                )}
+            </button>
             </section>
+            
             {state.isLoading && (
             <div className="animate-in fade-in duration-700">
                 <NeuralLoader />
             </div>
             )}
+            
             {!state.isLoading && state.recommendations.length > 0 && (
             <section className="space-y-6 md:space-y-10 animate-in fade-in slide-in-from-bottom-8 duration-1000">
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-white/10 pb-4 md:pb-8">
@@ -819,21 +754,9 @@ const App: React.FC = () => {
                     <div>
                         <div className="mono text-[8px] md:text-[10px] text-cyan-500 uppercase tracking-widest font-bold">Output_Matrix</div>
                         <h3 className="text-base md:text-xl font-black uppercase text-white italic">
-                            {state.viewMode === ViewMode.PUBLIC ? 'SHARED_DATA_STREAM' : 'VERIFIED_MATCHES'}
+                            VERIFIED_MATCHES
                         </h3>
                     </div>
-                    {user && state.viewMode === ViewMode.PERSONAL && (
-                        <div className="md:ml-auto flex flex-col items-end gap-1">
-                          <button 
-                              onClick={handleShare} 
-                              disabled={isSharing}
-                              className="flex items-center gap-2 mono text-[10px] text-cyan-400 border border-cyan-500/20 px-4 py-1.5 hover:bg-cyan-500/10 transition-all uppercase bg-cyan-500/5 mb-1"
-                          >
-                              {isSharing ? <i className="fa-solid fa-spinner animate-spin"></i> : <i className="fa-solid fa-share-nodes"></i>}
-                              SHARE_FEED
-                          </button>
-                        </div>
-                    )}
                 </div>
                 {!user && (
                     <div className="mono text-[9px] bg-cyan-900/40 border border-cyan-500/30 text-cyan-200 px-3 py-2 animate-pulse">
@@ -856,7 +779,7 @@ const App: React.FC = () => {
                         movie={movie} 
                         isRecommendation 
                         onLikeSimilar={(seed) => gateInteraction(() => fetchRecommendations(seed))} 
-                        onMarkWatched={(m) => markAsWatched(m)} 
+                        onMark watched={(m) => markAsWatched(m)} 
                         onFeedback={(m, f) => handleFeedback(m, f)} 
                     />
                 ))}

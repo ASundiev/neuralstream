@@ -5,11 +5,6 @@ export enum ContentType {
   BOTH = 'both'
 }
 
-export enum ViewMode {
-  PERSONAL = 'personal',
-  PUBLIC = 'public'
-}
-
 export interface Feedback {
   type: 'like' | 'dislike';
   reason?: string;
@@ -50,7 +45,6 @@ export interface RecommendationRequest {
 }
 
 export interface AppState {
-  viewMode: ViewMode;
   isLoggedIn: boolean;
   userMovies: Movie[];
   feedbackHistory: { title: string, feedback: Feedback }[];
