@@ -16,10 +16,11 @@ export const NeuralBackground: React.FC = () => {
     let particles: Particle[] = [];
     let packets: Packet[] = [];
 
-    const PARTICLE_COUNT = 50;
-    const CONNECTION_DIST = 200;
-    const MOUSE_DIST = 250;
-    const PACKET_CHANCE = 0.015;
+    // Subtle Tuning Constants - Calmer but clearly visible
+    const PARTICLE_COUNT = 25; 
+    const CONNECTION_DIST = 220; 
+    const MOUSE_DIST = 250; 
+    const PACKET_CHANCE = 0.003; // Rare data pulses
 
     class Particle {
       x: number;
@@ -33,15 +34,16 @@ export const NeuralBackground: React.FC = () => {
       constructor(w: number, h: number) {
         this.x = Math.random() * w;
         this.y = Math.random() * h;
-        this.baseVx = (Math.random() - 0.5) * 0.4;
-        this.baseVy = (Math.random() - 0.5) * 0.4;
+        // Ultra-slow drift for a static-yet-living feel
+        this.baseVx = (Math.random() - 0.5) * 0.08;
+        this.baseVy = (Math.random() - 0.5) * 0.08;
         this.vx = this.baseVx;
         this.vy = this.baseVy;
         this.size = Math.random() * 2 + 1;
       }
 
       update(w: number, h: number) {
-        // Apply mouse influence
+        // Apply mouse influence (very gentle)
         if (mouseRef.current.active) {
           const dx = mouseRef.current.x - this.x;
           const dy = mouseRef.current.y - this.y;
@@ -49,27 +51,23 @@ export const NeuralBackground: React.FC = () => {
           
           if (distance < MOUSE_DIST) {
             const force = (MOUSE_DIST - distance) / MOUSE_DIST;
-            this.vx += (dx / distance) * force * 0.02;
-            this.vy += (dy / distance) * force * 0.02;
+            this.vx += (dx / distance) * force * 0.005;
+            this.vy += (dy / distance) * force * 0.005;
           }
         }
 
-        // Friction/Damping to return to base velocity
-        this.vx += (this.baseVx - this.vx) * 0.01;
-        this.vy += (this.baseVy - this.vy) * 0.01;
+        // Extremely slow recovery to base speed
+        this.vx += (this.baseVx - this.vx) * 0.002;
+        this.vy += (this.baseVy - this.vy) * 0.002;
 
         this.x += this.vx;
         this.y += this.vy;
 
-        // Bounce off walls
-        if (this.x < 0 || this.x > w) {
-          this.vx *= -1;
-          this.baseVx *= -1;
-        }
-        if (this.y < 0 || this.y > h) {
-          this.vy *= -1;
-          this.baseVy *= -1;
-        }
+        // Wrap around
+        if (this.x < 0) this.x = w;
+        if (this.x > w) this.x = 0;
+        if (this.y < 0) this.y = h;
+        if (this.y > h) this.y = 0;
       }
     }
 
@@ -83,7 +81,7 @@ export const NeuralBackground: React.FC = () => {
         this.start = start;
         this.end = end;
         this.progress = 0;
-        this.speed = 0.015 + Math.random() * 0.025;
+        this.speed = 0.004 + Math.random() * 0.008; // Slower packets
       }
 
       update() {
@@ -96,9 +94,9 @@ export const NeuralBackground: React.FC = () => {
         const y = this.start.y + (this.end.y - this.start.y) * this.progress;
 
         context.beginPath();
-        context.arc(x, y, 1.2, 0, Math.PI * 2);
-        context.fillStyle = '#00f5ff';
-        context.shadowBlur = 8;
+        context.arc(x, y, 1, 0, Math.PI * 2);
+        context.fillStyle = 'rgba(0, 245, 255, 0.8)';
+        context.shadowBlur = 6;
         context.shadowColor = '#00f5ff';
         context.fill();
         context.shadowBlur = 0;
@@ -125,23 +123,17 @@ export const NeuralBackground: React.FC = () => {
     const draw = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Draw mouse node connections with enhanced contrast
+      // Draw mouse node connections (vibrant but thin)
       if (mouseRef.current.active) {
-        ctx.beginPath();
-        ctx.arc(mouseRef.current.x, mouseRef.current.y, 4, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(0, 245, 255, 0.4)'; // Increased visibility for cursor node
-        ctx.fill();
-        
         for (const p of particles) {
           const dx = mouseRef.current.x - p.x;
           const dy = mouseRef.current.y - p.y;
           const dist = Math.sqrt(dx * dx + dy * dy);
           
           if (dist < MOUSE_DIST) {
-            // Dynamic alpha based on proximity to cursor for higher contrast
-            const alpha = (1 - dist / MOUSE_DIST) * 0.6; 
+            const alpha = (1 - dist / MOUSE_DIST) * 0.3; 
             ctx.strokeStyle = `rgba(0, 245, 255, ${alpha})`;
-            ctx.lineWidth = 1.0; // Thicker lines for active cursor connections
+            ctx.lineWidth = 0.5;
             ctx.beginPath();
             ctx.moveTo(mouseRef.current.x, mouseRef.current.y);
             ctx.lineTo(p.x, p.y);
@@ -151,7 +143,8 @@ export const NeuralBackground: React.FC = () => {
       }
 
       // Draw standard particle-to-particle connections
-      ctx.strokeStyle = 'rgba(0, 245, 255, 0.08)'; // Slightly increased base visibility
+      // Increased alpha from 0.04 to 0.12 for better visibility
+      ctx.strokeStyle = 'rgba(0, 245, 255, 0.12)'; 
       ctx.lineWidth = 0.5;
 
       for (let i = 0; i < particles.length; i++) {
@@ -168,15 +161,16 @@ export const NeuralBackground: React.FC = () => {
             ctx.lineTo(p2.x, p2.y);
             ctx.stroke();
 
-            if (Math.random() < PACKET_CHANCE && packets.length < 25) {
+            if (Math.random() < PACKET_CHANCE && packets.length < 10) {
               packets.push(new Packet(p1, p2));
             }
           }
         }
 
+        // More visible nodes
         ctx.beginPath();
         ctx.arc(p1.x, p1.y, p1.size, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(0, 245, 255, 0.35)'; // Sharper nodes
+        ctx.fillStyle = 'rgba(0, 245, 255, 0.35)'; 
         ctx.fill();
       }
 
@@ -207,8 +201,8 @@ export const NeuralBackground: React.FC = () => {
   return (
     <canvas
       ref={canvasRef}
-      className="fixed inset-0 z-0 pointer-events-none opacity-60 bg-slate-950"
-      style={{ filter: 'blur(0.5px)' }}
+      className="fixed inset-0 z-0 pointer-events-none opacity-80 bg-slate-950"
+      style={{ filter: 'blur(0.4px)' }}
     />
   );
 };

@@ -8,7 +8,7 @@ interface PromoHeroProps {
 
 export const PromoHero: React.FC<PromoHeroProps> = ({ onLogin, onSignUp }) => {
   return (
-    <div className="relative w-full tech-border bg-slate-900/10 overflow-hidden py-12 md:py-20 px-6 md:px-12 group flex items-center justify-center min-h-[450px] md:min-h-[550px] backdrop-blur-[2px]">
+    <div className="relative w-full tech-border bg-slate-900/10 overflow-hidden py-12 md:py-20 px-6 md:px-12 group flex items-center justify-center min-h-[450px] md:min-h-[550px] backdrop-blur-[2px] animate-neural-reveal">
       {/* HUD Background elements */}
       <div className="scanline opacity-10"></div>
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,245,255,0.08)_0%,transparent_70%)]"></div>

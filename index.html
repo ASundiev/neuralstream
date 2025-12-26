@@ -73,6 +73,104 @@
     .animate-orbit { animation: orbit 10s linear infinite; }
     .animate-orbit-rev { animation: orbit-rev 15s linear infinite; }
     .animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+
+    @keyframes border-beam-spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes steady-text-glow {
+      0%, 100% { text-shadow: 0 0 8px rgba(0, 245, 255, 0.4); }
+      50% { text-shadow: 0 0 15px rgba(0, 245, 255, 0.8); }
+    }
+
+    .hover-electric {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(0, 245, 255, 0.15) !important;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 1;
+    }
+
+    .hover-electric::before {
+      content: '';
+      position: absolute;
+      top: -150%;
+      left: -150%;
+      width: 400%;
+      height: 400%;
+      background: conic-gradient(
+        from 0deg,
+        transparent 0%,
+        transparent 80%,
+        var(--cyan) 92%,
+        transparent 100%
+      );
+      animation: border-beam-spin 3s linear infinite;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+      z-index: -2;
+      pointer-events: none;
+    }
+
+    .hover-electric::after {
+      content: '';
+      position: absolute;
+      inset: 1px;
+      background: var(--deep);
+      z-index: -1;
+      transition: background 0.3s ease;
+    }
+
+    .hover-electric:hover::before {
+      opacity: 1;
+    }
+
+    .hover-electric:hover {
+      border-color: rgba(0, 245, 255, 0.4) !important;
+      background: rgba(0, 245, 255, 0.02);
+      box-shadow: 0 0 30px rgba(0, 245, 255, 0.1);
+    }
+
+    .hover-electric:hover .glitch-text {
+      animation: steady-text-glow 2s ease-in-out infinite;
+      color: #fff;
+    }
+
+    /* Entrance Animations */
+    @keyframes neural-reveal {
+      0% { 
+        opacity: 0.1; 
+        transform: translateY(20px); 
+        filter: blur(8px); 
+      }
+      100% { 
+        opacity: 1; 
+        transform: translateY(0); 
+        filter: blur(0); 
+      }
+    }
+
+    @keyframes card-entrance {
+      0% {
+        opacity: 0.1;
+        transform: translateY(30px);
+        filter: blur(10px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0);
+        filter: blur(0);
+      }
+    }
+
+    .animate-neural-reveal {
+      animation: neural-reveal 1s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+
+    .animate-card-entrance {
+      animation: card-entrance 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
   </style>
 <script type="importmap">
 {
