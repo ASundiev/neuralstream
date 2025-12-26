@@ -40,7 +40,10 @@ export const MovieCard: React.FC<MovieCardProps> = ({
     setHasError(true);
   };
 
-  const isValidUrl = movie.posterUrl && movie.posterUrl.startsWith('http') && !movie.posterUrl.includes('[SIGNAL_LOST]');
+  // Resilient URL checking
+  const pUrl = movie.posterUrl;
+  const isLost = !pUrl || pUrl.includes('[SIGNAL_LOST]') || pUrl === 'null' || pUrl === 'undefined';
+  const isValidUrl = !isLost && pUrl.startsWith('http');
 
   return (
     <div className="group relative tech-border bg-slate-900/40 overflow-hidden transition-all duration-300 hover:bg-slate-900/60 border-cyan-500/10 flex flex-col h-full shadow-lg">
@@ -58,7 +61,7 @@ export const MovieCard: React.FC<MovieCardProps> = ({
         
         {(!hasError && isValidUrl) ? (
           <img 
-            src={movie.posterUrl} 
+            src={pUrl} 
             alt={movie.title}
             onLoad={() => setImageLoaded(true)}
             onError={handleImageError}
@@ -85,6 +88,10 @@ export const MovieCard: React.FC<MovieCardProps> = ({
                 <div className="h-[1px] w-6 bg-cyan-500/20"></div>
                 <span className="mono text-xs text-slate-500 uppercase tracking-widest font-bold">{movie.year}</span>
                 <div className="h-[1px] w-6 bg-cyan-500/20"></div>
+              </div>
+
+              <div className="mono text-[8px] text-amber-500/40 uppercase tracking-widest">
+                {hasError ? 'SYNC_ERROR' : 'METADATA_ONLY'}
               </div>
             </div>
             <div className="absolute bottom-4 left-0 right-0 mono text-[9px] text-slate-800 uppercase tracking-[0.5em] font-bold">Neural_Override_Active</div>

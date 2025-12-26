@@ -4,64 +4,94 @@ import { RecommendationRequest, Movie, ContentType, WatchProvider } from "../typ
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
-const TMDB_TOKEN = process.env.VITE_TMDB_TOKEN;
+// Robust token retrieval: handle potential stringified "undefined" or empty strings from build systems
+const TMDB_TOKEN = (process.env.VITE_TMDB_TOKEN && process.env.VITE_TMDB_TOKEN !== 'undefined' && process.env.VITE_TMDB_TOKEN !== '') 
+  ? process.env.VITE_TMDB_TOKEN 
+  : null;
 
-async function fetchTmdbMetadata(title: string, year?: string): Promise<{ posterUrl: string | null, providers: WatchProvider[], tmdbId: number | null }> {
-  if (!TMDB_TOKEN || TMDB_TOKEN === 'undefined') {
-    return { posterUrl: null, providers: [], tmdbId: null };
+async function fetchTmdbMetadata(title: string, year?: string, type?: string, knownTmdbId?: number): Promise<{ posterUrl: string | null, providers: WatchProvider[], tmdbId: number | null }> {
+  if (!TMDB_TOKEN) {
+    return { posterUrl: null, providers: [], tmdbId: knownTmdbId || null };
   }
 
   try {
+    const isTV = type?.toLowerCase().includes('series') || type?.toLowerCase().includes('tv') || type === ContentType.SERIES;
+    const searchType = isTV ? 'tv' : 'movie';
     const cleanYear = year ? year.split(/[-–—]/)[0].trim().match(/\d{4}/)?.[0] : null;
-    const query = encodeURIComponent(title);
-    const url = `https://api.themoviedb.org/3/search/multi?query=${query}${cleanYear ? `&year=${cleanYear}` : ''}&include_adult=false&language=en-US&page=1`;
+
+    // Detection: v3 keys are 32 chars hex. v4 tokens are long hashes.
+    const isV3 = TMDB_TOKEN.length < 50;
+    const baseUrl = `https://api.themoviedb.org/3`;
     
-    const response = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${TMDB_TOKEN}`,
-        accept: 'application/json'
+    // Auth configuration: v3 uses query param, v4 uses Bearer header
+    const authParams = isV3 ? `&api_key=${TMDB_TOKEN}` : '';
+    const authHeader = isV3 ? {} : { 'Authorization': `Bearer ${TMDB_TOKEN}` };
+
+    let matchId = knownTmdbId;
+
+    if (!matchId) {
+      const query = encodeURIComponent(title);
+      const yearKey = isTV ? 'first_air_date_year' : 'year';
+      const searchUrl = `${baseUrl}/search/${searchType}?query=${query}${cleanYear ? `&${yearKey}=${cleanYear}` : ''}&include_adult=false&language=en-US&page=1${authParams}`;
+      
+      const response = await fetch(searchUrl, { 
+        headers: { ...authHeader, 'Accept': 'application/json' },
+        mode: 'cors'
+      }).catch(err => {
+        console.warn("TMDB_SEARCH_FETCH_FAILED:", err);
+        return null;
+      });
+
+      if (response?.ok) {
+        const data = await response.json();
+        const match = data.results?.find((r: any) => 
+          (r.title || r.name)?.toLowerCase() === title.toLowerCase()
+        ) || data.results?.[0];
+        matchId = match?.id;
       }
-    });
+    }
 
-    if (!response.ok) return { posterUrl: null, providers: [], tmdbId: null };
+    if (!matchId) return { posterUrl: null, providers: [], tmdbId: null };
 
-    const data = await response.json();
-    const match = data.results?.find((r: any) => 
-      (r.title || r.name)?.toLowerCase() === title.toLowerCase()
-    ) || data.results?.[0];
+    // Fetch details and providers in parallel
+    const detailParams = isV3 ? `?api_key=${TMDB_TOKEN}` : '';
+    const [detailsRes, providersRes] = await Promise.all([
+      fetch(`${baseUrl}/${searchType}/${matchId}${detailParams}`, { 
+        headers: { ...authHeader, 'Accept': 'application/json' } 
+      }).catch(() => null),
+      fetch(`${baseUrl}/${searchType}/${matchId}/watch/providers${detailParams}`, { 
+        headers: { ...authHeader, 'Accept': 'application/json' } 
+      }).catch(() => null)
+    ]);
 
-    if (!match) return { posterUrl: null, providers: [], tmdbId: null };
-
-    // Fetch Providers
-    const mediaType = match.media_type === 'tv' ? 'tv' : 'movie';
-    const providerUrl = `https://api.themoviedb.org/3/${mediaType}/${match.id}/watch/providers`;
-    const providerResponse = await fetch(providerUrl, {
-      headers: { Authorization: `Bearer ${TMDB_TOKEN}`, accept: 'application/json' }
-    });
+    let posterUrl = null;
+    if (detailsRes?.ok) {
+      const details = await detailsRes.json();
+      if (details.poster_path) {
+        posterUrl = `https://image.tmdb.org/t/p/w600_and_h900_bestv2${details.poster_path}`;
+      }
+    }
 
     let providers: WatchProvider[] = [];
-    if (providerResponse.ok) {
-      const pData = await providerResponse.json();
+    if (providersRes?.ok) {
+      const pData = await providersRes.json();
       providers = pData.results?.US?.flatrate || [];
     }
 
-    return {
-      posterUrl: match.poster_path ? `https://image.tmdb.org/t/p/w600_and_h900_bestv2${match.poster_path}` : null,
-      providers,
-      tmdbId: match.id
-    };
+    return { posterUrl, providers, tmdbId: matchId };
   } catch (error) {
-    console.error(`TMDB Handshake Error for ${title}:`, error);
+    console.error("TMDB_METADATA_EXCEPTION:", error);
+    return { posterUrl: null, providers: [], tmdbId: knownTmdbId || null };
   }
-  return { posterUrl: null, providers: [], tmdbId: null };
 }
 
 export async function searchMovieForHistory(query: string): Promise<Movie | null> {
   try {
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: `LOCATE OFFICIAL DATA FOR: "${query}". Return title, year, type, and genres.`,
+      contents: `LOCATE_OFFICIAL_CONTENT: "${query}". Use Google Search to find the exact title, year, official TMDB ID, and a DIRECT HIGH-QUALITY POSTER IMAGE URL (ending in .jpg or .png).`,
       config: {
+        tools: [{ googleSearch: {} }],
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
@@ -69,7 +99,9 @@ export async function searchMovieForHistory(query: string): Promise<Movie | null
             title: { type: Type.STRING },
             year: { type: Type.STRING },
             type: { type: Type.STRING },
-            genres: { type: Type.ARRAY, items: { type: Type.STRING } }
+            genres: { type: Type.ARRAY, items: { type: Type.STRING } },
+            tmdbId: { type: Type.INTEGER },
+            searchPosterUrl: { type: Type.STRING, description: "Direct URL to the poster image file." }
           },
           required: ["title", "year", "type", "genres"]
         }
@@ -77,19 +109,20 @@ export async function searchMovieForHistory(query: string): Promise<Movie | null
     });
 
     const data = JSON.parse(response.text);
-    const metadata = await fetchTmdbMetadata(data.title, data.year);
+    const metadata = await fetchTmdbMetadata(data.title, data.year, data.type, data.tmdbId);
 
     return {
       ...data,
       id: Math.random().toString(36).substr(2, 9),
-      tmdbId: metadata.tmdbId || undefined,
+      tmdbId: metadata.tmdbId || data.tmdbId || undefined,
       userRating: 8,
       rating: 8,
-      posterUrl: metadata.posterUrl || `[SIGNAL_LOST]`,
-      providers: metadata.providers
+      posterUrl: metadata.posterUrl || data.searchPosterUrl || `[SIGNAL_LOST]`,
+      providers: metadata.providers,
+      type: data.type.toLowerCase().includes('tv') || data.type.toLowerCase().includes('series') ? ContentType.SERIES : ContentType.MOVIE
     };
   } catch (error) {
-    console.error("Neural Search Failed:", error);
+    console.error("NEURAL_SEARCH_FAILURE:", error);
     return null;
   }
 }
@@ -98,33 +131,32 @@ export async function getRecommendations(request: RecommendationRequest): Promis
   const { watchedHistory, feedbackHistory, targetType, genre, mood, seedMovie, naturalLanguageQuery, preferredProviders, isGuest } = request;
 
   const context = watchedHistory
-    .filter(m => (m.userRating || 0) >= 8)
+    .filter(m => (m.userRating || 0) >= 7)
     .map(m => `${m.title} (${m.year})`)
-    .slice(0, 20)
+    .slice(0, 30)
     .join(', ');
 
   const feedbackContext = feedbackHistory
     .map(f => `${f.feedback.type.toUpperCase()}: "${f.title}"${f.feedback.reason ? ` because ${f.feedback.reason}` : ''}`)
     .join(' | ');
 
-  const systemInstruction = isGuest 
-    ? "You are NeuralStream Guest AI. Provide popular, highly-rated recommendations based on the query. Keep descriptions brief."
-    : "You are the core logic of NeuralStream AI. You specialize in deep taste analysis. Return high-quality, non-obvious recommendations.";
-
   const prompt = `
-    TASK: GENERATE ${isGuest ? '6' : '8'} RECOMMENDATIONS.
-    USER_WATCHED_HISTORY: [${context}]
-    USER_FEEDBACK_SIGNALS: [${feedbackContext || "No feedback yet"}]
-    NEURAL_OVERRIDE_SIGNAL: ${naturalLanguageQuery || "NONE"}
-    MODALITY: ${targetType}
-    GENRE: ${genre || "ALL"}
-    MOOD: ${mood || "UNCALIBRATED"}
-    PREFERRED_NETWORKS: ${preferredProviders?.join(', ') || "ANY"}
-    ${seedMovie ? `SEED: Provide options strictly similar to "${seedMovie.title}"` : ""}
+    GENERATE ${isGuest ? '6' : '8'} HIGH-QUALITY RECOMMENDATIONS based on user taste profile.
+    
+    TRAINING_DATA:
+    - WATCHED_NODES: [${context}]
+    - FEEDBACK_SIGNALS: [${feedbackContext || "NONE"}]
+    - PARAMETER_OVERRIDE: ${naturalLanguageQuery || "NONE"}
+    - PREFERRED_MODALITY: ${targetType}
+    - GENRE_AXIS: ${genre || "ALL"}
+    - EMOTIONAL_MOOD: ${mood || "UNCALIBRATED"}
+    - NETWORK_PREFERENCE: ${preferredProviders?.join(', ') || "ANY"}
+    ${seedMovie ? `- SEED_ANCHOR: Strictly similar to "${seedMovie.title}"` : ""}
 
-    INSTRUCTION: ${isGuest ? 'Focus on generally acclaimed hits matching the query.' : 'Use the feedback signals to pivot recommendations. If a user disliked something for a specific reason, avoid that trait.'}
-    AVAILABILITY: Prioritize content known to be on ${preferredProviders?.length ? preferredProviders.join(' or ') : 'major streaming platforms'}.
-    Do NOT recommend anything already in the USER_WATCHED_HISTORY.
+    FOR EVERY RECOMMENDATION:
+    1. Find the official TMDB ID via Google Search.
+    2. Crucial: Provide a DIRECT high-quality POSTER IMAGE URL (must be a valid image file link).
+    3. Synthesize a "reason" derived from the user's specific history.
   `;
 
   try {
@@ -133,7 +165,7 @@ export async function getRecommendations(request: RecommendationRequest): Promis
       contents: prompt,
       config: {
         tools: [{ googleSearch: {} }], 
-        systemInstruction: systemInstruction,
+        systemInstruction: "You are the NeuralStream Recommendation Engine. You provide surgically precise content matches. You MUST use Google Search to verify all TMDB IDs and find direct, valid poster image URLs for all output items.",
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.ARRAY,
@@ -146,7 +178,9 @@ export async function getRecommendations(request: RecommendationRequest): Promis
               genres: { type: Type.ARRAY, items: { type: Type.STRING } },
               rating: { type: Type.NUMBER },
               description: { type: Type.STRING },
-              reason: { type: Type.STRING }
+              reason: { type: Type.STRING },
+              tmdbId: { type: Type.INTEGER },
+              searchPosterUrl: { type: Type.STRING, description: "A direct high-quality URL to the movie poster image file." }
             },
             required: ["title", "year", "type", "genres", "rating", "description", "reason"]
           }
@@ -154,23 +188,31 @@ export async function getRecommendations(request: RecommendationRequest): Promis
       }
     });
 
-    const results = JSON.parse(response.text);
+    const textOutput = response.text;
+    if (!textOutput) throw new Error("EMPTY_ENGINE_RESPONSE");
+    
+    const results = JSON.parse(textOutput);
     const sources = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
 
     const moviesWithMetadata = await Promise.all(results.map(async (item: any) => {
-      const metadata = await fetchTmdbMetadata(item.title, item.year);
+      const metadata = await fetchTmdbMetadata(item.title, item.year, item.type, item.tmdbId);
+      
+      // Primary: TMDB API, Secondary: Gemini Search Result, Tertiary: Fallback string
+      const finalPosterUrl = metadata.posterUrl || (item.searchPosterUrl && item.searchPosterUrl.startsWith('http') ? item.searchPosterUrl : `[SIGNAL_LOST]`);
+
       return {
         ...item,
         id: Math.random().toString(36).substr(2, 9),
-        tmdbId: metadata.tmdbId,
-        posterUrl: metadata.posterUrl || `[SIGNAL_LOST]`,
-        providers: metadata.providers
+        tmdbId: metadata.tmdbId || item.tmdbId,
+        posterUrl: finalPosterUrl,
+        providers: metadata.providers,
+        type: item.type.toLowerCase().includes('tv') || item.type.toLowerCase().includes('series') ? ContentType.SERIES : ContentType.MOVIE
       };
     }));
 
     return { movies: moviesWithMetadata, sources };
   } catch (error) {
-    console.error("Neural Stream Interrupt:", error);
+    console.error("NEURAL_SYNTHESIS_INTERRUPT:", error);
     throw error;
   }
 }

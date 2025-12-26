@@ -779,7 +779,7 @@ const App: React.FC = () => {
                         movie={movie} 
                         isRecommendation 
                         onLikeSimilar={(seed) => gateInteraction(() => fetchRecommendations(seed))} 
-                        onMark watched={(m) => markAsWatched(m)} 
+                        onMarkWatched={(m) => markAsWatched(m)} 
                         onFeedback={(m, f) => handleFeedback(m, f)} 
                     />
                 ))}
