@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -61,9 +62,10 @@
       backdrop-filter: blur(8px);
     }
     
-    ::-webkit-scrollbar { width: 4px; }
-    ::-webkit-scrollbar-track { background: var(--deep); }
-    ::-webkit-scrollbar-thumb { background: rgba(0, 245, 255, 0.2); }
+    .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: var(--deep); }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(0, 245, 255, 0.2); }
+    .custom-scrollbar { scrollbar-width: thin; scrollbar-color: rgba(0, 245, 255, 0.2) var(--deep); }
 
     @keyframes orbit { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     @keyframes orbit-rev { from { transform: rotate(360deg); } to { transform: rotate(0deg); } }

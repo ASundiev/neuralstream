@@ -58,8 +58,54 @@ const App: React.FC = () => {
   const [isQuickAdding, setIsQuickAdding] = useState(false);
   const skipSync = useRef(false);
 
-  // showUploadScreen logic
   const showUploadScreen = !!user && state.userMovies.length === 0;
+
+  const handleLogout = async () => {
+    if (window.confirm("TERMINATE_NEURAL_UPLINK? ANY UNSYNCED LOCAL CACHE WILL BE FLUSHED.")) {
+      await supabase.auth.signOut();
+    }
+  };
+
+  const fetchProfile = useCallback(async () => {
+    if (!user || !supabase) {
+      if (!user) setState(s => ({ ...s, isLoading: false }));
+      return;
+    }
+
+    setState((s) => ({ ...s, isLoading: true }));
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('state, is_approved')
+        .eq('id', user.id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') throw error;
+
+      if (data) {
+        setIsApproved(data.is_approved === true);
+        if (data.state) {
+          skipSync.current = true;
+          setState({
+            ...data.state,
+            filters: { ...INITIAL_FILTERS, ...(data.state.filters || {}) },
+            isLoggedIn: true,
+            isLoading: false,
+            isRecsLoading: false,
+            guestSearchUsed: true
+          });
+        } else {
+          setState((s) => ({ ...s, isLoggedIn: true, isLoading: false, isRecsLoading: false, guestSearchUsed: true }));
+        }
+      } else {
+        setState((s) => ({ ...s, isLoggedIn: true, isLoading: false }));
+      }
+    } catch (err) {
+      console.error("Hydration Failure:", err);
+      setIsApproved(false);
+      setState((s) => ({ ...s, isLoggedIn: true, isLoading: false, isRecsLoading: false }));
+    }
+  }, [user]);
 
   useEffect(() => {
     const initApp = async () => {
@@ -72,7 +118,6 @@ const App: React.FC = () => {
       const { data: { session } } = await supabase.auth.getSession();
       setUser(session?.user ?? null);
       
-      // Safety: If no session exists, we must release the loading screen immediately
       if (!session) {
         setState((s) => ({ ...s, isLoading: false }));
       }
@@ -82,7 +127,6 @@ const App: React.FC = () => {
         if (session) {
           setShowAuthModal(false);
         } else {
-          // If user logs out, reset loading state to landing mode
           setState((s) => ({ ...s, isLoading: false }));
         }
       });
@@ -93,51 +137,8 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      if (!user || !supabase) {
-        // Ensure that if user is null, we are not stuck in a loading state
-        if (!user) setState(s => ({ ...s, isLoading: false }));
-        return;
-      }
-
-      setState((s) => ({ ...s, isLoading: true }));
-      try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('state, is_approved')
-          .eq('id', user.id)
-          .single();
-
-        if (error && error.code !== 'PGRST116') throw error; // Handle "No rows" gracefully
-
-        if (data) {
-          setIsApproved(data.is_approved === true);
-          if (data.state) {
-            skipSync.current = true;
-            setState({
-              ...data.state,
-              filters: { ...INITIAL_FILTERS, ...(data.state.filters || {}) },
-              isLoggedIn: true,
-              isLoading: false,
-              isRecsLoading: false,
-              guestSearchUsed: true
-            });
-          } else {
-            setState((s) => ({ ...s, isLoggedIn: true, isLoading: false, isRecsLoading: false, guestSearchUsed: true }));
-          }
-        } else {
-          // Handle new profile
-          setIsApproved(null); // Or true depending on default policy
-          setState((s) => ({ ...s, isLoggedIn: true, isLoading: false }));
-        }
-      } catch (err) {
-        console.error("Hydration Failure:", err);
-        setIsApproved(false);
-        setState((s) => ({ ...s, isLoggedIn: true, isLoading: false, isRecsLoading: false }));
-      }
-    };
     fetchProfile();
-  }, [user]);
+  }, [fetchProfile]);
 
   useEffect(() => {
     if (!user || !supabase || state.isLoading || isApproved === false) return;
@@ -259,6 +260,14 @@ const App: React.FC = () => {
     });
   };
 
+  const removeSignal = (index: number) => {
+    setState((prev) => {
+      const newHistory = [...prev.feedbackHistory];
+      newHistory.splice(index, 1);
+      return { ...prev, feedbackHistory: newHistory };
+    });
+  };
+
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -338,13 +347,15 @@ const App: React.FC = () => {
 
       {showStatsModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-           <div className="max-w-2xl w-full tech-border bg-slate-900 p-8 shadow-2xl relative overflow-hidden">
+           <div className="max-w-3xl w-full tech-border bg-slate-900 p-8 shadow-2xl relative overflow-hidden max-h-[90vh] flex flex-col">
               <button onClick={() => setShowStatsModal(false)} className="absolute top-4 right-4 text-slate-500 hover:text-white px-2 z-30">X</button>
-              <div className="flex flex-col gap-8 relative z-20">
-                 <div className="space-y-1">
-                    <div className="mono text-[10px] text-cyan-500 uppercase font-black tracking-widest">Neural_DNA_Profile</div>
-                    <h2 className="text-3xl font-black text-white italic uppercase tracking-tighter">Diagnostic_Report</h2>
-                 </div>
+              
+              <div className="space-y-1 mb-8">
+                 <div className="mono text-[10px] text-cyan-500 uppercase font-black tracking-widest">Neural_DNA_Profile</div>
+                 <h2 className="text-3xl font-black text-white italic uppercase tracking-tighter">Diagnostic_Report</h2>
+              </div>
+
+              <div className="overflow-y-auto pr-4 custom-scrollbar space-y-8 flex-1">
                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="p-4 bg-black/40 border border-white/5 space-y-1">
                        <div className="mono text-[9px] text-slate-500 uppercase">Nodes</div>
@@ -359,13 +370,67 @@ const App: React.FC = () => {
                        <div className="text-xs font-black text-green-400 uppercase">ACTIVE</div>
                     </div>
                  </div>
-                 <button onClick={() => setShowStatsModal(false)} className="mono text-xs bg-cyan-500 text-black px-6 py-2 font-black uppercase tracking-widest mt-4">[ DISMISS ]</button>
+
+                 <div className="space-y-4">
+                    <div className="mono text-[10px] text-cyan-400 uppercase font-black tracking-widest border-b border-cyan-500/10 pb-2 flex items-center justify-between">
+                       <span><i className="fa-solid fa-wave-square mr-2"></i> Signal_Log_Data</span>
+                       <span className="text-[8px] opacity-40">HISTORY_RECORDS::{state.feedbackHistory.length}</span>
+                    </div>
+                    
+                    {state.feedbackHistory.length > 0 ? (
+                       <div className="space-y-2 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
+                          {state.feedbackHistory.map((item, idx) => (
+                             <div key={idx} className="flex items-center justify-between p-3 bg-white/5 border border-white/5 hover:border-white/10 transition-colors group">
+                                <div className="flex items-center gap-4">
+                                   <div className={`w-8 h-8 flex items-center justify-center rounded-sm ${item.feedback.type === 'like' ? 'bg-cyan-500/10 text-cyan-500' : 'bg-red-500/10 text-red-500'}`}>
+                                      <i className={`fa-solid ${item.feedback.type === 'like' ? 'fa-thumbs-up' : 'fa-thumbs-down'} text-xs`}></i>
+                                   </div>
+                                   <div>
+                                      <div className="text-xs font-black uppercase text-white truncate max-w-[200px] md:max-w-sm">{item.title}</div>
+                                      {item.feedback.reason && <div className="mono text-[9px] text-slate-500 italic mt-0.5">" {item.feedback.reason} "</div>}
+                                   </div>
+                                </div>
+                                <button 
+                                  onClick={() => removeSignal(idx)}
+                                  className="mono text-[9px] text-red-500/40 hover:text-red-500 transition-colors uppercase font-bold"
+                                >
+                                   [ PURGE ]
+                                </button>
+                             </div>
+                          ))}
+                       </div>
+                    ) : (
+                       <div className="py-10 text-center border border-white/5 bg-white/5">
+                          <p className="mono text-[10px] text-slate-600 uppercase tracking-widest">No_Signals_Intercepted</p>
+                       </div>
+                    )}
+                 </div>
+
+                 <div className="p-6 bg-cyan-500/5 border border-cyan-500/20 space-y-4">
+                    <div className="mono text-[10px] text-cyan-400 uppercase font-black tracking-widest border-b border-cyan-500/10 pb-2 flex items-center gap-2">
+                       <i className="fa-solid fa-cloud-arrow-down"></i> Recovery_Matrix
+                    </div>
+                    <p className="mono text-[10px] text-slate-400 uppercase leading-relaxed">
+                       If you suspect local data loss, trigger a manual re-hydration from the cloud grid.
+                    </p>
+                    <button 
+                      onClick={() => { fetchProfile(); setShowStatsModal(false); }}
+                      className="w-full py-3 border border-cyan-500/40 text-cyan-400 hover:bg-cyan-500 hover:text-black mono text-xs font-black uppercase tracking-widest transition-all"
+                    >
+                       [ FORCE_RESTORE_FROM_CLOUD ]
+                    </button>
+                 </div>
+              </div>
+
+              <div className="pt-6 border-t border-white/5 mt-auto">
+                 <button onClick={() => setShowStatsModal(false)} className="w-full py-4 bg-cyan-500 text-black mono font-black text-sm uppercase tracking-widest hover:bg-white transition-colors">
+                    [ DISMISS ]
+                 </button>
               </div>
            </div>
         </div>
       )}
 
-      {/* Conditionally remove the entire top navbar from the non-authorised landing page */}
       {user && (
         <header className="sticky top-0 z-50 backdrop-blur-2xl border-b px-4 md:px-8 flex items-center justify-between h-14 md:h-20 bg-slate-950/95 border-white/5">
             <div className="flex items-center gap-2 md:gap-10">
@@ -390,7 +455,7 @@ const App: React.FC = () => {
                       </div>
                       <div className="mono text-[10px] text-cyan-400 font-bold uppercase">{state.userMovies.length} DATA_POINTS</div>
                   </button>
-                  <button onClick={() => supabase.auth.signOut()} className="mono text-xs text-red-400/50 hover:text-red-400 px-6 h-11 border border-red-500/20 transition-all uppercase font-bold tracking-widest">[ EXIT ]</button>
+                  <button onClick={handleLogout} className="mono text-xs text-red-400/50 hover:text-red-400 px-6 h-11 border border-red-500/20 transition-all uppercase font-bold tracking-widest">[ EXIT ]</button>
               </div>
               <button onClick={() => setIsMenuOpen(true)} className="lg:hidden flex items-center justify-center w-10 h-10 text-cyan-500 border border-cyan-500/20"><i className="fa-solid fa-bars-staggered text-lg"></i></button>
             </div>
