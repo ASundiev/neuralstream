@@ -50,6 +50,7 @@ export interface AppState {
   feedbackHistory: { title: string, feedback: Feedback }[];
   recommendations: Movie[];
   isLoading: boolean;
+  isRecsLoading: boolean;
   filters: {
     type: ContentType;
     genre: string;
