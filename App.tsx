@@ -158,7 +158,7 @@ const App: React.FC = () => {
         if (session) {
           setShowAuthModal(false);
         } else {
-          setState((s) => ({ ...s, isLoading: false }));
+          setState((s) => ({ ...s, isLoggedIn: true, isLoading: false, isRecsLoading: false }));
         }
       });
 
@@ -613,19 +613,19 @@ const App: React.FC = () => {
           ) : (
               <div className="space-y-12">
                 <div className="perspective-1000 relative -mt-8 mx-4 md:mx-12 z-30">
-                  <div className={`transition-all duration-1000 preserve-3d relative min-h-[380px] ${isFlipped || user ? 'rotate-y-180' : ''}`}>
+                  <div className={`transition-all duration-1000 preserve-3d relative ${isFlipped || user ? 'rotate-y-180' : ''}`}>
                     {/* Front: Promo Features in same sized block */}
-                    <div className="backface-hidden">
-                      <div className="tech-border bg-slate-900/80 backdrop-blur-xl border-cyan-500/10 mx-[3rem]">
+                    <div className={`backface-hidden ${isFlipped || user ? 'absolute inset-0 invisible pointer-events-none' : 'relative'}`}>
+                      <div className="tech-border bg-slate-900/80 backdrop-blur-xl border-cyan-500/10">
                         <PromoFeatures />
                       </div>
                     </div>
 
                     {/* Back: Tuning Parameters in same sized block */}
-                    <div className="backface-hidden absolute inset-0 rotate-y-180">
+                    <div className={`backface-hidden rotate-y-180 ${isFlipped || user ? 'relative' : 'absolute inset-0 invisible pointer-events-none'}`}>
                       <section 
                         ref={tuningRef}
-                        className="tech-border p-8 bg-slate-900/80 backdrop-blur-xl space-y-10 border-cyan-500/30 mt-[-1rem] mx-[3rem]"
+                        className="tech-border p-8 bg-slate-900/80 backdrop-blur-xl space-y-10 border-cyan-500/30"
                       >
                         <div className={`space-y-6 ${tuningVisible ? 'animate-neural-reveal' : 'opacity-0'}`} style={{ animationFillMode: 'both' }}>
                           <div className="flex justify-between items-start">
@@ -655,7 +655,7 @@ const App: React.FC = () => {
                                   {importSuccess ? '[ SYNC_COMPLETE ]' : state.userMovies.length > 0 ? '[ RE-IMPORT FROM IMDB ]' : '[ IMPORT FROM IMDB ]'}
                                 </button>
                                 <input 
-                                  type="file" 
+                                   type="file" 
                                   ref={fileInputRef}
                                   className="hidden" 
                                   accept=".csv" 
