@@ -32,6 +32,20 @@ export interface Movie {
   providers?: WatchProvider[];
 }
 
+export interface SearchHistoryItem {
+  id: string;
+  query: string;
+  timestamp: string;
+  recommendations: Movie[];
+  filters: {
+    type: ContentType;
+    genre: string;
+    mood: string;
+    query: string;
+    providers: string[];
+  };
+}
+
 export interface RecommendationRequest {
   watchedHistory: Movie[];
   feedbackHistory: { title: string, feedback: Feedback }[];
@@ -48,6 +62,7 @@ export interface AppState {
   isLoggedIn: boolean;
   userMovies: Movie[];
   feedbackHistory: { title: string, feedback: Feedback }[];
+  searchHistory?: SearchHistoryItem[];
   recommendations: Movie[];
   isLoading: boolean;
   isRecsLoading: boolean;
