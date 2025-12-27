@@ -7,6 +7,7 @@ import { getRecommendations } from './services/geminiService';
 import { MovieCard } from './components/MovieCard';
 import { NeuralLoader } from './components/NeuralLoader';
 import { PromoHero } from './components/PromoHero';
+import { PromoFeatures } from './components/PromoFeatures';
 import { NeuralBackground } from './components/NeuralBackground';
 
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://vplgyzzwgbgwudbtdgfk.supabase.co';
@@ -42,8 +43,8 @@ const App: React.FC = () => {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showStatsModal, setShowStatsModal] = useState(false);
   const [activeStatsTab, setActiveStatsTab] = useState<'SIGNALS' | 'SEARCHES'>('SIGNALS');
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [tuningVisible, setTuningVisible] = useState(false);
+  const [isFlipped, setIsFlipped] = useState(false);
 
   const [state, setState] = useState<AppState>({
     isLoggedIn: false,
@@ -89,8 +90,8 @@ const App: React.FC = () => {
   const handleLogout = async () => {
     if (window.confirm("TERMINATE_NEURAL_UPLINK? ANY UNSYNCED LOCAL CACHE WILL BE FLUSHED.")) {
       await supabase.auth.signOut();
-      setIsMenuOpen(false);
       setShowStatsModal(false);
+      setIsFlipped(false);
     }
   };
 
@@ -355,11 +356,11 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen pb-20 relative bg-slate-950">
-      {!user && <NeuralBackground />}
+      <NeuralBackground />
       
       {showAuthModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="max-w-md w-full tech-border bg-slate-900 p-8 shadow-2xl relative">
+          <div className="max-w-md w-full tech-border bg-slate-900 p-8 relative">
             <button onClick={() => setShowAuthModal(false)} className="absolute top-2 right-2 text-slate-500 hover:text-white px-2">X</button>
             <div className="text-center space-y-4 mb-6">
               <i className="fa-solid fa-lock text-3xl text-cyan-500"></i>
@@ -378,7 +379,7 @@ const App: React.FC = () => {
                 <button 
                   type="submit" 
                   disabled={authLoading} 
-                  className="w-full py-4 bg-transparent border border-cyan-500/30 text-cyan-400 mono font-black text-sm uppercase tracking-widest transition-all relative overflow-hidden group/auth-btn shadow-[0_0_20px_rgba(0,245,255,0)] hover:shadow-[0_0_40px_rgba(0,245,255,0.3)] hover:bg-cyan-500 hover:text-black"
+                  className="w-full py-4 bg-transparent border border-cyan-500/30 text-cyan-400 mono font-black text-sm uppercase tracking-widest transition-all relative overflow-hidden group/auth-btn hover-electric"
                 >
                   <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover/btn:translate-x-[100%] transition-transform duration-500"></div>
                   <span className="relative z-10">{authLoading ? 'SYNCING...' : (isSignUp ? 'REGISTER' : 'LOGIN')}</span>
@@ -396,7 +397,7 @@ const App: React.FC = () => {
 
       {showStatsModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-           <div className="max-w-3xl w-full tech-border bg-slate-900 p-8 shadow-2xl relative overflow-hidden h-[85vh] flex flex-col">
+           <div className="max-w-3xl w-full tech-border bg-slate-900 p-8 relative overflow-hidden h-[85vh] flex flex-col">
               <button onClick={() => setShowStatsModal(false)} className="absolute top-4 right-4 text-slate-500 hover:text-white px-2 z-30">X</button>
               
               <div className="space-y-1 mb-8">
@@ -540,53 +541,62 @@ const App: React.FC = () => {
         </div>
       )}
 
-      {user && (
-        <header className="z-50 w-full relative">
-          <div className="max-w-7xl mx-auto px-4 md:px-8 flex items-center justify-between h-14 md:h-20">
-              <div className="flex items-center gap-2 md:gap-10">
-                <div className="flex items-center gap-2 shrink-0">
-                    <div className="w-6 h-6 md:w-8 md:h-8 flex items-center justify-center bg-cyan-500 shadow-[0_0_15px_rgba(0,245,255,0.4)]">
-                        <i className="fa-solid fa-dna text-[10px] md:text-sm text-black"></i>
+      {/* Persistent Transparent Header */}
+      <header className="fixed top-0 left-0 right-0 z-[60] bg-transparent">
+        <div className="max-w-7xl mx-auto px-4 md:px-8 flex items-center justify-between h-24 md:h-24">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 flex items-center justify-center bg-cyan-500">
+                  <i className="fa-solid fa-dna text-sm text-black"></i>
+              </div>
+              <span className="text-xl md:text-2xl font-black tracking-tighter uppercase italic leading-tight text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.1)]">
+                  NeuralStream
+              </span>
+            </div>
+            
+            <div className="flex items-center gap-8">
+              {!user ? (
+                <>
+                  <button onClick={() => openAuth(true)} className="mono text-xs font-black uppercase tracking-widest text-slate-500 hover:text-white transition-colors">[ SIGN UP ]</button>
+                  <button onClick={() => openAuth(false)} className="px-6 py-2 bg-cyan-500/10 border border-cyan-500/40 text-cyan-400 mono font-black text-xs uppercase tracking-widest hover:bg-cyan-500 hover:text-black transition-all shadow-[0_0_20px_rgba(0,245,255,0.1)] rounded-sm">[ LOGIN ]</button>
+                </>
+              ) : (
+                <button 
+                  onClick={() => setShowStatsModal(true)} 
+                  className="group relative flex items-center gap-4 bg-slate-900/40 border border-cyan-500/10 hover:border-cyan-500/40 hover:bg-slate-900/80 p-2 pr-4 transition-all duration-300 rounded-sm"
+                >
+                    <div className="w-10 h-10 flex items-center justify-center bg-cyan-500/5 border border-cyan-500/20 text-cyan-500 group-hover:bg-cyan-500 group-hover:text-black transition-all">
+                       <i className="fa-solid fa-id-card-clip text-base"></i>
                     </div>
-                    <span className="text-lg md:text-2xl font-black tracking-tighter uppercase italic leading-tight text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.1)]">
-                        Neural<span className="text-cyan-400">Stream</span>
-                    </span>
-                </div>
-              </div>
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-6">
-                    <button 
-                      onClick={() => setShowStatsModal(true)} 
-                      className="group relative flex items-center gap-4 bg-slate-900/40 border border-cyan-500/10 hover:border-cyan-500/40 hover:bg-slate-900/80 p-2 pr-4 transition-all duration-300 shadow-[0_0_20px_rgba(0,0,0,0.3)] hover:shadow-[0_0_30px_rgba(0,245,255,0.1)] rounded-sm"
-                    >
-                        <div className="w-10 h-10 flex items-center justify-center bg-cyan-500/5 border border-cyan-500/20 text-cyan-500 group-hover:bg-cyan-500 group-hover:text-black transition-all">
-                           <i className="fa-solid fa-id-card-clip"></i>
+                    <div className="hidden md:flex flex-col items-start leading-tight text-left">
+                        <div className="mono text-[8px] text-slate-500 uppercase tracking-widest flex items-center gap-1.5 font-black">
+                            <span className={`w-1.5 h-1.5 ${syncStatus === 'SYNCING' ? 'bg-cyan-500 animate-ping' : 'bg-green-500'} rounded-full`}></span>
+                            NEURAL_DNA_PROFILE
                         </div>
-                        <div className="flex flex-col items-start leading-tight text-left">
-                            <div className="mono text-[8px] text-slate-500 uppercase tracking-widest flex items-center gap-1.5 font-black">
-                                <span className={`w-1.5 h-1.5 ${syncStatus === 'SYNCING' ? 'bg-cyan-500 animate-ping' : 'bg-green-500'} rounded-full`}></span>
-                                NEURAL_DNA_PROFILE
-                            </div>
-                            <div className="mono text-[10px] text-cyan-400 font-bold uppercase tracking-tight group-hover:text-white transition-colors">
-                                NODES: <span className="text-white drop-shadow-[0_0_5px_rgba(0,245,255,0.2)]">{state.userMovies.length}</span> // SIGNALS: <span className="text-white drop-shadow-[0_0_5px_rgba(0,245,255,0.2)]">{state.feedbackHistory.length}</span>
-                            </div>
+                        <div className="mono text-[10px] text-cyan-400 font-bold uppercase tracking-tight group-hover:text-white transition-colors">
+                            NODES: <span className="text-white">{state.userMovies.length}</span> // SIGNALS: <span className="text-white">{state.feedbackHistory.length}</span>
                         </div>
-                        <div className="absolute -right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all">
-                           <i className="fa-solid fa-chevron-right text-[10px] text-cyan-400"></i>
-                        </div>
-                    </button>
-                </div>
-              </div>
-          </div>
-        </header>
-      )}
+                    </div>
+                </button>
+              )}
+            </div>
+        </div>
+      </header>
 
-      <main className="max-w-7xl mx-auto px-4 md:px-8 py-10 space-y-16 relative z-10">
-        <div className="relative">
-          {!user && state.recommendations.length === 0 && <PromoHero onLogin={() => openAuth(false)} onSignUp={() => openAuth(true)} />}
+      <main className="max-w-7xl mx-auto px-4 md:px-8 mt-16 relative z-10">
+        <div className="relative pt-16">
+          {!user && (
+            <div className="px-4 md:px-12">
+              <PromoHero 
+                isFlipped={isFlipped} 
+                onTryNow={() => setIsFlipped(true)} 
+                onLogin={() => openAuth(false)} 
+                onSignUp={() => openAuth(true)}
+              />
+            </div>
+          )}
 
           {showUploadScreen ? (
-              <div className="max-w-xl mx-auto tech-border bg-slate-900/40 p-12 text-center space-y-10 relative mt-10 backdrop-blur-md">
+              <div className="max-w-xl mx-auto tech-border bg-slate-900/40 p-12 text-center space-y-10 relative -mt-16 mx-4 md:mx-12 backdrop-blur-md z-30">
                   <div className="space-y-4">
                     <div className="mono text-xs text-cyan-400 uppercase tracking-widest animate-pulse">Neural_Profile_Empty</div>
                     <h2 className="text-3xl font-black uppercase text-white italic">Initialize Your <span className="text-cyan-400">Matrix</span></h2>
@@ -598,125 +608,137 @@ const App: React.FC = () => {
                   </label>
               </div>
           ) : (
-              <>
-              {(user || !state.guestSearchUsed) && (
-                <section 
-                  ref={tuningRef}
-                  className={`tech-border p-8 bg-slate-900/80 backdrop-blur-xl space-y-10 relative z-30 shadow-[0_-20px_50px_rgba(0,0,0,0.5)] ${(!user && state.recommendations.length === 0) ? '-mt-6 md:-mt-16 mx-2 md:mx-12' : ''}`}
-                >
-                  <div className={`space-y-6 ${tuningVisible ? 'animate-neural-reveal' : 'opacity-0'}`} style={{ animationFillMode: 'both' }}>
-                    <div className="space-y-1">
-                      <div className="mono text-[10px] text-cyan-500 uppercase font-black tracking-widest flex items-center gap-2">
-                        <span className="w-1.5 h-1.5 bg-cyan-500 rounded-full animate-pulse"></span>
-                        Neural_Uplink_Console
+              <div className="space-y-12">
+                <div className="perspective-1000 relative -mt-8 mx-4 md:mx-12 z-30">
+                  <div className={`transition-all duration-1000 preserve-3d relative min-h-[380px] ${isFlipped || user ? 'rotate-y-180' : ''}`}>
+                    {/* Front: Promo Features in same sized block */}
+                    <div className="backface-hidden">
+                      <div className="tech-border bg-slate-900/80 backdrop-blur-xl border-cyan-500/10 mx-[3rem]">
+                        <PromoFeatures />
                       </div>
-                      <h2 className="text-2xl font-black text-white italic uppercase tracking-tight">Tuning Parameters</h2>
                     </div>
-                    
-                    <div className={`relative flex items-start group ${tuningVisible ? 'animate-neural-reveal' : 'opacity-0'}`} style={{ animationDelay: '100ms', animationFillMode: 'both' }}>
-                        <div className="absolute left-6 top-5 mono text-cyan-500/60 font-black text-sm select-none">CMD_&gt;</div>
-                        <textarea 
-                          rows={2}
-                          value={state.filters.query}
-                          onChange={(e) => setState((s) => ({ ...s, filters: { ...s.filters, query: e.target.value } }))}
-                          placeholder="SPECIFY_NEURAL_OVERRIDE..."
-                          className="w-full bg-black/40 border border-white/10 group-hover:border-cyan-500/40 focus:border-cyan-500/60 p-5 pl-20 mono text-sm text-white outline-none uppercase placeholder-slate-800 rounded-sm resize-none"
-                        />
+
+                    {/* Back: Tuning Parameters in same sized block */}
+                    <div className="backface-hidden absolute inset-0 rotate-y-180">
+                      <section 
+                        ref={tuningRef}
+                        className="tech-border p-8 bg-slate-900/80 backdrop-blur-xl space-y-10 border-cyan-500/30 mt-[-1rem] mx-[3rem]"
+                      >
+                        <div className={`space-y-6 ${tuningVisible ? 'animate-neural-reveal' : 'opacity-0'}`} style={{ animationFillMode: 'both' }}>
+                          <div className="space-y-1">
+                            <div className="mono text-[10px] text-cyan-500 uppercase font-black tracking-widest flex items-center gap-2">
+                              <span className="w-1.5 h-1.5 bg-cyan-500 rounded-full animate-pulse"></span>
+                              Neural_Uplink_Console
+                            </div>
+                            <h2 className="text-2xl font-black text-white italic uppercase tracking-tight">Tuning Parameters</h2>
+                          </div>
+                          
+                          <div className={`relative flex items-start group ${tuningVisible ? 'animate-neural-reveal' : 'opacity-0'}`} style={{ animationDelay: '100ms', animationFillMode: 'both' }}>
+                              <div className="absolute left-6 top-5 mono text-cyan-500/60 font-black text-sm select-none">CMD_&gt;</div>
+                              <textarea 
+                                rows={2}
+                                value={state.filters.query}
+                                onChange={(e) => setState((s) => ({ ...s, filters: { ...s.filters, query: e.target.value } }))}
+                                placeholder="SPECIFY_NEURAL_OVERRIDE..."
+                                className="w-full bg-black/40 border border-white/10 group-hover:border-cyan-500/40 focus:border-cyan-500/60 p-5 pl-20 mono text-sm text-white outline-none uppercase placeholder-slate-800 rounded-sm resize-none"
+                              />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                          <div className={`space-y-3 ${tuningVisible ? 'animate-neural-reveal' : 'opacity-0'}`} style={{ animationDelay: '200ms', animationFillMode: 'both' }}>
+                            <label className="mono text-[10px] uppercase text-slate-300 font-bold tracking-widest">Modality</label>
+                            <div className="flex w-full p-1 bg-black/40 border border-white/10 h-[52px]">
+                                {CONTENT_TYPES.map((ct) => (
+                                <button 
+                                  key={ct.value} 
+                                  onClick={() => setState((s) => ({ ...s, filters: { ...s.filters, type: ct.value } }))} 
+                                  className={`flex-1 flex items-center justify-center mono text-[10px] font-black uppercase transition-all duration-300 relative ${
+                                    state.filters.type === ct.value 
+                                      ? 'bg-slate-800 text-cyan-400 border border-cyan-500/20' 
+                                      : 'text-slate-500 hover:text-slate-200 hover:bg-white/5 border border-transparent'
+                                  }`}
+                                >
+                                    {ct.label}
+                                </button>
+                                ))}
+                            </div>
+                          </div>
+                          <div className={`space-y-3 ${tuningVisible ? 'animate-neural-reveal' : 'opacity-0'}`} style={{ animationDelay: '300ms', animationFillMode: 'both' }}>
+                            <label className="mono text-[10px] uppercase text-slate-300 font-bold tracking-widest">Genre_Axis</label>
+                            <div className="relative group">
+                              <select 
+                                value={state.filters.genre} 
+                                onChange={(e) => setState((s) => ({ ...s, filters: { ...s.filters, genre: e.target.value } }))} 
+                                className="w-full bg-black/40 border border-white/10 p-4 pr-10 h-[52px] mono text-xs uppercase text-white outline-none group-hover:border-cyan-500/30 focus:border-cyan-500/50 appearance-none rounded-none transition-colors"
+                              >
+                                  <option value="">ALL_CHANNELS</option>
+                                  {GENRES.map((g) => <option key={g} value={g}>{g.toUpperCase()}</option>)}
+                              </select>
+                              <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none opacity-20 group-hover:opacity-60 transition-opacity">
+                                <i className="fa-solid fa-chevron-down text-[10px] text-cyan-500"></i>
+                              </div>
+                            </div>
+                          </div>
+                          <div className={`space-y-3 ${tuningVisible ? 'animate-neural-reveal' : 'opacity-0'}`} style={{ animationDelay: '400ms', animationFillMode: 'both' }}>
+                            <label className="mono text-[10px] uppercase text-slate-300 font-bold tracking-widest">Affective_State</label>
+                            <div className="relative group">
+                              <select 
+                                value={state.filters.mood} 
+                                onChange={(e) => setState((s) => ({ ...s, filters: { ...s.filters, mood: e.target.value } }))} 
+                                className="w-full bg-black/40 border border-white/10 p-4 pr-10 h-[52px] mono text-xs uppercase text-white outline-none group-hover:border-cyan-500/30 focus:border-cyan-500/50 appearance-none rounded-none transition-colors"
+                              >
+                                  <option value="">UNCALIBRATED</option>
+                                  {MOODS.map((m) => <option key={m} value={m}>{m.toUpperCase()}</option>)}
+                              </select>
+                              <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none opacity-20 group-hover:opacity-60 transition-opacity">
+                                <i className="fa-solid fa-chevron-down text-[10px] text-cyan-500"></i>
+                              </div>
+                            </div>
+                          </div>
+                          <div className={`space-y-3 ${tuningVisible ? 'animate-neural-reveal' : 'opacity-0'}`} style={{ animationDelay: '500ms', animationFillMode: 'both' }}>
+                            <label className="mono text-[10px] uppercase text-slate-300 font-bold tracking-widest">Availability_Matrix</label>
+                            <div className="relative group">
+                              <select 
+                                value={state.filters.providers?.[0] || ''} 
+                                onChange={(e) => setState((s) => ({ ...s, filters: { ...s.filters, providers: e.target.value ? [e.target.value] : [] } }))} 
+                                className="w-full bg-black/40 border border-white/10 p-4 pr-10 h-[52px] mono text-xs uppercase text-white outline-none group-hover:border-cyan-500/30 focus:border-cyan-500/50 appearance-none rounded-none transition-colors"
+                              >
+                                  <option value="">GLOBAL_STREAM</option>
+                                  {MAJOR_PLATFORMS.map((p) => <option key={p.id} value={p.name}>{p.name.toUpperCase()}</option>)}
+                              </select>
+                              <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none opacity-20 group-hover:opacity-60 transition-opacity">
+                                <i className="fa-solid fa-chevron-down text-[10px] text-cyan-500"></i>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <button 
+                          onClick={() => fetchRecommendations()} 
+                          disabled={state.isRecsLoading} 
+                          className={`w-full py-6 bg-transparent border border-cyan-500/30 text-cyan-400 mono font-black text-sm uppercase tracking-[0.6em] transition-all relative overflow-hidden group/initiate-btn hover-electric ${tuningVisible ? 'animate-neural-reveal' : 'opacity-0'} ${state.isRecsLoading ? 'bg-black/50 cursor-wait' : ''}`}
+                          style={{ animationDelay: '600ms', animationFillMode: 'both' }}
+                        >
+                          <div className="relative z-10 glitch-text">
+                            {state.isRecsLoading ? (
+                              <span className="flex items-center justify-center gap-4">
+                                <i className="fa-solid fa-microchip animate-spin text-lg"></i>SYNTHESIZING...
+                              </span>
+                            ) : (
+                              <span className="flex items-center justify-center gap-4">
+                                <i className="fa-solid fa-bolt text-xs"></i>Initiate<i className="fa-solid fa-bolt text-xs"></i>
+                              </span>
+                            )}
+                          </div>
+                        </button>
+                      </section>
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                    <div className={`space-y-3 ${tuningVisible ? 'animate-neural-reveal' : 'opacity-0'}`} style={{ animationDelay: '200ms', animationFillMode: 'both' }}>
-                      <label className="mono text-[10px] uppercase text-slate-300 font-bold tracking-widest">Modality</label>
-                      <div className="flex w-full p-1 bg-black/40 border border-white/10 h-[52px]">
-                          {CONTENT_TYPES.map((ct) => (
-                          <button 
-                            key={ct.value} 
-                            onClick={() => setState((s) => ({ ...s, filters: { ...s.filters, type: ct.value } }))} 
-                            className={`flex-1 flex items-center justify-center mono text-[10px] font-black uppercase transition-all duration-300 relative ${
-                              state.filters.type === ct.value 
-                                ? 'bg-slate-800 text-cyan-400 shadow-[0_0_15px_rgba(0,245,255,0.1)] border border-cyan-500/20' 
-                                : 'text-slate-500 hover:text-slate-200 hover:bg-white/5 border border-transparent'
-                            }`}
-                          >
-                              {ct.label}
-                          </button>
-                          ))}
-                      </div>
-                    </div>
-                    <div className={`space-y-3 ${tuningVisible ? 'animate-neural-reveal' : 'opacity-0'}`} style={{ animationDelay: '300ms', animationFillMode: 'both' }}>
-                      <label className="mono text-[10px] uppercase text-slate-300 font-bold tracking-widest">Genre_Axis</label>
-                      <div className="relative group">
-                        <select 
-                          value={state.filters.genre} 
-                          onChange={(e) => setState((s) => ({ ...s, filters: { ...s.filters, genre: e.target.value } }))} 
-                          className="w-full bg-black/40 border border-white/10 p-4 pr-10 h-[52px] mono text-xs uppercase text-white outline-none group-hover:border-cyan-500/30 focus:border-cyan-500/50 appearance-none rounded-none transition-colors"
-                        >
-                            <option value="">ALL_CHANNELS</option>
-                            {GENRES.map((g) => <option key={g} value={g}>{g.toUpperCase()}</option>)}
-                        </select>
-                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none opacity-20 group-hover:opacity-60 transition-opacity">
-                          <i className="fa-solid fa-chevron-down text-[10px] text-cyan-500"></i>
-                        </div>
-                      </div>
-                    </div>
-                    <div className={`space-y-3 ${tuningVisible ? 'animate-neural-reveal' : 'opacity-0'}`} style={{ animationDelay: '400ms', animationFillMode: 'both' }}>
-                      <label className="mono text-[10px] uppercase text-slate-300 font-bold tracking-widest">Affective_State</label>
-                      <div className="relative group">
-                        <select 
-                          value={state.filters.mood} 
-                          onChange={(e) => setState((s) => ({ ...s, filters: { ...s.filters, mood: e.target.value } }))} 
-                          className="w-full bg-black/40 border border-white/10 p-4 pr-10 h-[52px] mono text-xs uppercase text-white outline-none group-hover:border-cyan-500/30 focus:border-cyan-500/50 appearance-none rounded-none transition-colors"
-                        >
-                            <option value="">UNCALIBRATED</option>
-                            {MOODS.map((m) => <option key={m} value={m}>{m.toUpperCase()}</option>)}
-                        </select>
-                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none opacity-20 group-hover:opacity-60 transition-opacity">
-                          <i className="fa-solid fa-chevron-down text-[10px] text-cyan-500"></i>
-                        </div>
-                      </div>
-                    </div>
-                    <div className={`space-y-3 ${tuningVisible ? 'animate-neural-reveal' : 'opacity-0'}`} style={{ animationDelay: '500ms', animationFillMode: 'both' }}>
-                      <label className="mono text-[10px] uppercase text-slate-300 font-bold tracking-widest">Availability_Matrix</label>
-                      <div className="relative group">
-                        <select 
-                          value={state.filters.providers?.[0] || ''} 
-                          onChange={(e) => setState((s) => ({ ...s, filters: { ...s.filters, providers: e.target.value ? [e.target.value] : [] } }))} 
-                          className="w-full bg-black/40 border border-white/10 p-4 pr-10 h-[52px] mono text-xs uppercase text-white outline-none group-hover:border-cyan-500/30 focus:border-cyan-500/50 appearance-none rounded-none transition-colors"
-                        >
-                            <option value="">GLOBAL_STREAM</option>
-                            {MAJOR_PLATFORMS.map((p) => <option key={p.id} value={p.name}>{p.name.toUpperCase()}</option>)}
-                        </select>
-                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none opacity-20 group-hover:opacity-60 transition-opacity">
-                          <i className="fa-solid fa-chevron-down text-[10px] text-cyan-500"></i>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <button 
-                    onClick={() => fetchRecommendations()} 
-                    disabled={state.isRecsLoading} 
-                    className={`w-full py-6 bg-transparent border border-cyan-500/30 text-cyan-400 mono font-black text-sm uppercase tracking-[0.6em] transition-all relative overflow-hidden group/initiate-btn hover-electric ${tuningVisible ? 'animate-neural-reveal' : 'opacity-0'} ${state.isRecsLoading ? 'bg-black/50 cursor-wait' : ''}`}
-                    style={{ animationDelay: '600ms', animationFillMode: 'both' }}
-                  >
-                    <div className="relative z-10 glitch-text">
-                      {state.isRecsLoading ? (
-                        <span className="flex items-center justify-center gap-4">
-                          <i className="fa-solid fa-microchip animate-spin text-lg"></i>SYNTHESIZING...
-                        </span>
-                      ) : (
-                        <span className="flex items-center justify-center gap-4">
-                          <i className="fa-solid fa-bolt text-xs"></i>Initiate<i className="fa-solid fa-bolt text-xs"></i>
-                        </span>
-                      )}
-                    </div>
-                  </button>
-                </section>
-              )}
+                </div>
               
-              {state.isRecsLoading && <div className="mt-10 animate-in fade-in duration-700"><NeuralLoader /></div>}
+              {state.isRecsLoading && <div className="mt-10 animate-in fade-in duration-700 px-4 md:px-12"><NeuralLoader /></div>}
               
               {!state.isRecsLoading && state.recommendations.length > 0 && (
-              <section className="space-y-10 animate-in fade-in slide-in-from-bottom-8 duration-1000 mt-10">
+              <section className="space-y-10 animate-in fade-in slide-in-from-bottom-8 duration-1000 mt-10 px-4 md:px-12">
                   <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-white/10 pb-8">
                     <div>
                       <div className="mono text-[10px] text-cyan-500 uppercase tracking-widest font-bold">Output_Matrix</div>
@@ -726,12 +748,13 @@ const App: React.FC = () => {
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 items-stretch">
                   {state.recommendations.map((movie, idx) => (
+                      /* Fix typo in MovieCard props: 'onMark watched' changed to 'onMarkWatched' to match the component's interface. */
                       <MovieCard key={movie.id} movie={movie} index={idx} isRecommendation onLikeSimilar={(seed) => fetchRecommendations(seed)} onMarkWatched={(m) => markAsWatched(m)} onFeedback={(m, f) => handleFeedback(m, f)} />
                   ))}
                   </div>
               </section>
               )}
-              </>
+              </div>
           )}
         </div>
       </main>

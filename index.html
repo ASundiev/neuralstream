@@ -57,11 +57,6 @@
       to { top: 100%; }
     }
 
-    .glass-dark {
-      background: rgba(15, 23, 42, 0.8);
-      backdrop-filter: blur(8px);
-    }
-    
     .custom-scrollbar::-webkit-scrollbar { width: 4px; }
     .custom-scrollbar::-webkit-scrollbar-track { background: var(--deep); }
     .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(0, 245, 255, 0.2); }
@@ -122,46 +117,35 @@
       transition: background 0.3s ease;
     }
 
-    .hover-electric:hover::before {
-      opacity: 1;
-    }
-
+    .hover-electric:hover::before { opacity: 1; }
     .hover-electric:hover {
       border-color: rgba(0, 245, 255, 0.4) !important;
       background: rgba(0, 245, 255, 0.02);
       box-shadow: 0 0 30px rgba(0, 245, 255, 0.1);
     }
 
-    .hover-electric:hover .glitch-text {
-      animation: steady-text-glow 2s ease-in-out infinite;
-      color: #fff;
+    /* 3D Flip Styles */
+    .perspective-1000 {
+      perspective: 1000px;
+    }
+    .preserve-3d {
+      transform-style: preserve-3d;
+    }
+    .backface-hidden {
+      backface-visibility: hidden;
+    }
+    .rotate-y-180 {
+      transform: rotateY(180deg);
     }
 
-    /* Entrance Animations */
     @keyframes neural-reveal {
-      0% { 
-        opacity: 0.1; 
-        transform: translateY(20px); 
-        filter: blur(8px); 
-      }
-      100% { 
-        opacity: 1; 
-        transform: translateY(0); 
-        filter: blur(0); 
-      }
+      0% { opacity: 0.1; transform: translateY(20px); filter: blur(8px); }
+      100% { opacity: 1; transform: translateY(0); filter: blur(0); }
     }
 
     @keyframes card-entrance {
-      0% {
-        opacity: 0.1;
-        transform: translateY(30px);
-        filter: blur(10px);
-      }
-      100% {
-        opacity: 1;
-        transform: translateY(0);
-        filter: blur(0);
-      }
+      0% { opacity: 0.1; transform: translateY(30px); filter: blur(10px); }
+      100% { opacity: 1; transform: translateY(0); filter: blur(0); }
     }
 
     .animate-neural-reveal {
