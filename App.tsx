@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { ContentType, Movie, AppState, Feedback, SearchHistoryItem } from './types';
@@ -45,6 +44,7 @@ const App: React.FC = () => {
   const [activeStatsTab, setActiveStatsTab] = useState<'SIGNALS' | 'SEARCHES'>('SIGNALS');
   const [tuningVisible, setTuningVisible] = useState(false);
   const [isFlipped, setIsFlipped] = useState(false);
+  const [importSuccess, setImportSuccess] = useState(false);
 
   const [state, setState] = useState<AppState>({
     isLoggedIn: false,
@@ -61,6 +61,7 @@ const App: React.FC = () => {
 
   const skipSync = useRef(false);
   const tuningRef = useRef<HTMLElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const showUploadScreen = !!user && state.userMovies.length === 0;
 
@@ -314,41 +315,43 @@ const App: React.FC = () => {
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    gateInteraction(() => {
-      setState((prev) => ({ ...prev, isLoading: true }));
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const text = event.target?.result as string;
-        const lines = text.split('\n');
-        if (lines.length < 2) {
-          setState((prev) => ({ ...prev, isLoading: false }));
-          return;
+    
+    setState((prev) => ({ ...prev, isLoading: true }));
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result as string;
+      const lines = text.split('\n');
+      if (lines.length < 2) {
+        setState((prev) => ({ ...prev, isLoading: false }));
+        return;
+      }
+      const headers = lines[0].split(',');
+      const getIdx = (n: string) => headers.findIndex(h => h.trim().replace(/^"|"$/g, '') === n);
+      const [iT, iY, iR, iTy] = [getIdx('Title'), getIdx('Year'), getIdx('Your Rating'), getIdx('Title Type')];
+      
+      const movies: Movie[] = [];
+      for (let i = 1; i < lines.length; i++) {
+        const row = lines[i].split(',').map(c => c.trim().replace(/^"|"$/g, ''));
+        const rating = parseInt(row[iR]);
+        if (row[iT] && rating >= 7) {
+          movies.push({
+            id: Math.random().toString(36).substr(2, 9),
+            title: row[iT],
+            year: row[iY],
+            rating: rating,
+            userRating: rating,
+            type: row[iTy]?.toLowerCase().includes('tv') ? ContentType.SERIES : ContentType.MOVIE,
+            genres: [],
+            posterUrl: '[SIGNAL_LOST]'
+          });
         }
-        const headers = lines[0].split(',');
-        const getIdx = (n: string) => headers.findIndex(h => h.trim().replace(/^"|"$/g, '') === n);
-        const [iT, iY, iR, iTy] = [getIdx('Title'), getIdx('Year'), getIdx('Your Rating'), getIdx('Title Type')];
-        
-        const movies: Movie[] = [];
-        for (let i = 1; i < lines.length; i++) {
-          const row = lines[i].split(',').map(c => c.trim().replace(/^"|"$/g, ''));
-          const rating = parseInt(row[iR]);
-          if (row[iT] && rating >= 7) {
-            movies.push({
-              id: Math.random().toString(36).substr(2, 9),
-              title: row[iT],
-              year: row[iY],
-              rating: rating,
-              userRating: rating,
-              type: row[iTy]?.toLowerCase().includes('tv') ? ContentType.SERIES : ContentType.MOVIE,
-              genres: [],
-              posterUrl: '[SIGNAL_LOST]'
-            });
-          }
-        }
-        setState((prev) => ({ ...prev, userMovies: movies, isLoggedIn: true, isLoading: false }));
-      };
-      reader.readAsText(file);
-    });
+      }
+      setState((prev) => ({ ...prev, userMovies: movies, isLoggedIn: !!user, isLoading: false }));
+      setImportSuccess(true);
+      setTimeout(() => setImportSuccess(false), 3000);
+    };
+    reader.readAsText(file);
+    if (e.target) e.target.value = ''; // Reset input
   };
 
   if (!supabase) return <div className="min-h-screen flex items-center justify-center bg-slate-950 text-white">SUPABASE_CONFIG_MISSING</div>;
@@ -625,12 +628,46 @@ const App: React.FC = () => {
                         className="tech-border p-8 bg-slate-900/80 backdrop-blur-xl space-y-10 border-cyan-500/30 mt-[-1rem] mx-[3rem]"
                       >
                         <div className={`space-y-6 ${tuningVisible ? 'animate-neural-reveal' : 'opacity-0'}`} style={{ animationFillMode: 'both' }}>
-                          <div className="space-y-1">
-                            <div className="mono text-[10px] text-cyan-500 uppercase font-black tracking-widest flex items-center gap-2">
-                              <span className="w-1.5 h-1.5 bg-cyan-500 rounded-full animate-pulse"></span>
-                              Neural_Uplink_Console
+                          <div className="flex justify-between items-start">
+                            <div className="space-y-1">
+                              <div className="mono text-[10px] uppercase font-black tracking-widest flex items-center gap-2">
+                                <span className={`w-1.5 h-1.5 ${state.userMovies.length > 0 ? 'bg-green-500' : 'bg-cyan-500'} rounded-full animate-pulse`}></span>
+                                {(!user && state.userMovies.length > 0) ? (
+                                  <span className="text-green-500 animate-in fade-in duration-300">GUEST_UPLINK_ESTABLISHED</span>
+                                ) : user ? (
+                                  <span className="text-green-500 animate-in fade-in duration-300">UPLINK_PROFILE_SYNCED</span>
+                                ) : (
+                                  <span className="text-cyan-500">Neural_Uplink_Console</span>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <h2 className="text-2xl font-black text-white italic uppercase tracking-tight">Tuning Parameters</h2>
+                              </div>
                             </div>
-                            <h2 className="text-2xl font-black text-white italic uppercase tracking-tight">Tuning Parameters</h2>
+                            
+                            {/* Native File Uploader Trigger Button with Counter Below */}
+                            <div className="flex flex-col items-end gap-2">
+                              <div className="relative">
+                                <button 
+                                  onClick={() => fileInputRef.current?.click()}
+                                  className={`px-6 py-2 border mono font-black text-xs uppercase tracking-widest transition-all shadow-[0_0_20px_rgba(0,245,255,0.1)] rounded-sm ${importSuccess ? 'bg-green-500 border-green-400 text-black' : 'bg-cyan-500/10 border-cyan-500/40 text-cyan-400 hover:bg-cyan-500 hover:text-black'}`}
+                                >
+                                  {importSuccess ? '[ SYNC_COMPLETE ]' : state.userMovies.length > 0 ? '[ RE-IMPORT FROM IMDB ]' : '[ IMPORT FROM IMDB ]'}
+                                </button>
+                                <input 
+                                  type="file" 
+                                  ref={fileInputRef}
+                                  className="hidden" 
+                                  accept=".csv" 
+                                  onChange={handleFileUpload} 
+                                />
+                              </div>
+                              {state.userMovies.length > 0 && (
+                                <span className="mono text-[10px] text-slate-500 uppercase font-bold animate-in fade-in slide-in-from-top-1 duration-500">
+                                  {state.userMovies.length}_NODES_SYNCED
+                                </span>
+                              )}
+                            </div>
                           </div>
                           
                           <div className={`relative flex items-start group ${tuningVisible ? 'animate-neural-reveal' : 'opacity-0'}`} style={{ animationDelay: '100ms', animationFillMode: 'both' }}>
@@ -748,7 +785,6 @@ const App: React.FC = () => {
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 items-stretch">
                   {state.recommendations.map((movie, idx) => (
-                      /* Fix typo in MovieCard props: 'onMark watched' changed to 'onMarkWatched' to match the component's interface. */
                       <MovieCard key={movie.id} movie={movie} index={idx} isRecommendation onLikeSimilar={(seed) => fetchRecommendations(seed)} onMarkWatched={(m) => markAsWatched(m)} onFeedback={(m, f) => handleFeedback(m, f)} />
                   ))}
                   </div>
