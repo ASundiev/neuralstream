@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Movie, Feedback, ContentType } from '../types';
-import { editMoviePoster, generateNeuralPoster } from '../services/imageService';
+import { generateNeuralPoster } from '../services/imageService';
 
 interface MovieCardProps {
   movie: Movie;
@@ -20,11 +20,7 @@ export const MovieCard: React.FC<MovieCardProps> = ({
   onFeedback 
 }) => {
   const [showReasonInput, setShowReasonInput] = useState(false);
-  const [showEditInput, setShowEditInput] = useState(false);
-  const [editPrompt, setEditPrompt] = useState('');
-  const [isProcessingEdit, setIsProcessingEdit] = useState(false);
   const [isSynthesizingPoster, setIsSynthesizingPoster] = useState(false);
-  const [editedPoster, setEditedPoster] = useState<string | null>(null);
   const [neuralPoster, setNeuralPoster] = useState<string | null>(null);
   
   const [tempFeedback, setTempFeedback] = useState<'like' | 'dislike' | null>(null);
@@ -87,33 +83,14 @@ export const MovieCard: React.FC<MovieCardProps> = ({
     }
   };
 
-  const handleNeuralEdit = async () => {
-    if (!editPrompt.trim()) return;
-    const sourceUrl = editedPoster || neuralPoster || movie.posterUrl;
-    if (!sourceUrl) return;
-    
-    setIsProcessingEdit(true);
-    try {
-      const result = await editMoviePoster(sourceUrl, editPrompt);
-      if (result) {
-        setEditedPoster(result);
-        setShowEditInput(false);
-      }
-    } catch (err) {
-      alert("EDIT_FAILURE: Unable to synthesize neural modification. This may be due to CORS restrictions on the source image.");
-    } finally {
-      setIsProcessingEdit(false);
-    }
-  };
-
   const handleImageError = () => {
     setHasError(true);
   };
 
-  const pUrl = editedPoster || neuralPoster || movie.posterUrl;
+  const pUrl = neuralPoster || movie.posterUrl;
   const isLost = !pUrl || pUrl.includes('[SIGNAL_LOST]') || pUrl === 'null' || pUrl === 'undefined';
   const isValidUrl = !isLost && (pUrl.startsWith('http') || pUrl.startsWith('data:image'));
-  const isNeuralGenerated = !!(neuralPoster || editedPoster);
+  const isNeuralGenerated = !!neuralPoster;
 
   const tmdbUrl = movie.tmdbId 
     ? `https://www.themoviedb.org/${movie.type === ContentType.SERIES ? 'tv' : 'movie'}/${movie.tmdbId}`
@@ -125,12 +102,12 @@ export const MovieCard: React.FC<MovieCardProps> = ({
 
   const PosterContent = () => (
     <div className="aspect-[2/3] w-full overflow-hidden relative shrink-0 bg-slate-950">
-      {(isSynthesizingPoster || isProcessingEdit) && (
+      {isSynthesizingPoster && (
         <div className="absolute inset-0 flex items-center justify-center bg-slate-900/80 z-40 backdrop-blur-sm">
            <div className="flex flex-col items-center gap-4">
               <div className="w-10 h-10 border-2 border-cyan-500/10 border-t-cyan-500 rounded-full animate-spin"></div>
               <div className="mono text-[9px] text-cyan-500 uppercase font-black animate-pulse tracking-widest">
-                {isSynthesizingPoster ? 'Generating_Illustration...' : 'Synthesizing_Pixels...'}
+                Generating_Illustration...
               </div>
            </div>
         </div>
@@ -176,12 +153,6 @@ export const MovieCard: React.FC<MovieCardProps> = ({
             </div>
           </div>
           <div className="absolute bottom-4 left-0 right-0 mono text-[9px] text-slate-800 uppercase tracking-[0.5em] font-bold">Neural_Override_Active</div>
-        </div>
-      )}
-      
-      {isNeuralGenerated && (
-        <div className="absolute bottom-2 left-2 z-20">
-          <div className="mono text-[8px] bg-cyan-500 text-black px-1.5 py-0.5 font-black uppercase tracking-tighter shadow-[0_0_10px_rgba(0,245,255,0.4)]">NEURAL_ILLUSTRATION</div>
         </div>
       )}
 
@@ -278,33 +249,6 @@ export const MovieCard: React.FC<MovieCardProps> = ({
                     </button>
                   </div>
                 </div>
-              ) : showEditInput ? (
-                <div className="space-y-1 animate-in fade-in slide-in-from-top-2 duration-300">
-                  <input 
-                    autoFocus
-                    type="text"
-                    value={editPrompt}
-                    onChange={(e) => setEditPrompt(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleNeuralEdit()}
-                    placeholder="TYPE_EDIT_PROMPT..."
-                    className="w-full bg-black/60 border border-cyan-500/30 p-2 mono text-xs text-white outline-none uppercase placeholder-slate-700"
-                  />
-                  <div className="flex gap-1">
-                    <button 
-                      onClick={handleNeuralEdit}
-                      disabled={isProcessingEdit}
-                      className="flex-1 py-1.5 bg-cyan-500 text-black mono text-xs font-bold uppercase flex items-center justify-center gap-2"
-                    >
-                      {isProcessingEdit ? <i className="fa-solid fa-microchip animate-spin"></i> : '[ SYNTHESIZE ]'}
-                    </button>
-                    <button 
-                      onClick={() => setShowEditInput(false)}
-                      className="px-3 py-1.5 bg-white/5 text-slate-500 mono text-xs font-bold uppercase"
-                    >
-                      [ X ]
-                    </button>
-                  </div>
-                </div>
               ) : movie.feedback ? (
                 <div className="py-2 border border-white/5 bg-white/5 flex items-center justify-center gap-2">
                   <i className={`fa-solid ${movie.feedback.type === 'like' ? 'fa-thumbs-up text-cyan-500' : 'fa-thumbs-down text-red-500'} text-xs`}></i>
@@ -341,15 +285,6 @@ export const MovieCard: React.FC<MovieCardProps> = ({
                   [ WATCHED ]
                 </button>
               </div>
-
-              {!showEditInput && !showReasonInput && !isProcessingEdit && (
-                <button 
-                  onClick={() => setShowEditInput(true)}
-                  className="w-full py-2 bg-cyan-500/5 border border-cyan-500/20 text-cyan-500/80 hover:text-cyan-400 hover:border-cyan-400 mono text-[9px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2"
-                >
-                  [ NEURAL_EDIT_POSTER ]
-                </button>
-              )}
             </div>
           </div>
         ) : (

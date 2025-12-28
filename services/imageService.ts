@@ -55,11 +55,12 @@ export async function generateNeuralPoster(title: string, description: string = 
       contents: {
         parts: [
           {
-            text: `A minimalist high-end cyberpunk techno illustration for the movie "${title}". 
-            Context: ${description.slice(0, 150)}
-            Style: Abstract vector illustration, clean geometric lines, digital circuitry patterns, cinematic depth, 2D graphic design. 
-            Palette: Deep navy background (#020617) with vibrant cyan (#00f5ff) and white glowing accents. 
-            No text, no human faces, just a symbolic artistic interpretation of the movie's core concept.`,
+            text: `A high-end cinematic digital illustration for the movie "${title}". 
+            Context: ${description.slice(0, 200)}
+            Goal: Create a recognizable visual representation of the film's core iconic themes, characters, or props.
+            Style: Cyberpunk digital art. Blend identifiable silhouettes or specific movie motifs with subtle glowing circuitry and data-stream overlays. It should look like a "neural memory" of the film.
+            Palette: Deep navy/black background (#020617) with vibrant cyan (#00f5ff) and white glowing accents. 
+            Avoid text or letters. Ensure the subject matter is clearly recognizable as relating to "${title}".`,
           },
         ],
       },
