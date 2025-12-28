@@ -1,6 +1,6 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Movie, Feedback, ContentType } from '../types';
+import { editMoviePoster, generateNeuralPoster } from '../services/imageService';
 
 interface MovieCardProps {
   movie: Movie;
@@ -20,6 +20,13 @@ export const MovieCard: React.FC<MovieCardProps> = ({
   onFeedback 
 }) => {
   const [showReasonInput, setShowReasonInput] = useState(false);
+  const [showEditInput, setShowEditInput] = useState(false);
+  const [editPrompt, setEditPrompt] = useState('');
+  const [isProcessingEdit, setIsProcessingEdit] = useState(false);
+  const [isSynthesizingPoster, setIsSynthesizingPoster] = useState(false);
+  const [editedPoster, setEditedPoster] = useState<string | null>(null);
+  const [neuralPoster, setNeuralPoster] = useState<string | null>(null);
+  
   const [tempFeedback, setTempFeedback] = useState<'like' | 'dislike' | null>(null);
   const [reason, setReason] = useState('');
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -27,6 +34,23 @@ export const MovieCard: React.FC<MovieCardProps> = ({
   const [isInView, setIsInView] = useState(false);
   
   const cardRef = useRef<HTMLDivElement>(null);
+
+  // Auto-generate poster if missing
+  useEffect(() => {
+    const checkAndGenerate = async () => {
+      const pUrl = movie.posterUrl;
+      const isLost = !pUrl || pUrl.includes('[SIGNAL_LOST]') || pUrl === 'null' || pUrl === 'undefined';
+      
+      if (isLost && !neuralPoster && !isSynthesizingPoster) {
+        setIsSynthesizingPoster(true);
+        const result = await generateNeuralPoster(movie.title, movie.description);
+        if (result) setNeuralPoster(result);
+        setIsSynthesizingPoster(false);
+      }
+    };
+    
+    if (isInView) checkAndGenerate();
+  }, [isInView, movie.posterUrl, movie.title, movie.description, neuralPoster, isSynthesizingPoster]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -63,14 +87,33 @@ export const MovieCard: React.FC<MovieCardProps> = ({
     }
   };
 
+  const handleNeuralEdit = async () => {
+    if (!editPrompt.trim()) return;
+    const sourceUrl = editedPoster || neuralPoster || movie.posterUrl;
+    if (!sourceUrl) return;
+    
+    setIsProcessingEdit(true);
+    try {
+      const result = await editMoviePoster(sourceUrl, editPrompt);
+      if (result) {
+        setEditedPoster(result);
+        setShowEditInput(false);
+      }
+    } catch (err) {
+      alert("EDIT_FAILURE: Unable to synthesize neural modification. This may be due to CORS restrictions on the source image.");
+    } finally {
+      setIsProcessingEdit(false);
+    }
+  };
+
   const handleImageError = () => {
     setHasError(true);
   };
 
-  // Resilient URL checking
-  const pUrl = movie.posterUrl;
+  const pUrl = editedPoster || neuralPoster || movie.posterUrl;
   const isLost = !pUrl || pUrl.includes('[SIGNAL_LOST]') || pUrl === 'null' || pUrl === 'undefined';
-  const isValidUrl = !isLost && pUrl.startsWith('http');
+  const isValidUrl = !isLost && (pUrl.startsWith('http') || pUrl.startsWith('data:image'));
+  const isNeuralGenerated = !!(neuralPoster || editedPoster);
 
   const tmdbUrl = movie.tmdbId 
     ? `https://www.themoviedb.org/${movie.type === ContentType.SERIES ? 'tv' : 'movie'}/${movie.tmdbId}`
@@ -82,24 +125,34 @@ export const MovieCard: React.FC<MovieCardProps> = ({
 
   const PosterContent = () => (
     <div className="aspect-[2/3] w-full overflow-hidden relative shrink-0 bg-slate-950">
-      {!imageLoaded && !hasError && isValidUrl && (
-        <div className="absolute inset-0 flex items-center justify-center bg-slate-900/50 z-10">
-           <div className="flex flex-col items-center gap-2">
-              <div className="w-8 h-8 border-2 border-cyan-500/10 border-t-cyan-500 rounded-full animate-spin"></div>
+      {(isSynthesizingPoster || isProcessingEdit) && (
+        <div className="absolute inset-0 flex items-center justify-center bg-slate-900/80 z-40 backdrop-blur-sm">
+           <div className="flex flex-col items-center gap-4">
+              <div className="w-10 h-10 border-2 border-cyan-500/10 border-t-cyan-500 rounded-full animate-spin"></div>
+              <div className="mono text-[9px] text-cyan-500 uppercase font-black animate-pulse tracking-widest">
+                {isSynthesizingPoster ? 'Generating_Illustration...' : 'Synthesizing_Pixels...'}
+              </div>
            </div>
-           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-[shimmer_2s_infinite]"></div>
         </div>
       )}
-      
+
       {(!hasError && isValidUrl) ? (
-        <img 
-          src={pUrl} 
-          alt={movie.title}
-          onLoad={() => setImageLoaded(true)}
-          onError={handleImageError}
-          loading="lazy"
-          className={`w-full h-full object-cover transition-all duration-700 group-hover:scale-110 ${imageLoaded ? 'opacity-100 grayscale-[0.2] group-hover:grayscale-0' : 'opacity-0'}`}
-        />
+        <div className="relative w-full h-full overflow-hidden">
+          {isNeuralGenerated && (
+            <div className="absolute inset-0 z-10 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+               <div className="absolute inset-0 bg-gradient-to-t from-cyan-500/20 to-transparent"></div>
+               <div className="absolute inset-0 scanline opacity-20"></div>
+            </div>
+          )}
+          <img 
+            src={pUrl} 
+            alt={movie.title}
+            onLoad={() => setImageLoaded(true)}
+            onError={handleImageError}
+            loading="lazy"
+            className={`w-full h-full object-cover transition-all duration-700 group-hover:scale-110 ${imageLoaded ? 'opacity-100' : 'opacity-0'} ${isNeuralGenerated ? 'grayscale-[0.4] group-hover:grayscale-0 contrast-125' : 'grayscale-[0.2] group-hover:grayscale-0'}`}
+          />
+        </div>
       ) : (
         <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center relative bg-gradient-to-br from-slate-950 via-slate-900 to-black border-b border-cyan-500/10">
           <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[radial-gradient(#00f5ff_1px,transparent_1px)] [background-size:16px_16px]"></div>
@@ -121,15 +174,17 @@ export const MovieCard: React.FC<MovieCardProps> = ({
               <span className="mono text-xs text-slate-500 uppercase tracking-widest font-bold">{movie.year}</span>
               <div className="h-[1px] w-6 bg-cyan-500/20"></div>
             </div>
-
-            <div className="mono text-[8px] text-amber-500/40 uppercase tracking-widest">
-              {hasError ? 'SYNC_ERROR' : 'METADATA_ONLY'}
-            </div>
           </div>
           <div className="absolute bottom-4 left-0 right-0 mono text-[9px] text-slate-800 uppercase tracking-[0.5em] font-bold">Neural_Override_Active</div>
         </div>
       )}
       
+      {isNeuralGenerated && (
+        <div className="absolute bottom-2 left-2 z-20">
+          <div className="mono text-[8px] bg-cyan-500 text-black px-1.5 py-0.5 font-black uppercase tracking-tighter shadow-[0_0_10px_rgba(0,245,255,0.4)]">NEURAL_ILLUSTRATION</div>
+        </div>
+      )}
+
       <div className="absolute top-2 left-2 right-2 flex justify-between items-start pointer-events-none z-20">
         <div className="flex flex-wrap gap-1">
            {movie.providers?.slice(0, 3).map(p => (
@@ -189,7 +244,7 @@ export const MovieCard: React.FC<MovieCardProps> = ({
 
         {isRecommendation ? (
           <div className="pt-2 border-t border-white/5 space-y-3 flex-1 flex flex-col justify-between">
-            <div className="relative h-32 overflow-y-auto custom-scrollbar pr-1">
+            <div className="relative h-24 overflow-y-auto custom-scrollbar pr-1">
               <i className="fa-solid fa-quote-left absolute -left-2 -top-1 text-cyan-500/10 text-sm"></i>
               <p className="text-xs text-slate-400 leading-relaxed font-light italic pl-1">
                 {movie.reason}
@@ -223,6 +278,33 @@ export const MovieCard: React.FC<MovieCardProps> = ({
                     </button>
                   </div>
                 </div>
+              ) : showEditInput ? (
+                <div className="space-y-1 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <input 
+                    autoFocus
+                    type="text"
+                    value={editPrompt}
+                    onChange={(e) => setEditPrompt(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleNeuralEdit()}
+                    placeholder="TYPE_EDIT_PROMPT..."
+                    className="w-full bg-black/60 border border-cyan-500/30 p-2 mono text-xs text-white outline-none uppercase placeholder-slate-700"
+                  />
+                  <div className="flex gap-1">
+                    <button 
+                      onClick={handleNeuralEdit}
+                      disabled={isProcessingEdit}
+                      className="flex-1 py-1.5 bg-cyan-500 text-black mono text-xs font-bold uppercase flex items-center justify-center gap-2"
+                    >
+                      {isProcessingEdit ? <i className="fa-solid fa-microchip animate-spin"></i> : '[ SYNTHESIZE ]'}
+                    </button>
+                    <button 
+                      onClick={() => setShowEditInput(false)}
+                      className="px-3 py-1.5 bg-white/5 text-slate-500 mono text-xs font-bold uppercase"
+                    >
+                      [ X ]
+                    </button>
+                  </div>
+                </div>
               ) : movie.feedback ? (
                 <div className="py-2 border border-white/5 bg-white/5 flex items-center justify-center gap-2">
                   <i className={`fa-solid ${movie.feedback.type === 'like' ? 'fa-thumbs-up text-cyan-500' : 'fa-thumbs-down text-red-500'} text-xs`}></i>
@@ -232,15 +314,15 @@ export const MovieCard: React.FC<MovieCardProps> = ({
                 <div className="grid grid-cols-2 gap-1">
                   <button 
                     onClick={() => handleVote('like')}
-                    className="py-2 border border-cyan-500/20 hover:bg-cyan-500/10 text-cyan-500/60 hover:text-cyan-500 mono text-xs uppercase font-bold transition-all flex items-center justify-center gap-1"
+                    className="py-2 border border-cyan-500/20 hover:bg-cyan-500/10 text-cyan-500/60 hover:text-cyan-400 mono text-xs uppercase font-bold transition-all flex items-center justify-center gap-1"
                   >
-                    <i className="fa-solid fa-thumbs-up"></i> LIKE
+                    [ <i className="fa-solid fa-thumbs-up"></i> LIKE ]
                   </button>
                   <button 
                     onClick={() => handleVote('dislike')}
                     className="py-2 border border-red-500/10 hover:bg-red-500/10 text-red-500/40 hover:text-red-500 mono text-xs uppercase font-bold transition-all flex items-center justify-center gap-1"
                   >
-                    <i className="fa-solid fa-thumbs-down"></i> NO
+                    [ <i className="fa-solid fa-thumbs-down"></i> NO ]
                   </button>
                 </div>
               )}
@@ -259,6 +341,15 @@ export const MovieCard: React.FC<MovieCardProps> = ({
                   [ WATCHED ]
                 </button>
               </div>
+
+              {!showEditInput && !showReasonInput && !isProcessingEdit && (
+                <button 
+                  onClick={() => setShowEditInput(true)}
+                  className="w-full py-2 bg-cyan-500/5 border border-cyan-500/20 text-cyan-500/80 hover:text-cyan-400 hover:border-cyan-400 mono text-[9px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2"
+                >
+                  [ NEURAL_EDIT_POSTER ]
+                </button>
+              )}
             </div>
           </div>
         ) : (
