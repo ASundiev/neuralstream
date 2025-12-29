@@ -578,13 +578,13 @@ const App: React.FC = () => {
               <div className="pt-6 border-t border-white/5 mt-auto flex flex-row gap-4 bg-slate-900 z-10 pb-2">
                  <button 
                    onClick={handleLogout}
-                   className="flex-1 py-4 bg-slate-800/50 hover:bg-slate-800 text-slate-400 mono text-[11px] font-black uppercase tracking-widest transition-all border border-white/5"
+                   className="flex-1 py-4 mono text-xs font-black uppercase tracking-widest text-slate-500 hover:text-white transition-colors"
                  >
                     [ LOG_OUT ]
                  </button>
                  <button 
                    onClick={() => setShowStatsModal(false)} 
-                   className="flex-1 py-4 bg-white text-black mono font-black text-[11px] uppercase tracking-widest hover:bg-slate-200 transition-colors"
+                   className="flex-1 py-4 bg-cyan-500/10 border border-cyan-500/40 text-cyan-400 mono font-black text-xs uppercase tracking-widest hover:bg-cyan-500 hover:text-black transition-all shadow-[0_0_20px_rgba(0,245,255,0.1)]"
                  >
                     [ DISMISS ]
                  </button>
@@ -594,7 +594,7 @@ const App: React.FC = () => {
       )}
 
       <main className={`max-w-7xl mx-auto px-4 md:px-8 relative z-10 pt-32`}>
-        <div className="relative">
+        <div className={`relative ${user ? 'pt-32' : 'pt-0'}`}>
           <div className="px-4 md:px-12">
             {!user && (
               <PromoHero 
@@ -672,6 +672,11 @@ const App: React.FC = () => {
                                     onChange={handleFileUpload} 
                                   />
                                 </div>
+                                {state.userMovies.length > 0 && (
+                                  <span className="mono text-[10px] text-slate-500 uppercase font-bold animate-in fade-in slide-in-from-top-1 duration-500">
+                                    {state.userMovies.length}_NODES_SYNCED
+                                  </span>
+                                )}
                               </div>
                             </div>
                             
