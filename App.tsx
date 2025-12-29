@@ -595,14 +595,16 @@ const App: React.FC = () => {
 
       <main className={`max-w-7xl mx-auto px-4 md:px-8 relative z-10 pt-32`}>
         <div className={`relative ${user ? 'pt-32' : 'pt-0'}`}>
-          <div className="px-4 md:px-12">
+          <div className="">
             {!user && (
-              <PromoHero 
-                isFlipped={isFlipped} 
-                onTryNow={() => setIsFlipped(true)} 
-                onLogin={() => openAuth(false)} 
-                onSignUp={() => openAuth(true)}
-              />
+              <div className="mx-4 md:mx-12">
+                <PromoHero 
+                  isFlipped={isFlipped} 
+                  onTryNow={() => setIsFlipped(true)} 
+                  onLogin={() => openAuth(false)} 
+                  onSignUp={() => openAuth(true)}
+                />
+              </div>
             )}
 
             {showUploadScreen ? (
@@ -619,7 +621,7 @@ const App: React.FC = () => {
                 </div>
             ) : (
                 <div className="space-y-12">
-                  <div className="perspective-1000 relative -mt-8 z-30">
+                  <div className="perspective-1000 relative -mt-8 z-30 mx-4 md:mx-12">
                     <div className={`transition-all duration-1000 preserve-3d relative ${isFlipped || user ? 'rotate-y-180' : ''}`}>
                       <div className={`backface-hidden ${isFlipped || user ? 'absolute inset-0 invisible pointer-events-none' : 'relative'}`}>
                         <div className="tech-border bg-slate-900/80 backdrop-blur-xl border-cyan-500/10">
@@ -780,7 +782,7 @@ const App: React.FC = () => {
                 {state.isRecsLoading && <div className="mt-10 animate-in fade-in duration-700"><NeuralLoader /></div>}
                 
                 {!state.isRecsLoading && state.recommendations.length > 0 && (
-                <section className="space-y-10 animate-in fade-in slide-in-from-bottom-8 duration-1000 mt-10">
+                <section className="space-y-10 animate-in fade-in slide-in-from-bottom-8 duration-1000 mt-10 px-4 md:px-12">
                     <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-white/10 pb-8">
                       <div>
                         <div className="mono text-[10px] text-cyan-500 uppercase tracking-widest font-bold">Output_Matrix</div>
