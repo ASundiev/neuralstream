@@ -672,11 +672,6 @@ const App: React.FC = () => {
                                     onChange={handleFileUpload} 
                                   />
                                 </div>
-                                {state.userMovies.length > 0 && (
-                                  <span className="mono text-[10px] text-slate-500 uppercase font-bold animate-in fade-in slide-in-from-top-1 duration-500">
-                                    {state.userMovies.length}_NODES_SYNCED
-                                  </span>
-                                )}
                               </div>
                             </div>
                             
