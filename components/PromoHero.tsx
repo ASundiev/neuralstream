@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 interface PromoHeroProps {
@@ -21,9 +20,13 @@ export const PromoHero: React.FC<PromoHeroProps> = ({ onTryNow, onLogin, onSignU
       <div className="relative z-20 flex flex-col items-center justify-center text-center max-w-4xl mx-auto space-y-12">
         <div className="space-y-10">
           <div className="flex flex-col items-center space-y-8">
-            <div className="inline-flex items-center gap-3 px-4 py-1.5 border border-cyan-500/20 bg-cyan-500/5 mono text-[10px] text-cyan-400 uppercase tracking-[0.4em] animate-pulse rounded-full">
-              <span className="w-2 h-2 bg-cyan-500 rounded-full"></span>
-              Neural_Protocol_Active
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 flex items-center justify-center bg-cyan-500 shadow-[0_0_15px_rgba(0,245,255,0.4)]">
+                  <i className="fa-solid fa-dna text-sm text-black"></i>
+              </div>
+              <span className="text-xl md:text-2xl font-black tracking-tighter uppercase italic leading-tight text-white drop-shadow-[0_0_10px_rgba(0,245,255,0.1)]">
+                  NeuralStream
+              </span>
             </div>
             
             <div className="space-y-6">

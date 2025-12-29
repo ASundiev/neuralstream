@@ -71,25 +71,28 @@ export async function generateNeuralPoster(title: string, description: string = 
       },
     });
 
-    for (const part of response.candidates[0].content.parts) {
-      if (part.inlineData) {
-        const base64Data = part.inlineData.data;
-        const dataUrl = `data:image/png;base64,${base64Data}`;
+    const parts = response.candidates?.[0]?.content?.parts;
+    if (parts) {
+      for (const part of parts) {
+        if (part.inlineData) {
+          const base64Data = part.inlineData.data;
+          const dataUrl = `data:image/png;base64,${base64Data}`;
 
-        // Layer 4: Persist to Cloud
-        if (supabase) {
-          const blob = base64ToBlob(base64Data, 'image/png');
-          await supabase.storage.from('neural-posters').upload(fileName, blob, {
-            contentType: 'image/png',
-            upsert: true
-          });
-          const { data } = supabase.storage.from('neural-posters').getPublicUrl(fileName);
-          posterCache[title] = data.publicUrl;
-          return data.publicUrl;
+          // Layer 4: Persist to Cloud
+          if (supabase) {
+            const blob = base64ToBlob(base64Data, 'image/png');
+            await supabase.storage.from('neural-posters').upload(fileName, blob, {
+              contentType: 'image/png',
+              upsert: true
+            });
+            const { data } = supabase.storage.from('neural-posters').getPublicUrl(fileName);
+            posterCache[title] = data.publicUrl;
+            return data.publicUrl;
+          }
+
+          posterCache[title] = dataUrl;
+          return dataUrl;
         }
-
-        posterCache[title] = dataUrl;
-        return dataUrl;
       }
     }
     return null;
@@ -147,9 +150,12 @@ export async function editMoviePoster(imageUrl: string, prompt: string): Promise
       },
     });
 
-    for (const part of response.candidates[0].content.parts) {
-      if (part.inlineData) {
-        return `data:image/png;base64,${part.inlineData.data}`;
+    const parts = response.candidates?.[0]?.content?.parts;
+    if (parts) {
+      for (const part of parts) {
+        if (part.inlineData) {
+          return `data:image/png;base64,${part.inlineData.data}`;
+        }
       }
     }
     return null;

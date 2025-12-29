@@ -7,7 +7,6 @@ import { MovieCard } from './components/MovieCard';
 import { NeuralLoader } from './components/NeuralLoader';
 import { PromoHero } from './components/PromoHero';
 import { PromoFeatures } from './components/PromoFeatures';
-import { NeuralBackground } from './components/NeuralBackground';
 
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://vplgyzzwgbgwudbtdgfk.supabase.co';
 const SUPABASE_KEY = process.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZwbGd5enp3Z2Jnd3VkYnRkZ2ZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYxNzM0ODksImV4cCI6MjA4MTc0OTQ4OX0.90zVerWUdgekP_MWRiViKC80bDy46UkZau6MZ6ANrKE';
@@ -129,7 +128,7 @@ const App: React.FC = () => {
           setState((s) => ({ ...s, isLoggedIn: true, isLoading: false, isRecsLoading: false, guestSearchUsed: true }));
         }
       } else {
-        setState((s) => ({ ...s, isLoggedIn: true, isLoading: false }));
+        setState((s) => ({ ...s, isLoggedIn: true, isLoading: false, isRecsLoading: false, guestSearchUsed: true }));
       }
     } catch (err) {
       console.error("Hydration Failure:", err);
@@ -359,16 +358,49 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen pb-20 relative bg-slate-950">
-      <NeuralBackground />
       
+      {user && (
+        <header className="fixed top-0 left-0 right-0 z-[80] bg-slate-950/60 backdrop-blur-xl border-b border-cyan-500/5 h-20 flex items-center animate-in slide-in-from-top duration-700">
+          <div className="max-w-7xl mx-auto w-full px-4 md:px-8">
+            <div className="px-4 md:px-12 flex items-center justify-between w-full">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 flex items-center justify-center bg-cyan-500 shadow-[0_0_20px_rgba(0,245,255,0.4)]">
+                    <i className="fa-solid fa-dna text-lg text-black"></i>
+                </div>
+                <h1 className="text-2xl font-black uppercase italic tracking-tighter text-white drop-shadow-[0_0_10px_rgba(0,245,255,0.2)]">
+                  NeuralStream
+                </h1>
+              </div>
+              
+              <button 
+                onClick={() => setShowStatsModal(true)}
+                className="group flex items-center gap-4 p-1.5 pr-6 bg-cyan-500/5 border border-cyan-500/10 hover:border-cyan-500/30 transition-all rounded-sm"
+              >
+                <div className="w-10 h-10 flex items-center justify-center bg-cyan-500/20 text-cyan-400 group-hover:bg-cyan-500 group-hover:text-black transition-all">
+                    <i className="fa-solid fa-id-badge text-xl"></i>
+                </div>
+                <div className="text-left space-y-0.5">
+                  <div className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 bg-cyan-500 rounded-full animate-pulse shadow-[0_0_5px_rgba(0,245,255,0.5)]"></span>
+                    <span className="mono text-[9px] text-slate-500 uppercase font-black tracking-widest">Neural_DNA_Profile</span>
+                  </div>
+                  <div className="mono text-[10px] font-black uppercase tracking-tight">
+                    <span className="text-cyan-400">Nodes:</span> {state.userMovies.length} <span className="text-slate-700 mx-1">//</span> <span className="text-cyan-400">Signals:</span> {state.feedbackHistory.length}
+                  </div>
+                </div>
+              </button>
+            </div>
+          </div>
+        </header>
+      )}
+
       {showAuthModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in duration-300">
-          <div className="max-w-4xl w-full tech-border bg-slate-900 shadow-[0_0_50px_rgba(0,245,255,0.1)] relative overflow-hidden flex flex-col md:flex-row">
+          <div className="max-w-4xl w-full tech-border bg-slate-900 shadow-[0_0_50px_rgba(0,245,255,0.1)] relative overflow-hidden flex flex-col md:flex-row border-cyan-500/20">
             <button onClick={() => setShowAuthModal(false)} className="absolute top-4 right-4 text-slate-500 hover:text-white px-2 z-[110]">
               <i className="fa-solid fa-xmark text-lg"></i>
             </button>
             
-            {/* Left Side: Value Proposition / Benefits */}
             <div className="md:w-1/2 p-8 md:p-12 bg-black/40 border-b md:border-b-0 md:border-r border-white/5 space-y-10">
               <div className="space-y-4">
                 <div className="mono text-[10px] text-cyan-500 uppercase tracking-[0.4em] font-black">Unlock all features</div>
@@ -386,7 +418,7 @@ const App: React.FC = () => {
                   </div>
                 </div>
                 <div className="flex gap-4 group">
-                  <div className="w-8 h-8 shrink-0 flex items-center justify-center bg-slate-800 border border-white/5 text-slate-500 group-hover:text-cyan-400 transition-colors">
+                  <div className="w-8 h-8 shrink-0 flex items-center justify-center bg-slate-800 border border-white/5 text-slate-500 group-hover:text-greenAcc-400 transition-colors">
                     <i className="fa-solid fa-sync text-xs"></i>
                   </div>
                   <div>
@@ -394,19 +426,9 @@ const App: React.FC = () => {
                     <p className="mono text-[9px] text-slate-500 uppercase leading-relaxed">Your movie history and preferences are securely stored and synced across your unique viewer profile.</p>
                   </div>
                 </div>
-                <div className="flex gap-4 group">
-                  <div className="w-8 h-8 shrink-0 flex items-center justify-center bg-slate-800 border border-white/5 text-slate-500 group-hover:text-cyan-400 transition-colors">
-                    <i className="fa-solid fa-comment-dots text-xs"></i>
-                  </div>
-                  <div>
-                    <h4 className="mono text-[10px] font-black text-white uppercase tracking-widest mb-1">Smart AI Prompting</h4>
-                    <p className="mono text-[9px] text-slate-500 uppercase leading-relaxed">Describe exactly what you want to see using normal language and get precise results from our neural engine.</p>
-                  </div>
-                </div>
               </div>
             </div>
 
-            {/* Right Side: Auth Form */}
             <div className="md:w-1/2 p-8 md:p-12 flex flex-col justify-center bg-slate-900">
               <div className="text-center space-y-4 mb-10">
                 <div className="inline-block px-4 py-1 bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 mono text-[10px] uppercase tracking-widest font-black rounded-full mb-2">
@@ -455,16 +477,15 @@ const App: React.FC = () => {
 
       {showStatsModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-           <div className="max-w-3xl w-full tech-border bg-slate-900 p-8 relative overflow-hidden h-[85vh] flex flex-col">
+           <div className="max-w-3xl w-full tech-border bg-slate-900 p-8 relative overflow-hidden h-[85vh] flex flex-col border-cyan-500/20">
               <button onClick={() => setShowStatsModal(false)} className="absolute top-4 right-4 text-slate-500 hover:text-white px-2 z-30">X</button>
               
               <div className="space-y-1 mb-8">
-                 <div className="mono text-[10px] text-cyan-500 uppercase font-black tracking-widest">Neural_DNA_Profile</div>
-                 <h2 className="text-3xl font-black text-white italic uppercase tracking-tighter">Diagnostic_Report</h2>
+                 <h2 className="text-3xl font-black text-white italic uppercase tracking-tighter">Neural DNA Profile</h2>
               </div>
 
               <div className="overflow-y-auto pr-4 custom-scrollbar space-y-8 flex-1 min-h-0">
-                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="p-4 bg-black/40 border border-white/5 space-y-1">
                        <div className="mono text-[9px] text-slate-500 uppercase">Nodes</div>
                        <div className="text-2xl font-black text-cyan-400">{state.userMovies.length}</div>
@@ -472,10 +493,6 @@ const App: React.FC = () => {
                     <div className="p-4 bg-black/40 border border-white/5 space-y-1">
                        <div className="mono text-[9px] text-slate-500 uppercase">Signals</div>
                        <div className="text-2xl font-black text-cyan-400">{state.feedbackHistory.length}</div>
-                    </div>
-                    <div className="p-4 bg-black/40 border border-white/5 space-y-1">
-                       <div className="mono text-[9px] text-slate-500 uppercase">Sync</div>
-                       <div className="text-xs font-black text-green-400 uppercase">ACTIVE</div>
                     </div>
                  </div>
 
@@ -497,9 +514,6 @@ const App: React.FC = () => {
                                 {activeStatsTab === 'SEARCHES' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-cyan-400"></div>}
                             </button>
                         </div>
-                        {activeStatsTab === 'SEARCHES' && (state.searchHistory?.length || 0) > 0 && (
-                            <button onClick={clearVault} className="mono text-[8px] text-red-500 hover:text-red-400 transition-colors mr-4 uppercase font-bold">[ PURGE_ALL ]</button>
-                        )}
                     </div>
                     
                     <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar min-h-0 pb-10">
@@ -508,22 +522,15 @@ const App: React.FC = () => {
                         {state.feedbackHistory.length > 0 ? (
                         <div className="space-y-2 animate-in fade-in duration-300">
                             {state.feedbackHistory.map((item, idx) => (
-                                <div key={idx} className="flex items-center justify-between p-3 bg-white/5 border border-white/5 hover:border-white/10 transition-colors group">
+                                <div key={idx} className="flex items-center justify-between p-3 bg-white/5 border border-white/5 hover:border-cyan-500/20 transition-colors group">
                                     <div className="flex items-center gap-4">
                                     <div className={`w-8 h-8 flex items-center justify-center rounded-sm ${item.feedback.type === 'like' ? 'bg-cyan-500/10 text-cyan-500' : 'bg-red-500/10 text-red-500'}`}>
                                         <i className={`fa-solid ${item.feedback.type === 'like' ? 'fa-thumbs-up' : 'fa-thumbs-down'} text-xs`}></i>
                                     </div>
                                     <div>
                                         <div className="text-xs font-black uppercase text-white truncate max-w-[200px] md:max-w-sm">{item.title}</div>
-                                        {item.feedback.reason && <div className="mono text-[9px] text-slate-500 italic mt-0.5">" {item.feedback.reason} "</div>}
                                     </div>
                                     </div>
-                                    <button 
-                                    onClick={() => removeSignal(idx)}
-                                    className="mono text-[9px] text-red-500/40 hover:text-red-500 transition-colors uppercase font-bold"
-                                    >
-                                    [ PURGE ]
-                                    </button>
                                 </div>
                             ))}
                         </div>
@@ -551,21 +558,8 @@ const App: React.FC = () => {
                                                     <div className="text-xs font-black uppercase text-white group-hover:text-cyan-400 transition-colors truncate max-w-[200px] md:max-w-md">
                                                         {item.query}
                                                     </div>
-                                                    <div className="mono text-[8px] text-slate-600 uppercase flex items-center gap-2">
-                                                        <span>{new Date(item.timestamp).toLocaleDateString()} // {new Date(item.timestamp).toLocaleTimeString()}</span>
-                                                        <span>• {item.recommendations.length} RESULTS</span>
-                                                    </div>
                                                 </div>
                                             </div>
-                                            <div className="flex items-center gap-4">
-                                                <span className="mono text-[9px] text-slate-700 uppercase group-hover:text-cyan-600 transition-colors font-bold">[ RESTORE ]</span>
-                                            </div>
-                                        </button>
-                                        <button 
-                                            onClick={(e) => { e.stopPropagation(); purgeSearch(item.id); }}
-                                            className="absolute top-1/2 -right-12 -translate-y-1/2 mono text-[9px] text-red-500/40 hover:text-red-500 transition-colors uppercase font-bold opacity-0 group-hover:opacity-100 group-hover:-right-4 px-2"
-                                        >
-                                            [ X ]
                                         </button>
                                     </div>
                                 ))}
@@ -584,13 +578,13 @@ const App: React.FC = () => {
               <div className="pt-6 border-t border-white/5 mt-auto flex flex-row gap-4 bg-slate-900 z-10 pb-2">
                  <button 
                    onClick={handleLogout}
-                   className="flex-1 py-4 bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-black mono text-[11px] font-black uppercase tracking-widest transition-all border border-red-500/20"
+                   className="flex-1 py-4 bg-slate-800/50 hover:bg-slate-800 text-slate-400 mono text-[11px] font-black uppercase tracking-widest transition-all border border-white/5"
                  >
                     [ LOG_OUT ]
                  </button>
                  <button 
                    onClick={() => setShowStatsModal(false)} 
-                   className="flex-1 py-4 bg-cyan-500 text-black mono font-black text-[11px] uppercase tracking-widest hover:bg-white transition-colors"
+                   className="flex-1 py-4 bg-white text-black mono font-black text-[11px] uppercase tracking-widest hover:bg-slate-200 transition-colors"
                  >
                     [ DISMISS ]
                  </button>
@@ -599,49 +593,8 @@ const App: React.FC = () => {
         </div>
       )}
 
-      {/* Persistent Transparent Header */}
-      <header className="fixed top-0 left-0 right-0 z-[60] bg-transparent">
-        <div className="max-w-7xl mx-auto px-4 md:px-8 flex items-center justify-between h-24 md:h-24">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 flex items-center justify-center bg-cyan-500">
-                  <i className="fa-solid fa-dna text-sm text-black"></i>
-              </div>
-              <span className="text-xl md:text-2xl font-black tracking-tighter uppercase italic leading-tight text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.1)]">
-                  NeuralStream
-              </span>
-            </div>
-            
-            <div className="flex items-center gap-8">
-              {!user ? (
-                <>
-                  <button onClick={() => openAuth(true)} className="mono text-xs font-black uppercase tracking-widest text-slate-500 hover:text-white transition-colors">[ SIGN UP ]</button>
-                  <button onClick={() => openAuth(false)} className="px-6 py-2 bg-cyan-500/10 border border-cyan-500/40 text-cyan-400 mono font-black text-xs uppercase tracking-widest hover:bg-cyan-500 hover:text-black transition-all shadow-[0_0_20px_rgba(0,245,255,0.1)] rounded-sm">[ LOGIN ]</button>
-                </>
-              ) : (
-                <button 
-                  onClick={() => setShowStatsModal(true)} 
-                  className="group relative flex items-center gap-4 bg-slate-900/40 border border-cyan-500/10 hover:border-cyan-500/40 hover:bg-slate-900/80 p-2 pr-4 transition-all duration-300 rounded-sm"
-                >
-                    <div className="w-10 h-10 flex items-center justify-center bg-cyan-500/5 border border-cyan-500/20 text-cyan-500 group-hover:bg-cyan-500 group-hover:text-black transition-all">
-                       <i className="fa-solid fa-id-card-clip text-base"></i>
-                    </div>
-                    <div className="hidden md:flex flex-col items-start leading-tight text-left">
-                        <div className="mono text-[8px] text-slate-500 uppercase tracking-widest flex items-center gap-1.5 font-black">
-                            <span className={`w-1.5 h-1.5 ${syncStatus === 'SYNCING' ? 'bg-cyan-500 animate-ping' : 'bg-green-500'} rounded-full`}></span>
-                            NEURAL_DNA_PROFILE
-                        </div>
-                        <div className="mono text-[10px] text-cyan-400 font-bold uppercase tracking-tight group-hover:text-white transition-colors">
-                            NODES: <span className="text-white">{state.userMovies.length}</span> // SIGNALS: <span className="text-white">{state.feedbackHistory.length}</span>
-                        </div>
-                    </div>
-                </button>
-              )}
-            </div>
-        </div>
-      </header>
-
-      <main className="max-w-7xl mx-auto px-4 md:px-8 mt-16 relative z-10">
-        <div className="relative pt-16">
+      <main className={`max-w-7xl mx-auto px-4 md:px-8 relative z-10 pt-32`}>
+        <div className="relative">
           <div className="px-4 md:px-12">
             {!user && (
               <PromoHero 
@@ -653,7 +606,7 @@ const App: React.FC = () => {
             )}
 
             {showUploadScreen ? (
-                <div className="max-w-xl mx-auto tech-border bg-slate-900/40 p-12 text-center space-y-10 relative -mt-16 backdrop-blur-md z-30">
+                <div className="max-w-xl mx-auto tech-border bg-slate-900/40 p-12 text-center space-y-10 relative -mt-16 backdrop-blur-md z-30 border-cyan-500/20">
                     <div className="space-y-4">
                       <div className="mono text-xs text-cyan-400 uppercase tracking-widest animate-pulse">Neural_Profile_Empty</div>
                       <h2 className="text-3xl font-black uppercase text-white italic">Initialize Your <span className="text-cyan-400">Matrix</span></h2>
@@ -668,14 +621,12 @@ const App: React.FC = () => {
                 <div className="space-y-12">
                   <div className="perspective-1000 relative -mt-8 z-30">
                     <div className={`transition-all duration-1000 preserve-3d relative ${isFlipped || user ? 'rotate-y-180' : ''}`}>
-                      {/* Front: Promo Features in same sized block */}
                       <div className={`backface-hidden ${isFlipped || user ? 'absolute inset-0 invisible pointer-events-none' : 'relative'}`}>
                         <div className="tech-border bg-slate-900/80 backdrop-blur-xl border-cyan-500/10">
                           <PromoFeatures />
                         </div>
                       </div>
 
-                      {/* Back: Tuning Parameters in same sized block */}
                       <div className={`backface-hidden rotate-y-180 ${isFlipped || user ? 'relative' : 'absolute inset-0 invisible pointer-events-none'}`}>
                         <section 
                           ref={tuningRef}
@@ -685,11 +636,11 @@ const App: React.FC = () => {
                             <div className="flex flex-col md:flex-row justify-between items-start gap-6 md:gap-0">
                               <div className="space-y-1">
                                 <div className="mono text-[10px] uppercase font-black tracking-widest flex items-center gap-2">
-                                  <span className={`w-1.5 h-1.5 ${state.userMovies.length > 0 ? 'bg-green-500' : 'bg-cyan-500'} rounded-full animate-pulse`}></span>
+                                  <span className={`w-1.5 h-1.5 ${state.userMovies.length > 0 ? 'bg-cyan-500' : 'bg-cyan-500'} rounded-full animate-pulse shadow-[0_0_5px_rgba(0,245,255,0.5)]`}></span>
                                   {(!user && state.userMovies.length > 0) ? (
-                                    <span className="text-green-500 animate-in fade-in duration-300">GUEST_UPLINK_ESTABLISHED</span>
+                                    <span className="text-cyan-500 animate-in fade-in duration-300 uppercase">GUEST_UPLINK_ESTABLISHED</span>
                                   ) : user ? (
-                                    <span className="text-green-500 animate-in fade-in duration-300">UPLINK_PROFILE_SYNCED</span>
+                                    <span className="text-cyan-500 animate-in fade-in duration-300 uppercase">UPLINK_PROFILE_SYNCED</span>
                                   ) : (
                                     <span className="text-cyan-500">Neural_Uplink_Console</span>
                                   )}
@@ -699,12 +650,17 @@ const App: React.FC = () => {
                                 </div>
                               </div>
                               
-                              {/* Native File Uploader Trigger Button with Counter Below */}
                               <div className="flex flex-col items-start md:items-end gap-2">
                                 <div className="relative">
                                   <button 
                                     onClick={() => fileInputRef.current?.click()}
-                                    className={`px-6 py-2 border mono font-black text-xs uppercase tracking-widest transition-all shadow-[0_0_20px_rgba(0,245,255,0.1)] rounded-sm ${importSuccess ? 'bg-green-500 border-green-400 text-black' : 'bg-cyan-500/10 border-cyan-500/40 text-cyan-400 hover:bg-cyan-500 hover:text-black'}`}
+                                    className={`px-6 py-2 border mono font-black text-xs uppercase tracking-widest transition-all rounded-sm ${
+                                      importSuccess 
+                                        ? 'bg-cyan-500 border-cyan-400 text-black shadow-[0_0_20px_rgba(0,245,255,0.4)]' 
+                                        : state.userMovies.length > 0
+                                          ? 'bg-white/5 border-white/20 text-slate-400 hover:bg-white hover:text-black shadow-none'
+                                          : 'bg-cyan-500/10 border-cyan-500/40 text-cyan-400 hover:bg-cyan-500 hover:text-black shadow-[0_0_20px_rgba(0,245,255,0.1)]'
+                                    }`}
                                   >
                                     {importSuccess ? '[ SYNC_COMPLETE ]' : state.userMovies.length > 0 ? '[ RE-IMPORT FROM IMDB ]' : '[ IMPORT FROM IMDB ]'}
                                   </button>
@@ -716,11 +672,6 @@ const App: React.FC = () => {
                                     onChange={handleFileUpload} 
                                   />
                                 </div>
-                                {state.userMovies.length > 0 && (
-                                  <span className="mono text-[10px] text-slate-500 uppercase font-bold animate-in fade-in slide-in-from-top-1 duration-500">
-                                    {state.userMovies.length}_NODES_SYNCED
-                                  </span>
-                                )}
                               </div>
                             </div>
                             
@@ -765,8 +716,8 @@ const App: React.FC = () => {
                                     <option value="">ALL_CHANNELS</option>
                                     {GENRES.map((g) => <option key={g} value={g}>{g.toUpperCase()}</option>)}
                                 </select>
-                                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none opacity-20 group-hover:opacity-60 transition-opacity">
-                                  <i className="fa-solid fa-chevron-down text-[10px] text-cyan-500"></i>
+                                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-cyan-500/50 group-hover:text-cyan-400 transition-colors">
+                                  <i className="fa-solid fa-chevron-down text-[10px]"></i>
                                 </div>
                               </div>
                             </div>
@@ -781,8 +732,8 @@ const App: React.FC = () => {
                                     <option value="">UNCALIBRATED</option>
                                     {MOODS.map((m) => <option key={m} value={m}>{m.toUpperCase()}</option>)}
                                 </select>
-                                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none opacity-20 group-hover:opacity-60 transition-opacity">
-                                  <i className="fa-solid fa-chevron-down text-[10px] text-cyan-500"></i>
+                                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-cyan-500/50 group-hover:text-cyan-400 transition-colors">
+                                  <i className="fa-solid fa-chevron-down text-[10px]"></i>
                                 </div>
                               </div>
                             </div>
@@ -797,8 +748,8 @@ const App: React.FC = () => {
                                     <option value="">GLOBAL_STREAM</option>
                                     {MAJOR_PLATFORMS.map((p) => <option key={p.id} value={p.name}>{p.name.toUpperCase()}</option>)}
                                 </select>
-                                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none opacity-20 group-hover:opacity-60 transition-opacity">
-                                  <i className="fa-solid fa-chevron-down text-[10px] text-cyan-500"></i>
+                                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-cyan-500/50 group-hover:text-cyan-400 transition-colors">
+                                  <i className="fa-solid fa-chevron-down text-[10px]"></i>
                                 </div>
                               </div>
                             </div>
@@ -816,7 +767,7 @@ const App: React.FC = () => {
                                 </span>
                               ) : (
                                 <span className="flex items-center justify-center gap-4">
-                                  <i className="fa-solid fa-bolt text-xs"></i>Initiate<i className="fa-solid fa-bolt text-xs"></i>
+                                  <i className="fa-solid fa-bolt text-xs text-cyan-500"></i>Initiate<i className="fa-solid fa-bolt text-xs text-cyan-500"></i>
                                 </span>
                               )}
                             </div>
@@ -835,17 +786,6 @@ const App: React.FC = () => {
                         <div className="mono text-[10px] text-cyan-500 uppercase tracking-widest font-bold">Output_Matrix</div>
                         <h3 className="text-xl font-black uppercase text-white italic">VERIFIED_MATCHES</h3>
                       </div>
-                      {!user && (
-                        <div className="group relative">
-                          <div className="absolute -inset-1 bg-cyan-500/20 blur opacity-0 group-hover:opacity-100 transition duration-500"></div>
-                          <button 
-                            onClick={() => openAuth(true)}
-                            className="relative mono text-[9px] bg-cyan-900/40 border border-cyan-500/30 text-cyan-200 px-4 py-2 uppercase tracking-widest hover:bg-cyan-500 hover:text-black transition-all flex items-center gap-2"
-                          >
-                            <i className="fa-solid fa-lock text-[10px]"></i> GUEST_TRIAL_RESULTS. LOGIN TO SAVE YOUR DNA.
-                          </button>
-                        </div>
-                      )}
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 items-stretch">
                     {state.recommendations.map((movie, idx) => (

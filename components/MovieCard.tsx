@@ -20,6 +20,7 @@ export const MovieCard: React.FC<MovieCardProps> = ({
   onFeedback 
 }) => {
   const [showReasonInput, setShowReasonInput] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
   const [isSynthesizingPoster, setIsSynthesizingPoster] = useState(false);
   const [neuralPoster, setNeuralPoster] = useState<string | null>(null);
   
@@ -31,7 +32,6 @@ export const MovieCard: React.FC<MovieCardProps> = ({
   
   const cardRef = useRef<HTMLDivElement>(null);
 
-  // Auto-generate poster if missing
   useEffect(() => {
     const checkAndGenerate = async () => {
       const pUrl = movie.posterUrl;
@@ -117,7 +117,7 @@ export const MovieCard: React.FC<MovieCardProps> = ({
         <div className="relative w-full h-full overflow-hidden">
           {isNeuralGenerated && (
             <div className="absolute inset-0 z-10 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-               <div className="absolute inset-0 bg-gradient-to-t from-cyan-500/20 to-transparent"></div>
+               <div className="absolute inset-0 bg-gradient-to-t from-cyan-500/20 via-cyan-500/10 to-transparent"></div>
                <div className="absolute inset-0 scanline opacity-20"></div>
             </div>
           )}
@@ -168,7 +168,7 @@ export const MovieCard: React.FC<MovieCardProps> = ({
              />
            ))}
         </div>
-        <div className="mono text-xs bg-cyan-500 text-black px-1.5 py-0.5 font-bold shadow-lg shadow-cyan-500/40">
+        <div className="mono text-xs bg-greenAcc-500 text-black px-1.5 py-0.5 font-bold shadow-lg shadow-greenAcc-500/40">
           {movie.rating ? movie.rating.toFixed(1) : '8.0'}
         </div>
       </div>
@@ -232,65 +232,79 @@ export const MovieCard: React.FC<MovieCardProps> = ({
                     onChange={(e) => setReason(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && submitFeedback()}
                     placeholder="WHY? (OPTIONAL)"
-                    className="w-full bg-black/60 border border-cyan-500/30 p-2 mono text-xs text-white outline-none uppercase placeholder-slate-700"
+                    className="w-full bg-black/60 border border-white/10 p-2 mono text-xs text-white outline-none uppercase placeholder-slate-700"
                   />
                   <div className="flex gap-1">
                     <button 
                       onClick={submitFeedback}
-                      className="flex-1 py-1.5 bg-cyan-500 text-black mono text-xs font-bold uppercase"
+                      className="flex-1 py-1.5 bg-white text-black mono text-xs font-bold uppercase hover:bg-cyan-400 transition-colors"
                     >
                       [ CONFIRM ]
                     </button>
                     <button 
                       onClick={() => setShowReasonInput(false)}
-                      className="px-3 py-1.5 bg-white/5 text-slate-500 mono text-xs font-bold uppercase"
+                      className="px-3 py-1.5 bg-white/5 border border-white/5 text-slate-500 hover:text-white mono text-xs font-bold uppercase transition-colors"
                     >
                       [ X ]
                     </button>
                   </div>
                 </div>
               ) : movie.feedback ? (
-                <div className="py-2 border border-white/5 bg-white/5 flex items-center justify-center gap-2">
+                <div className="py-2 border border-white/10 bg-white/5 flex items-center justify-center gap-2">
                   <i className={`fa-solid ${movie.feedback.type === 'like' ? 'fa-thumbs-up text-cyan-500' : 'fa-thumbs-down text-red-500'} text-xs`}></i>
                   <span className="mono text-[10px] text-slate-400 uppercase tracking-widest">Feedback_Stored</span>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 gap-1">
+                <div className="flex gap-1">
                   <button 
                     onClick={() => handleVote('like')}
-                    className="py-2 border border-cyan-500/20 hover:bg-cyan-500/10 text-cyan-500/60 hover:text-cyan-400 mono text-xs uppercase font-bold transition-all flex items-center justify-center gap-1"
+                    title="Like this recommendation"
+                    className="flex-1 py-2 border border-white/10 bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all flex items-center justify-center"
                   >
-                    [ <i className="fa-solid fa-thumbs-up"></i> LIKE ]
+                    <i className="fa-solid fa-thumbs-up"></i>
                   </button>
                   <button 
                     onClick={() => handleVote('dislike')}
-                    className="py-2 border border-red-500/10 hover:bg-red-500/10 text-red-500/40 hover:text-red-500 mono text-xs uppercase font-bold transition-all flex items-center justify-center gap-1"
+                    title="Dislike this recommendation"
+                    className="flex-1 py-2 border border-white/10 bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all flex items-center justify-center"
                   >
-                    [ <i className="fa-solid fa-thumbs-down"></i> NO ]
+                    <i className="fa-solid fa-thumbs-down"></i>
                   </button>
+                  <div className="relative">
+                    <button 
+                      onClick={() => setShowMenu(!showMenu)}
+                      className="px-4 py-2 border border-white/10 bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all flex items-center justify-center"
+                    >
+                      <i className="fa-solid fa-ellipsis-vertical"></i>
+                    </button>
+                    {showMenu && (
+                      <>
+                        <div className="fixed inset-0 z-[55]" onClick={() => setShowMenu(false)}></div>
+                        <div className="absolute bottom-full right-0 mb-2 w-32 bg-slate-900 border border-white/10 shadow-2xl z-[60] py-1 animate-in fade-in slide-in-from-bottom-2 duration-200">
+                          <button 
+                            onClick={() => { onLikeSimilar?.(movie); setShowMenu(false); }}
+                            className="w-full text-left px-3 py-2 mono text-[10px] uppercase font-bold text-slate-400 hover:text-cyan-400 hover:bg-white/5 transition-colors"
+                          >
+                            [ SIMILAR ]
+                          </button>
+                          <button 
+                            onClick={() => { onMarkWatched?.(movie); setShowMenu(false); }}
+                            className="w-full text-left px-3 py-2 mono text-[10px] uppercase font-bold text-slate-400 hover:text-greenAcc-400 hover:bg-white/5 transition-colors"
+                          >
+                            [ WATCHED ]
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
               )}
-
-              <div className="grid grid-cols-2 gap-1">
-                <button 
-                  onClick={() => onLikeSimilar?.(movie)}
-                  className="py-2 border border-cyan-500/10 hover:border-cyan-500/30 text-slate-400 hover:text-cyan-400 mono text-[10px] uppercase font-bold tracking-widest transition-all"
-                >
-                  [ SIMILAR ]
-                </button>
-                <button 
-                  onClick={() => onMarkWatched?.(movie)}
-                  className="py-2 border border-white/5 hover:bg-white/5 text-slate-600 hover:text-slate-300 mono text-[10px] uppercase font-bold tracking-widest transition-all"
-                >
-                  [ WATCHED ]
-                </button>
-              </div>
             </div>
           </div>
         ) : (
           <div className="flex items-center gap-2 pt-1 opacity-60 mt-auto">
             <div className="h-1 flex-1 bg-slate-800">
-               <div className="h-full bg-cyan-500/20" style={{ width: `${(movie.userRating || 8) * 10}%` }}></div>
+               <div className="h-full bg-greenAcc-500/20" style={{ width: `${(movie.userRating || 8) * 10}%` }}></div>
             </div>
             <span className="mono text-[10px] text-slate-500 uppercase tracking-tighter">DATA_NODE</span>
           </div>

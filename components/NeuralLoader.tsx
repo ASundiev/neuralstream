@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 
 const LOG_MESSAGES = [
@@ -29,29 +28,17 @@ export const NeuralLoader: React.FC = () => {
     <div className="w-full min-h-[500px] flex flex-col items-center justify-center p-12 bg-slate-900/10 tech-border relative overflow-hidden group">
       <div className="scanline opacity-20"></div>
       
-      {/* HUD Background elements */}
-      <div className="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none">
-        <div className="w-[600px] h-[600px] border border-cyan-500 rounded-full animate-orbit"></div>
-        <div className="absolute w-[400px] h-[400px] border border-cyan-500/50 rounded-full animate-orbit-rev"></div>
-      </div>
-
       <div className="relative z-10 flex flex-col items-center">
-        {/* Central Core Animation */}
         <div className="relative w-48 h-48 mb-12">
-          {/* Animated SVG HUD */}
           <svg viewBox="0 0 100 100" className="w-full h-full">
-            {/* Outer rotating ring */}
-            <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="0.5" strokeDasharray="10 5" className="text-cyan-500/30 animate-orbit" />
-            {/* Inner rotating dash ring */}
-            <circle cx="50" cy="50" r="35" fill="none" stroke="currentColor" strokeWidth="1" strokeDasharray="5 15" className="text-cyan-400/50 animate-orbit-rev" />
-            {/* Central Pulsating Core */}
-            <circle cx="50" cy="50" r="15" fill="currentColor" className="text-cyan-500 animate-pulse-glow" />
-            <circle cx="50" cy="50" r="20" fill="none" stroke="currentColor" strokeWidth="2" className="text-cyan-500 animate-ping opacity-20" />
+            <circle cx="50" cy="50" r="45" fill="none" stroke="#00f5ff" strokeWidth="0.5" strokeDasharray="10 5" className="opacity-30" />
+            <circle cx="50" cy="50" r="35" fill="none" stroke="#e0f603" strokeWidth="1" strokeDasharray="5 15" className="opacity-50" />
+            <circle cx="50" cy="50" r="15" fill="#00f5ff" />
+            <circle cx="50" cy="50" r="20" fill="none" stroke="#00f5ff" strokeWidth="2" className="animate-ping opacity-20" />
             
-            {/* Geometric accents */}
-            <path d="M50 5 L55 15 L45 15 Z" fill="currentColor" className="text-cyan-500" transform="rotate(0 50 50)" />
-            <path d="M50 5 L55 15 L45 15 Z" fill="currentColor" className="text-cyan-500" transform="rotate(120 50 50)" />
-            <path d="M50 5 L55 15 L45 15 Z" fill="currentColor" className="text-cyan-500" transform="rotate(240 50 50)" />
+            <path d="M50 5 L55 15 L45 15 Z" fill="#00f5ff" transform="rotate(0 50 50)" />
+            <path d="M50 5 L55 15 L45 15 Z" fill="#e0f603" transform="rotate(120 50 50)" />
+            <path d="M50 5 L55 15 L45 15 Z" fill="#00f5ff" transform="rotate(240 50 50)" />
           </svg>
           
           <div className="absolute inset-0 flex items-center justify-center">
@@ -65,20 +52,19 @@ export const NeuralLoader: React.FC = () => {
               [ PROCESSING_DATA_STREAMS ]
             </div>
             <h3 className="text-3xl font-black italic uppercase tracking-tighter text-white">
-              NEURAL_MATRIC_SYNTHESIS
+              NEURAL_MATRIX_SYNTHESIS
             </h3>
           </div>
 
           <div className="h-1 w-64 bg-white/5 mx-auto relative overflow-hidden">
-             <div className="absolute inset-0 bg-cyan-500/50 w-1/3 animate-[shimmer_1.5s_infinite]"></div>
+             <div className="absolute inset-0 bg-gradient-to-r from-cyan-500 via-cyan-500 to-greenAcc-500 w-full"></div>
           </div>
 
           <div className="mono text-sm space-y-2 bg-black/40 p-4 border border-white/5 tech-border min-w-[320px]">
             <div className="flex justify-between text-slate-600 text-[10px] mb-2 border-b border-white/5 pb-2 uppercase">
               <span>Status_Log</span>
-              <span>Ver_1.0.9</span>
+              <span>Ver_1.1.0</span>
             </div>
-            {/* Log display with cycling messages */}
             <div className="h-6 overflow-hidden">
                <div className="text-cyan-400 font-bold uppercase transition-transform duration-500 flex items-center gap-2">
                  <span className="w-1.5 h-1.5 bg-cyan-500 animate-pulse"></span>
@@ -88,16 +74,15 @@ export const NeuralLoader: React.FC = () => {
             <div className="text-slate-500 text-[10px] uppercase text-left">
               Memory_Buffer_Allocation::Verified<br/>
               Neural_Pathways::Synced<br/>
-              Awaiting_Model_Output...
+              <span className="text-cyan-500/60">Awaiting_Model_Output...</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Corners decorative */}
       <div className="absolute top-4 left-4 w-4 h-4 border-t-2 border-l-2 border-cyan-500/30"></div>
       <div className="absolute top-4 right-4 w-4 h-4 border-t-2 border-r-2 border-cyan-500/30"></div>
-      <div className="absolute bottom-4 left-4 w-4 h-4 border-b-2 border-l-2 border-cyan-500/30"></div>
+      <div className="absolute bottom-4 left-4 w-4 h-4 border-b-2 border-l-2 border-greenAcc-500/30"></div>
       <div className="absolute bottom-4 right-4 w-4 h-4 border-b-2 border-r-2 border-cyan-500/30"></div>
     </div>
   );
