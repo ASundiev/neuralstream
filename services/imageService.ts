@@ -56,13 +56,13 @@ export async function generateNeuralPoster(title: string, description: string = 
       contents: {
         parts: [
           {
-            text: `A bold, aggressive, high-contrast graphic art movie poster for "${title}". 
-            Style: Gritty street-art cyberpunk. Blend heavy comic-book ink lines with expressive, painterly textures. 
-            Palette: Dominant neon yellow (#e0f603) and vibrant magenta (#ff1388) with electric cyan (#00f5ff) highlights against deep blacks.
-            Composition: Character-centric or centered on an iconic symbol. Include background graphic elements like large abstract shapes, halftone patterns, ink splatters, and distressed newsprint textures. 
-            The mood should be punchy and raw. Integrate some stylized, unreadable decorative graphic characters or vertical bars to mimic high-end collectible poster art. 
-            Portray core themes from: ${description.slice(0, 200)}. 
-            No legible credits, no small text. Ensure the subject matter is a stylized representation of "${title}".`,
+            text: `A raw, minimalist street-art movie poster for "${title}". 
+            Style: Aggressive stencil-style cyberpunk. Use thick, heavy black ink outlines and broad, expressive spray-paint strokes. 
+            Composition: Extremely focused on a single, powerful central character or iconic silhouette. Avoid clutter and small objects. 
+            Palette: High-contrast blocks of neon lime-yellow (#e0f603) and vibrant magenta (#ff1388) against deep, solid black. Use electric cyan (#00f5ff) only for sharp, minimal highlights or digital accents.
+            Graphic Elements: Integrate vertical bars, large graphic blocks of color, and abstract symbols that look like futuristic kanji or hazard warnings. 
+            Texture: Distressed ink splatters, rough brush edges, and subtle halftone patterns to create a hand-crafted, raw street-art feel rather than clean pop-art.
+            Subject: A stylized, iconic representation of the main theme from "${title}". No legible credits or small text.`,
           },
         ],
       },
@@ -146,7 +146,7 @@ export async function editMoviePoster(imageUrl: string, prompt: string): Promise
             },
           },
           {
-            text: `Apply this edit to the movie poster: ${prompt}. Maintain the bold, gritty, street-art cyberpunk aesthetic with neon yellow, magenta and cyan. Output only the modified image.`,
+            text: `Modify this movie poster: ${prompt}. Maintain the minimalist stencil-style, rough street-art aesthetic, and the high-contrast yellow/magenta/cyan palette.`,
           },
         ],
       },
