@@ -1,3 +1,4 @@
+
 import { GoogleGenAI } from "@google/genai";
 import { createClient } from "@supabase/supabase-js";
 
@@ -55,12 +56,13 @@ export async function generateNeuralPoster(title: string, description: string = 
       contents: {
         parts: [
           {
-            text: `A high-end cinematic digital illustration for the movie "${title}". 
-            Context: ${description.slice(0, 200)}
-            Goal: Create a recognizable visual representation of the film's core iconic themes, characters, or props.
-            Style: Cyberpunk digital art. Blend identifiable silhouettes or specific movie motifs with subtle glowing circuitry and data-stream overlays. It should look like a "neural memory" of the film.
-            Palette: Deep navy/black background (#020617) with vibrant cyan (#00f5ff) and white glowing accents. 
-            Avoid text or letters. Ensure the subject matter is clearly recognizable as relating to "${title}".`,
+            text: `A bold, aggressive, high-contrast graphic art movie poster for "${title}". 
+            Style: Gritty street-art cyberpunk. Blend heavy comic-book ink lines with expressive, painterly textures. 
+            Palette: Dominant neon yellow (#e0f603) and vibrant magenta (#ff1388) with electric cyan (#00f5ff) highlights against deep blacks.
+            Composition: Character-centric or centered on an iconic symbol. Include background graphic elements like large abstract shapes, halftone patterns, ink splatters, and distressed newsprint textures. 
+            The mood should be punchy and raw. Integrate some stylized, unreadable decorative graphic characters or vertical bars to mimic high-end collectible poster art. 
+            Portray core themes from: ${description.slice(0, 200)}. 
+            No legible credits, no small text. Ensure the subject matter is a stylized representation of "${title}".`,
           },
         ],
       },
@@ -144,7 +146,7 @@ export async function editMoviePoster(imageUrl: string, prompt: string): Promise
             },
           },
           {
-            text: `Apply this edit to the movie poster: ${prompt}. Maintain the cinematic quality and keep the title legible if possible. Output only the modified image.`,
+            text: `Apply this edit to the movie poster: ${prompt}. Maintain the bold, gritty, street-art cyberpunk aesthetic with neon yellow, magenta and cyan. Output only the modified image.`,
           },
         ],
       },
