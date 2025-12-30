@@ -84,6 +84,37 @@
       z-index: 10;
     }
 
+    .tech-chipped-red {
+      position: relative;
+      border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    .tech-chipped-red::before {
+      content: "";
+      position: absolute;
+      top: -1px;
+      left: -1px;
+      width: 4px;
+      height: 4px;
+      border-top: 1px solid #ef4444;
+      border-left: 1px solid #ef4444;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .tech-chipped-red::after {
+      content: "";
+      position: absolute;
+      bottom: -1px;
+      right: -1px;
+      width: 4px;
+      height: 4px;
+      border-bottom: 1px solid #ef4444;
+      border-right: 1px solid #ef4444;
+      pointer-events: none;
+      z-index: 10;
+    }
+
     .tech-chipped-inv {
       position: relative;
       border: 1px solid rgba(224, 246, 3, 0.2);
