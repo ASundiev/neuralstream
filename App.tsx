@@ -655,14 +655,18 @@ const App: React.FC = () => {
                           <button 
                             onClick={() => fetchRecommendations()} 
                             disabled={state.isRecsLoading} 
-                            className={`w-full py-6 bg-transparent border border-cyan-500/30 text-cyan-400 mono font-black text-sm uppercase tracking-[0.6em] transition-all relative overflow-hidden group/initiate-btn hover-electric ${state.isRecsLoading ? 'active' : ''} ${tuningVisible ? 'animate-neural-reveal' : 'opacity-0'}`}
+                            className={`group w-full relative p-[1px] overflow-hidden transition-all duration-300 rounded-sm tech-chipped ${tuningVisible ? 'animate-neural-reveal' : 'opacity-0'}`}
                             style={{ animationDelay: '600ms', animationFillMode: 'both' }}
                           >
-                            <div className="relative z-10 flex items-center justify-center gap-4">
+                            {/* Spinning Border Beam */}
+                            <span className={`absolute inset-[-200%] animate-[spin_4s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,transparent_0%,transparent_75%,#00f5ff_100%)] opacity-0 transition-opacity duration-300 group-hover:opacity-100 ${state.isRecsLoading ? 'opacity-100' : ''}`}></span>
+                            
+                            {/* Inner Surface & Content */}
+                            <div className={`relative z-10 w-full py-5 bg-slate-900 mono font-black text-sm uppercase tracking-[0.6em] flex items-center justify-center gap-4 transition-colors duration-300 group-hover:text-cyan-400 ${state.isRecsLoading ? 'text-cyan-400' : 'text-cyan-400/60'}`}>
                               {state.isRecsLoading ? (
                                 <><i className="fa-solid fa-microchip animate-spin text-lg"></i>SYNTHESIZING...</>
                               ) : (
-                                <><i className="fa-solid fa-bolt text-xs text-cyan-500"></i>INITIATE<i className="fa-solid fa-bolt text-xs text-cyan-500"></i></>
+                                <><i className="fa-solid fa-bolt text-xs"></i>INITIATE<i className="fa-solid fa-bolt text-xs"></i></>
                               )}
                             </div>
                           </button>
