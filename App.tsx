@@ -338,7 +338,7 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen pb-20 relative bg-slate-950">
-      <MosaicBackground />
+      {!user && <MosaicBackground />}
 
       {(user || state.userMovies.length > 0) && (
         <header className="fixed top-0 left-0 right-0 z-[80] bg-slate-950/60 backdrop-blur-xl border-b border-cyan-500/5 h-20 flex items-center animate-in slide-in-from-top duration-700">
@@ -530,7 +530,7 @@ const App: React.FC = () => {
       )}
 
       <main className={`max-w-7xl mx-auto px-4 md:px-8 relative z-10 pt-4 md:pt-40`}>
-        <div className={`relative ${user ? 'pt-32' : 'pt-0'}`}>
+        <div className="relative">
           <div className="">
             {!user && (
               <div className="md:mx-[3rem]">
@@ -586,10 +586,12 @@ const App: React.FC = () => {
                                   onClick={() => fileInputRef.current?.click()}
                                   className={`px-6 py-2 border mono font-black text-xs uppercase tracking-widest transition-all tech-chipped ${importSuccess
                                     ? 'bg-cyan-500 border-cyan-400 text-black'
-                                    : 'bg-cyan-500/10 border-cyan-500/40 text-cyan-400 hover:bg-cyan-500 hover:text-black'
+                                    : state.userMovies.length > 0
+                                      ? 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10 hover:text-white'
+                                      : 'bg-cyan-500/10 border-cyan-500/40 text-cyan-400 hover:bg-cyan-500 hover:text-black'
                                     }`}
                                 >
-                                  {importSuccess ? '[ SYNC_COMPLETE ]' : '[ IMPORT FROM IMDB ]'}
+                                  {importSuccess ? '[ SYNC_COMPLETE ]' : state.userMovies.length > 0 ? '[ RE-IMPORT FROM IMDB ]' : '[ IMPORT FROM IMDB ]'}
                                 </button>
                                 <input type="file" ref={fileInputRef} className="hidden" accept=".csv" onChange={handleFileUpload} />
                               </div>
