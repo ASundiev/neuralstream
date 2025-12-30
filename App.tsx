@@ -7,6 +7,7 @@ import { MovieCard } from './components/MovieCard';
 import { NeuralLoader } from './components/NeuralLoader';
 import { PromoHero } from './components/PromoHero';
 import { PromoFeatures } from './components/PromoFeatures';
+import { MosaicBackground } from './components/MosaicBackground';
 
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://vplgyzzwgbgwudbtdgfk.supabase.co';
 const SUPABASE_KEY = process.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZwbGd5enp3Z2Jnd3VkYnRkZ2ZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYxNzM0ODksImV4cCI6MjA4MTc0OTQ4OX0.90zVerWUdgekP_MWRiViKC80bDy46UkZau6MZ6ANrKE';
@@ -337,6 +338,7 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen pb-20 relative bg-slate-950">
+      <MosaicBackground />
 
       {(user || state.userMovies.length > 0) && (
         <header className="fixed top-0 left-0 right-0 z-[80] bg-slate-950/60 backdrop-blur-xl border-b border-cyan-500/5 h-20 flex items-center animate-in slide-in-from-top duration-700">
@@ -527,7 +529,7 @@ const App: React.FC = () => {
         </div>
       )}
 
-      <main className={`max-w-7xl mx-auto px-4 md:px-8 relative z-10 pt-4 md:pt-32`}>
+      <main className={`max-w-7xl mx-auto px-4 md:px-8 relative z-10 pt-4 md:pt-40`}>
         <div className={`relative ${user ? 'pt-32' : 'pt-0'}`}>
           <div className="">
             {!user && (
