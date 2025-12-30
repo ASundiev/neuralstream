@@ -39,23 +39,23 @@ export const PromoHero: React.FC<PromoHeroProps> = ({ onTryNow, onLogin, onSignU
                 Cinematic <span className="text-cyan-400">DNA_</span>
               </h1>
               <div className="flex items-center justify-center gap-4">
-                <div className="h-[1px] w-12 bg-cyan-500/30"></div>
                 <p className="mono text-[10px] md:text-xs text-slate-400 max-w-2xl leading-relaxed font-light tracking-[0.1em]">
                   Uplink your IMDB ratings matrix. Our neural engine maps recommendations synthesized from your unique viewer profile.
                 </p>
-                <div className="h-[1px] w-12 bg-cyan-500/30"></div>
               </div>
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-6 min-h-[64px]">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-6 min-h-[80px]">
             {!isFlipped ? (
               <button 
                 onClick={onTryNow}
-                className="px-20 py-6 bg-cyan-500 text-black mono font-black text-sm uppercase tracking-[0.4em] hover:bg-white transition-all shadow-[0_0_40px_rgba(0,245,255,0.3)] hover:shadow-cyan-400/60 relative group/btn tech-chipped"
+                className="px-24 py-6 bg-cyan-500 text-black mono font-black text-sm uppercase tracking-[0.6em] hover:bg-white transition-all shadow-[0_0_50px_rgba(0,245,255,0.3)] hover:shadow-cyan-400/60 relative group/btn tech-chipped overflow-hidden active:scale-95"
               >
-                <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover/btn:translate-x-[100%] transition-transform duration-500"></div>
-                TRY_NOW
+                {/* Internal shine effect */}
+                <div className="absolute inset-0 bg-white/30 translate-x-[-100%] group-hover/btn:translate-x-[100%] transition-transform duration-700 ease-in-out pointer-events-none"></div>
+                
+                <span className="relative z-10">TRY_NOW</span>
               </button>
             ) : (
               <div className="flex items-center gap-8 animate-in fade-in zoom-in-95 duration-500">

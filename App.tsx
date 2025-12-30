@@ -665,8 +665,6 @@ const App: React.FC = () => {
                                 <><i className="fa-solid fa-bolt text-xs text-cyan-500"></i>INITIATE<i className="fa-solid fa-bolt text-xs text-cyan-500"></i></>
                               )}
                             </div>
-                            <div className="absolute right-4 top-1/2 -translate-y-1/2 w-8 h-[1px] bg-cyan-500/40"></div>
-                            <div className="absolute left-4 top-1/2 -translate-y-1/2 w-8 h-[1px] bg-cyan-500/40"></div>
                           </button>
                         </section>
                       </div>
