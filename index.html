@@ -36,30 +36,63 @@
     .mono { font-family: 'JetBrains Mono', monospace; }
     
     .grid-overlay {
-      background-image: radial-gradient(rgba(0, 245, 255, 0.05) 1px, transparent 0);
-      background-size: 24px 24px;
+      background-image: 
+        linear-gradient(rgba(0, 245, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 245, 255, 0.03) 1px, transparent 1px);
+      background-size: 32px 32px;
     }
 
+    /* Reference-inspired tech borders */
     .tech-border {
       border: 1px solid rgba(0, 245, 255, 0.15);
       position: relative;
     }
-    
-    .tech-border::before, .tech-border::after {
-      content: '+';
-      position: absolute;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 10px;
-      color: var(--cyan);
-      opacity: 0.5;
+
+    .tech-chipped {
+      clip-path: polygon(
+        8px 0%, 
+        100% 0%, 
+        100% calc(100% - 8px), 
+        calc(100% - 8px) 100%, 
+        0% 100%, 
+        0% 8px
+      );
     }
-    .tech-border::before { top: -6px; left: -4px; }
-    .tech-border::after { bottom: -6px; right: -4px; }
+
+    .tech-chipped-inv {
+      clip-path: polygon(
+        0% 0%, 
+        calc(100% - 8px) 0%, 
+        100% 8px, 
+        100% 100%, 
+        8px 100%, 
+        0% calc(100% - 8px)
+      );
+    }
+
+    /* Decorative hatches and markers from the reference */
+    .tech-hatch {
+      background: repeating-linear-gradient(
+        -45deg,
+        rgba(0, 245, 255, 0.1),
+        rgba(0, 245, 255, 0.1) 2px,
+        transparent 2px,
+        transparent 4px
+      );
+    }
+
+    .tech-marker {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      background: var(--cyan);
+      box-shadow: 0 0 5px var(--cyan);
+    }
 
     .scanline {
       width: 100%;
       height: 2px;
-      background: rgba(0, 245, 255, 0.1);
+      background: rgba(0, 245, 255, 0.05);
       position: absolute;
       z-index: 10;
       pointer-events: none;
@@ -68,83 +101,55 @@
     .custom-scrollbar::-webkit-scrollbar { width: 4px; }
     .custom-scrollbar::-webkit-scrollbar-track { background: var(--deep); }
     .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(0, 245, 255, 0.2); }
-    .custom-scrollbar { scrollbar-width: thin; scrollbar-color: rgba(0, 245, 255, 0.2) var(--deep); }
 
     @keyframes border-beam-spin {
       from { transform: rotate(0deg); }
       to { transform: rotate(360deg); }
     }
 
-    @keyframes steady-text-glow {
-      0%, 100% { text-shadow: 0 0 8px rgba(0, 245, 255, 0.4); }
-      50% { text-shadow: 0 0 15px rgba(0, 245, 255, 0.8); }
-    }
-
-    .hover-electric, .hover-electric-green {
+    .hover-electric {
       position: relative;
       overflow: hidden;
       transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
       z-index: 1;
     }
 
-    .hover-electric::before, .hover-electric-green::before {
+    /* 1px Border Beam Animation */
+    .hover-electric::before {
       content: '';
       position: absolute;
       top: -150%;
       left: -150%;
       width: 400%;
       height: 400%;
-      animation: border-beam-spin 3s linear infinite;
       opacity: 0;
-      transition: opacity 0.5s ease;
+      transition: opacity 0.3s ease;
       z-index: -2;
       pointer-events: none;
+      background: conic-gradient(from 0deg, transparent 0%, transparent 85%, var(--cyan) 95%, transparent 100%);
     }
 
-    .hover-electric::before {
-      background: conic-gradient(from 0deg, transparent 0%, transparent 80%, var(--cyan) 92%, transparent 100%);
+    /* Only initiate animation on hover or active state */
+    .hover-electric:hover::before, .hover-electric.active::before { 
+      opacity: 1; 
+      animation: border-beam-spin 3s linear infinite;
+    }
+    
+    /* Strong Cyan Glow on hover and active state */
+    .hover-electric:hover, .hover-electric.active {
+      box-shadow: 0 0 40px rgba(0, 245, 255, 0.3), inset 0 0 20px rgba(0, 245, 255, 0.1);
+      border-color: rgba(0, 245, 255, 0.6) !important;
     }
 
-    .hover-electric-green::before {
-      background: conic-gradient(from 0deg, transparent 0%, transparent 80%, var(--green) 92%, transparent 100%);
-    }
-
-    .hover-electric::after, .hover-electric-green::after {
+    /* Internal background to keep the beam only on the border edge */
+    .hover-electric::after {
       content: '';
       position: absolute;
       inset: 1px;
       background: var(--deep);
       z-index: -1;
+      pointer-events: none;
       transition: background 0.3s ease;
-    }
-
-    .hover-electric:hover::before, .hover-electric-green:hover::before { opacity: 1; }
-    
-    .hover-electric { border: 1px solid rgba(0, 245, 255, 0.15) !important; }
-    .hover-electric:hover {
-      border-color: rgba(0, 245, 255, 0.4) !important;
-      background: rgba(0, 245, 255, 0.02);
-      box-shadow: 0 0 30px rgba(0, 245, 255, 0.1);
-    }
-
-    .hover-electric-green { border: 1px solid rgba(224, 246, 3, 0.15) !important; }
-    .hover-electric-green:hover {
-      border-color: rgba(224, 246, 3, 0.4) !important;
-      background: rgba(224, 246, 3, 0.02);
-      box-shadow: 0 0 30px rgba(224, 246, 3, 0.1);
-    }
-
-    .perspective-1000 {
-      perspective: 1000px;
-    }
-    .preserve-3d {
-      transform-style: preserve-3d;
-    }
-    .backface-hidden {
-      backface-visibility: hidden;
-    }
-    .rotate-y-180 {
-      transform: rotateY(180deg);
     }
 
     @keyframes neural-reveal {

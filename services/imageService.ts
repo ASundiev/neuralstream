@@ -58,11 +58,12 @@ export async function generateNeuralPoster(title: string, description: string = 
           {
             text: `A raw, minimalist street-art movie poster for "${title}". 
             Style: Aggressive stencil-style cyberpunk. Use thick, heavy black ink outlines and broad, expressive spray-paint strokes. 
-            Composition: Extremely focused on a single, powerful central character or iconic silhouette. Avoid clutter and small objects. 
+            Composition: FULL BLEED edge-to-edge artwork. Extremely focused on a single, powerful central character or iconic silhouette. 
             Palette: High-contrast blocks of neon lime-yellow (#e0f603) and vibrant magenta (#ff1388) against deep, solid black. Use electric cyan (#00f5ff) only for sharp, minimal highlights or digital accents.
             Graphic Elements: Integrate vertical bars, large graphic blocks of color, and abstract symbols that look like futuristic kanji or hazard warnings. 
-            Texture: Distressed ink splatters, rough brush edges, and subtle halftone patterns to create a hand-crafted, raw street-art feel rather than clean pop-art.
-            Subject: A stylized, iconic representation of the main theme from "${title}". No legible credits or small text.`,
+            Texture: Distressed ink splatters, rough brush edges, and subtle halftone patterns to create a hand-crafted, raw street-art feel.
+            Subject: A stylized, iconic representation of the main theme from "${title}".
+            CRITICAL CONSTRAINTS: NO BORDERS, NO FRAMES, NO WHITE MARGINS, NO OUTER OUTLINES, NO PADDING. The artwork must bleed off the edges of the image. No legible credits or small text.`,
           },
         ],
       },
@@ -146,7 +147,7 @@ export async function editMoviePoster(imageUrl: string, prompt: string): Promise
             },
           },
           {
-            text: `Modify this movie poster: ${prompt}. Maintain the minimalist stencil-style, rough street-art aesthetic, and the high-contrast yellow/magenta/cyan palette.`,
+            text: `Modify this movie poster: ${prompt}. Maintain the minimalist stencil-style, rough street-art aesthetic, and the high-contrast yellow/magenta/cyan palette. Ensure NO BORDERS or FRAMES are added.`,
           },
         ],
       },
