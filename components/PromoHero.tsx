@@ -39,7 +39,7 @@ export const PromoHero: React.FC<PromoHeroProps> = ({ onTryNow, onLogin, onSignU
                 Cinematic <span className="text-cyan-400">DNA_</span>
               </h1>
               <div className="flex items-center justify-center gap-4">
-                <p className="mono text-[10px] md:text-xs text-slate-400 max-w-2xl leading-relaxed font-light tracking-[0.1em]">
+                <p className="mono text-[10px] md:text-xs text-slate-400 max-w-2xl leading-relaxed font-light tracking-[0.1em] uppercase">
                   Uplink your IMDB ratings matrix. Our neural engine maps recommendations synthesized from your unique viewer profile.
                 </p>
               </div>
