@@ -449,7 +449,7 @@ const App: React.FC = () => {
       {/* Stats Modal */}
       {showStatsModal && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/95 backdrop-blur-lg animate-in fade-in duration-300">
-          <div className="max-w-4xl w-full tech-border bg-slate-900 border-cyan-500/20 shadow-[0_0_100px_rgba(0,245,255,0.1)] relative tech-chipped max-h-[90vh] flex flex-col">
+          <div className="max-w-4xl w-full h-[640px] max-h-[80vh] tech-border bg-slate-900 border-cyan-500/20 shadow-[0_0_100px_rgba(0,245,255,0.1)] relative tech-chipped flex flex-col">
             <div className="p-4 md:p-8 border-b border-white/5 flex items-center justify-between">
               <div className="space-y-1">
                 <h2 className="text-3xl font-black text-white italic uppercase tracking-tighter">Neural DNA Profile</h2>
@@ -583,8 +583,8 @@ const App: React.FC = () => {
                                 <button
                                   onClick={() => fileInputRef.current?.click()}
                                   className={`px-6 py-2 border mono font-black text-xs uppercase tracking-widest transition-all tech-chipped ${importSuccess
-                                      ? 'bg-cyan-500 border-cyan-400 text-black'
-                                      : 'bg-cyan-500/10 border-cyan-500/40 text-cyan-400 hover:bg-cyan-500 hover:text-black'
+                                    ? 'bg-cyan-500 border-cyan-400 text-black'
+                                    : 'bg-cyan-500/10 border-cyan-500/40 text-cyan-400 hover:bg-cyan-500 hover:text-black'
                                     }`}
                                 >
                                   {importSuccess ? '[ SYNC_COMPLETE ]' : '[ IMPORT FROM IMDB ]'}
