@@ -655,7 +655,7 @@ const App: React.FC = () => {
                           <button 
                             onClick={() => fetchRecommendations()} 
                             disabled={state.isRecsLoading} 
-                            className={`w-full py-6 bg-transparent border border-cyan-500/30 text-cyan-400 mono font-black text-sm uppercase tracking-[0.6em] transition-all relative overflow-hidden group/initiate-btn hover-electric ${state.isRecsLoading ? 'active' : ''} tech-chipped ${tuningVisible ? 'animate-neural-reveal' : 'opacity-0'}`}
+                            className={`w-full py-6 bg-transparent border border-cyan-500/30 text-cyan-400 mono font-black text-sm uppercase tracking-[0.6em] transition-all relative overflow-hidden group/initiate-btn hover-electric ${state.isRecsLoading ? 'active' : ''} ${tuningVisible ? 'animate-neural-reveal' : 'opacity-0'}`}
                             style={{ animationDelay: '600ms', animationFillMode: 'both' }}
                           >
                             <div className="relative z-10 flex items-center justify-center gap-4">

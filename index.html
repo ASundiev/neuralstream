@@ -131,22 +131,34 @@
       overflow: hidden;
       transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
       z-index: 1;
-      border-color: rgba(0, 245, 255, 0.3) !important;
+      border: 1px solid rgba(0, 245, 255, 0.2) !important;
     }
 
-    /* 1px Border Beam Animation */
+    /* 1px Border Beam Animation using Masking */
     .hover-electric::before {
       content: '';
       position: absolute;
-      top: -150%;
-      left: -150%;
-      width: 400%;
-      height: 400%;
+      inset: -1px;
+      padding: 1px;
+      background: conic-gradient(
+        from 0deg,
+        transparent 0%,
+        transparent 80%,
+        var(--cyan) 95%,
+        transparent 100%
+      );
+      -webkit-mask: 
+        linear-gradient(#fff 0 0) content-box, 
+        linear-gradient(#fff 0 0);
+      mask: 
+        linear-gradient(#fff 0 0) content-box, 
+        linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
       opacity: 0;
       transition: opacity 0.3s ease;
-      z-index: -2;
       pointer-events: none;
-      background: conic-gradient(from 0deg, transparent 0%, transparent 85%, var(--cyan) 95%, transparent 100%);
+      z-index: 2;
     }
 
     /* Only initiate animation on hover or active state */
@@ -157,19 +169,8 @@
     
     /* Strong Cyan Glow on hover and active state */
     .hover-electric:hover, .hover-electric.active {
-      box-shadow: 0 0 40px rgba(0, 245, 255, 0.3), inset 0 0 20px rgba(0, 245, 255, 0.1);
-      border-color: rgba(0, 245, 255, 0.8) !important;
-    }
-
-    /* Internal background to keep the beam only on the border edge */
-    .hover-electric::after {
-      content: '';
-      position: absolute;
-      inset: 1px;
-      background: var(--deep);
-      z-index: -1;
-      pointer-events: none;
-      transition: background 0.3s ease;
+      box-shadow: 0 0 40px rgba(0, 245, 255, 0.15), inset 0 0 20px rgba(0, 245, 255, 0.05);
+      border-color: rgba(0, 245, 255, 0.5) !important;
     }
 
     @keyframes neural-reveal {
