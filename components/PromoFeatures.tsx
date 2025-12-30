@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 
 interface FeatureItemProps {
@@ -130,7 +129,7 @@ const FeatureItem: React.FC<FeatureItemProps> = ({ iconType, title, desc, showBo
       onMouseMove={handleMouseMove}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className={`p-8 pt-6 pb-10 space-y-8 flex flex-col relative overflow-hidden transition-colors duration-500 ${isHovered ? 'bg-cyan-500/[0.02]' : ''} ${showBorder ? 'border-b md:border-b-0 md:border-r border-cyan-500/10' : ''}`}
+      className={`p-4 md:p-8 pt-6 pb-10 space-y-8 flex flex-col relative overflow-hidden transition-colors duration-500 ${isHovered ? 'bg-cyan-500/[0.02]' : ''} ${showBorder ? 'border-b md:border-b-0 md:border-r border-cyan-500/10' : ''}`}
     >
       {/* Flashlight Effect */}
       <div 

@@ -338,7 +338,7 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen pb-20 relative bg-slate-950">
       
-      {user && (
+      {(user || state.userMovies.length > 0) && (
         <header className="fixed top-0 left-0 right-0 z-[80] bg-slate-950/60 backdrop-blur-xl border-b border-cyan-500/5 h-20 flex items-center animate-in slide-in-from-top duration-700">
           <div className="max-w-7xl mx-auto w-full px-4 md:px-8">
             <div className="px-4 md:px-12 flex items-center justify-between w-full">
@@ -346,7 +346,7 @@ const App: React.FC = () => {
                 <div className="w-10 h-10 flex items-center justify-center bg-cyan-500 shadow-[0_0_20px_rgba(0,245,255,0.4)] tech-chipped">
                     <i className="fa-solid fa-dna text-lg text-black"></i>
                 </div>
-                <h1 className="text-2xl font-black uppercase italic tracking-tighter text-white drop-shadow-[0_0:10px_rgba(0,245,255,0.2)]">
+                <h1 className="hidden md:block text-2xl font-black uppercase italic tracking-tighter text-white drop-shadow-[0_0:10px_rgba(0,245,255,0.2)]">
                   NeuralStream
                 </h1>
               </div>
@@ -381,7 +381,7 @@ const App: React.FC = () => {
               <i className="fa-solid fa-xmark text-lg"></i>
             </button>
             
-            <div className="md:w-1/2 p-8 md:p-12 bg-black/40 border-b md:border-b-0 md:border-r border-white/5 space-y-10">
+            <div className="md:w-1/2 p-4 md:p-12 bg-black/40 border-b md:border-b-0 md:border-r border-white/5 space-y-10">
               <div className="space-y-4">
                 <div className="mono text-[10px] text-cyan-500 uppercase tracking-[0.4em] font-black">Unlock all features</div>
                 <h2 className="text-3xl font-black text-white italic uppercase tracking-tighter leading-[0.9]">Secure Your <br/><span className="text-cyan-400">Taste Matrix</span></h2>
@@ -409,7 +409,7 @@ const App: React.FC = () => {
               </div>
             </div>
 
-            <div className="md:w-1/2 p-8 md:p-12 flex flex-col justify-center bg-slate-900">
+            <div className="md:w-1/2 p-4 md:p-12 flex flex-col justify-center bg-slate-900">
               <div className="text-center space-y-4 mb-10">
                 <h3 className="text-xl font-black text-white uppercase italic">IDENTITY_VERIFICATION</h3>
               </div>
@@ -450,7 +450,7 @@ const App: React.FC = () => {
       {showStatsModal && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/95 backdrop-blur-lg animate-in fade-in duration-300">
           <div className="max-w-4xl w-full tech-border bg-slate-900 border-cyan-500/20 shadow-[0_0_100px_rgba(0,245,255,0.1)] relative tech-chipped max-h-[90vh] flex flex-col">
-            <div className="p-8 border-b border-white/5 flex items-center justify-between">
+            <div className="p-4 md:p-8 border-b border-white/5 flex items-center justify-between">
               <div className="space-y-1">
                 <div className="mono text-[10px] text-cyan-500 uppercase tracking-[0.4em] font-black">Profile_Telemetry</div>
                 <h2 className="text-3xl font-black text-white italic uppercase tracking-tighter">Neural_Uplink_Stats</h2>
@@ -460,7 +460,7 @@ const App: React.FC = () => {
               </button>
             </div>
             
-            <div className="p-8 flex-1 overflow-y-auto custom-scrollbar space-y-12">
+            <div className="p-4 md:p-8 flex-1 overflow-y-auto custom-scrollbar space-y-12">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                  <div className="space-y-6">
                     <h3 className="mono text-xs font-black text-cyan-400 uppercase tracking-widest border-l-2 border-cyan-500 pl-4">Feedback_Signals</h3>
@@ -501,7 +501,7 @@ const App: React.FC = () => {
               </div>
             </div>
             
-            <div className="p-8 border-t border-white/5 bg-black/20 flex justify-between items-center">
+            <div className="p-4 md:p-8 border-t border-white/5 bg-black/20 flex justify-between items-center">
                <button 
                   onClick={handleLogout}
                   className="px-8 py-3 bg-red-500/10 border border-red-500/30 text-red-500 mono text-[10px] font-black uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all tech-chipped"
@@ -514,11 +514,11 @@ const App: React.FC = () => {
         </div>
       )}
 
-      <main className={`max-w-7xl mx-auto px-4 md:px-8 relative z-10 pt-32`}>
+      <main className={`max-w-7xl mx-auto px-4 md:px-8 relative z-10 pt-4 md:pt-32`}>
         <div className={`relative ${user ? 'pt-32' : 'pt-0'}`}>
           <div className="">
             {!user && (
-              <div className="mx-[3rem]">
+              <div className="md:mx-[3rem]">
                 <PromoHero 
                   isFlipped={isFlipped} 
                   onTryNow={() => setIsFlipped(true)} 
@@ -529,7 +529,7 @@ const App: React.FC = () => {
             )}
 
             {showUploadScreen ? (
-                <div className="max-w-xl mx-auto tech-border bg-slate-900/40 p-12 text-center space-y-10 relative -mt-16 backdrop-blur-md z-30 border-cyan-500/20 tech-chipped">
+                <div className="max-w-xl mx-auto tech-border bg-slate-900/40 p-4 md:p-12 text-center space-y-10 relative -mt-16 backdrop-blur-md z-30 border-cyan-500/20 tech-chipped">
                     <div className="space-y-4">
                       <div className="mono text-xs text-cyan-400 uppercase tracking-widest animate-pulse">Neural_Profile_Empty</div>
                       <h2 className="text-3xl font-black uppercase text-white italic">Initialize Your <span className="text-cyan-400">Matrix</span></h2>
@@ -542,7 +542,7 @@ const App: React.FC = () => {
                 </div>
             ) : (
                 <div className="space-y-12">
-                  <div className="perspective-1000 relative -mt-8 z-30 mx-[3rem]">
+                  <div className="perspective-1000 relative mt-0 md:-mt-8 z-30 md:mx-[3rem]">
                     <div className={`transition-all duration-1000 preserve-3d relative ${isFlipped || user ? 'rotate-y-180' : ''}`}>
                       <div className={`backface-hidden ${isFlipped || user ? 'absolute inset-0 invisible pointer-events-none' : 'relative'}`}>
                         <div className="tech-border bg-slate-900/80 backdrop-blur-xl border-cyan-500/10 tech-chipped">
@@ -553,7 +553,7 @@ const App: React.FC = () => {
                       <div className={`backface-hidden rotate-y-180 ${isFlipped || user ? 'relative' : 'absolute inset-0 invisible pointer-events-none'}`}>
                         <section 
                           ref={tuningRef}
-                          className="tech-border p-8 bg-slate-900/80 backdrop-blur-xl space-y-10 border-cyan-500/30 tech-chipped"
+                          className="tech-border p-4 md:p-8 bg-slate-900/80 backdrop-blur-xl space-y-10 border-cyan-500/30 tech-chipped"
                         >
                           <div className={`space-y-6 ${tuningVisible ? 'animate-neural-reveal' : 'opacity-0'}`} style={{ animationFillMode: 'both' }}>
                             <div className="flex flex-col md:flex-row justify-between items-start gap-6 md:gap-0">
@@ -689,7 +689,7 @@ const App: React.FC = () => {
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 items-stretch">
                     {state.recommendations.map((movie, idx) => (
-                        <MovieCard key={movie.id} movie={movie} index={idx} isRecommendation onLikeSimilar={(seed) => fetchRecommendations(seed)} onMark_watched={(m) => markAsWatched(m)} onFeedback={(m, f) => handleFeedback(m, f)} />
+                        <MovieCard key={movie.id} movie={movie} index={idx} isRecommendation onLikeSimilar={(seed) => fetchRecommendations(seed)} onMarkWatched={(m) => markAsWatched(m)} onFeedback={(m, f) => handleFeedback(m, f)} />
                     ))}
                     </div>
                 </section>
