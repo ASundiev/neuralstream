@@ -121,14 +121,30 @@ export const MovieCard: React.FC<MovieCardProps> = ({
 
       {(!hasError && isValidUrl) ? (
         <div className="relative w-full h-full overflow-hidden">
-          {isNeuralGenerated && (
-            <div className="absolute inset-0 z-10 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-              <div className="absolute inset-0 bg-gradient-to-t from-cyan-500/20 via-cyan-500/10 to-transparent"></div>
-              <div className="absolute inset-0 scanline opacity-20"></div>
-            </div>
-          )}
+          {/* Glitch Layers - RGB Split */}
+          <div className="absolute inset-0 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none mix-blend-hard-light">
+            <img
+              src={pUrl || ''}
+              className="absolute inset-0 w-full h-full object-cover glitch-effect-1 transition-transform duration-700 group-hover:scale-110 opacity-75"
+              style={{ filter: 'grayscale(100%) brightness(0.8) sepia(100%) saturate(400%) hue-rotate(120deg) contrast(1.2)' }}
+              alt=""
+            />
+            <img
+              src={pUrl || ''}
+              className="absolute inset-0 w-full h-full object-cover glitch-effect-2 transition-transform duration-700 group-hover:scale-110 opacity-75"
+              style={{ filter: 'grayscale(100%) brightness(0.8) sepia(100%) saturate(400%) hue-rotate(280deg) contrast(1.2)' }}
+              alt=""
+            />
+            <img
+              src={pUrl || ''}
+              className="absolute inset-0 w-full h-full object-cover glitch-flash transition-transform duration-700 group-hover:scale-110 opacity-0 mix-blend-screen"
+              style={{ filter: 'brightness(2) contrast(2)' }}
+              alt=""
+            />
+          </div>
+
           <img
-            src={pUrl}
+            src={pUrl || ''}
             alt={movie.title}
             onLoad={() => setImageLoaded(true)}
             onError={handleImageError}
@@ -154,17 +170,7 @@ export const MovieCard: React.FC<MovieCardProps> = ({
         </div>
       )}
 
-      <div className="absolute top-2 left-2 right-2 flex justify-between items-start pointer-events-none z-20">
-        <div className="flex flex-wrap gap-1">
-          {movie.providers?.slice(0, 3).map(p => (
-            <img
-              key={p.provider_id}
-              src={`https://image.tmdb.org/t/p/original${p.logo_path}`}
-              alt={p.provider_name}
-              className="w-6 h-6 border border-white/20 shadow-lg pointer-events-auto tech-chipped"
-            />
-          ))}
-        </div>
+      <div className="absolute top-2 left-2 right-2 flex justify-end items-start pointer-events-none z-20">
         <div className="mono text-xs bg-greenAcc-500 text-black px-2 py-0.5 font-bold tech-chipped shadow-lg">
           {movie.rating ? movie.rating.toFixed(1) : '8.0'}
         </div>
