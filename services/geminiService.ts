@@ -1,6 +1,7 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
 import { RecommendationRequest, Movie, ContentType } from "../types";
+import { generateNeuralPoster } from "./imageService";
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
@@ -26,13 +27,14 @@ export async function searchMovieForHistory(query: string): Promise<Movie | null
     });
 
     const data = JSON.parse(response.text);
+    const posterUrl = await generateNeuralPoster(data.title, "");
 
     return {
       ...data,
       id: Math.random().toString(36).substr(2, 9),
       userRating: 8,
       rating: 8,
-      posterUrl: `[SIGNAL_LOST]`,
+      posterUrl: posterUrl || `[SIGNAL_LOST]`,
       type: data.type.toLowerCase().includes('tv') || data.type.toLowerCase().includes('series') ? ContentType.SERIES : ContentType.MOVIE
     };
   } catch (error) {
@@ -89,14 +91,15 @@ export async function getRecommendations(request: RecommendationRequest): Promis
 
     const results = JSON.parse(response.text);
 
-    const moviesWithMetadata = results.map((item: any) => {
+    const moviesWithMetadata = await Promise.all(results.map(async (item: any) => {
+      const posterUrl = await generateNeuralPoster(item.title, item.description);
       return {
         ...item,
         id: Math.random().toString(36).substr(2, 9),
-        posterUrl: `[SIGNAL_LOST]`,
+        posterUrl: posterUrl || `[SIGNAL_LOST]`,
         type: item.type.toLowerCase().includes('tv') || item.type.toLowerCase().includes('series') ? ContentType.SERIES : ContentType.MOVIE
       };
-    });
+    }));
 
     return { movies: moviesWithMetadata, sources: [] };
   } catch (error) {
