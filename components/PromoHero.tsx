@@ -61,13 +61,13 @@ export const PromoHero: React.FC<PromoHeroProps> = ({ onTryNow, onLogin, onSignU
               <div className="flex items-center gap-8 animate-in fade-in zoom-in-95 duration-500">
                 <button
                   onClick={onLogin}
-                  className="px-14 py-4 bg-cyan-500/10 border border-cyan-500/40 text-cyan-400 mono font-black text-xs uppercase tracking-[0.2em] hover:bg-cyan-500 hover:text-black transition-all tech-chipped"
+                  className="px-6 md:px-14 py-4 bg-cyan-500/10 border border-cyan-500/40 text-cyan-400 mono font-black text-xs uppercase tracking-[0.2em] hover:bg-cyan-500 hover:text-black transition-all tech-chipped whitespace-nowrap"
                 >
                   [ LOG IN ]
                 </button>
                 <button
                   onClick={onSignUp}
-                  className="mono text-xs font-black uppercase tracking-widest text-slate-500 hover:text-white transition-colors"
+                  className="mono text-xs font-black uppercase tracking-widest text-slate-500 hover:text-white transition-colors whitespace-nowrap"
                 >
                   [ SIGN UP ]
                 </button>

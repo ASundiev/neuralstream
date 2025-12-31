@@ -62,6 +62,7 @@ const App: React.FC = () => {
   const skipSync = useRef(false);
   const tuningRef = useRef<HTMLElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const showUploadScreen = !!user && state.userMovies.length === 0;
 
@@ -87,6 +88,13 @@ const App: React.FC = () => {
       clearTimeout(fallbackTimer);
     };
   }, [user, state.userMovies]);
+
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+    }
+  }, [state.filters.query]);
 
   const handleLogout = async () => {
     if (window.confirm("TERMINATE_NEURAL_UPLINK? ANY UNSYNCED LOCAL CACHE WILL BE FLUSHED.")) {
@@ -343,7 +351,7 @@ const App: React.FC = () => {
       {(user || state.userMovies.length > 0) && (
         <header className="fixed top-0 left-0 right-0 z-[80] bg-slate-950/60 backdrop-blur-xl border-b border-cyan-500/5 h-20 flex items-center animate-in slide-in-from-top duration-700">
           <div className="max-w-7xl mx-auto w-full px-4 md:px-8">
-            <div className="px-4 md:px-12 flex items-center justify-between w-full">
+            <div className="flex items-center justify-between w-full">
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 flex items-center justify-center bg-cyan-500 shadow-[0_0_20px_rgba(0,245,255,0.4)] tech-chipped">
                   <i className="fa-solid fa-dna text-lg text-black"></i>
@@ -529,7 +537,7 @@ const App: React.FC = () => {
         </div>
       )}
 
-      <main className={`max-w-7xl mx-auto px-4 md:px-8 relative z-10 pt-4 md:pt-40`}>
+      <main className={`max-w-7xl mx-auto px-4 md:px-8 relative z-10 pt-24 md:pt-40`}>
         <div className="relative">
           <div className="">
             {!user && (
@@ -584,7 +592,7 @@ const App: React.FC = () => {
                               <div className="relative">
                                 <button
                                   onClick={() => fileInputRef.current?.click()}
-                                  className={`px-6 py-2 border mono font-black text-xs uppercase tracking-widest transition-all tech-chipped ${importSuccess
+                                  className={`px-6 py-2 border mono font-black text-xs uppercase tracking-widest transition-all tech-chipped whitespace-nowrap ${importSuccess
                                     ? 'bg-cyan-500 border-cyan-400 text-black'
                                     : state.userMovies.length > 0
                                       ? 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10 hover:text-white'
@@ -601,11 +609,16 @@ const App: React.FC = () => {
                           <div className={`relative flex items-start group ${tuningVisible ? 'animate-neural-reveal' : 'opacity-0'}`} style={{ animationDelay: '100ms', animationFillMode: 'both' }}>
                             <div className="absolute left-6 top-5 mono text-cyan-500/60 font-black text-sm select-none">CMD_&gt;</div>
                             <textarea
-                              rows={2}
+                              ref={textareaRef}
+                              rows={1}
                               value={state.filters.query}
-                              onChange={(e) => setState((s) => ({ ...s, filters: { ...s.filters, query: e.target.value } }))}
+                              onChange={(e) => {
+                                setState((s) => ({ ...s, filters: { ...s.filters, query: e.target.value } }));
+                                e.target.style.height = 'auto';
+                                e.target.style.height = `${e.target.scrollHeight}px`;
+                              }}
                               placeholder="SPECIFY_NEURAL_OVERRIDE..."
-                              className="w-full bg-black/40 border border-white/10 group-hover:border-cyan-500/40 focus:border-cyan-500/60 p-5 pl-20 mono text-sm text-white outline-none uppercase placeholder-slate-800 rounded-sm resize-none"
+                              className="w-full bg-black/40 border border-white/10 group-hover:border-cyan-500/40 focus:border-cyan-500/60 p-5 pl-20 mono text-sm text-white outline-none uppercase placeholder-slate-800 rounded-sm resize-none overflow-hidden"
                             />
                             <div className="absolute bottom-2 right-2 flex gap-1">
                               <div className="w-1 h-3 bg-cyan-500/20"></div>
