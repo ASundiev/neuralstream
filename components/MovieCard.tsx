@@ -96,9 +96,7 @@ export const MovieCard: React.FC<MovieCardProps> = ({
   const isValidUrl = !isLost && (pUrl.startsWith('http') || pUrl.startsWith('data:image'));
   const isNeuralGenerated = !!neuralPoster;
 
-  const tmdbUrl = movie.tmdbId
-    ? `https://www.themoviedb.org/${movie.type === ContentType.SERIES ? 'tv' : 'movie'}/${movie.tmdbId}`
-    : null;
+  const imdbUrl = `https://www.imdb.com/find?q=${encodeURIComponent(`${movie.title} ${movie.year}`)}&s=tt`;
 
   const CardHeader = () => (
     <div className="h-1.5 w-full flex bg-cyan-500/5 group-hover:bg-cyan-500/20 transition-colors relative overflow-hidden">
@@ -186,8 +184,8 @@ export const MovieCard: React.FC<MovieCardProps> = ({
     >
       <CardHeader />
 
-      {tmdbUrl ? (
-        <a href={tmdbUrl} target="_blank" rel="noopener noreferrer" className="block relative focus:outline-none focus:ring-2 focus:ring-cyan-500 z-10">
+      {imdbUrl ? (
+        <a href={imdbUrl} target="_blank" rel="noopener noreferrer" className="block relative focus:outline-none focus:ring-2 focus:ring-cyan-500 z-10">
           <PosterContent />
         </a>
       ) : (
@@ -197,8 +195,8 @@ export const MovieCard: React.FC<MovieCardProps> = ({
       <div className="p-4 space-y-4 flex flex-col flex-1 relative bg-slate-900/40">
         <div className="flex justify-between items-start">
           <div className="space-y-0.5">
-            {tmdbUrl ? (
-              <a href={tmdbUrl} target="_blank" rel="noopener noreferrer" className="block focus:outline-none">
+            {imdbUrl ? (
+              <a href={imdbUrl} target="_blank" rel="noopener noreferrer" className="block focus:outline-none">
                 <h3 className="text-[13px] font-black uppercase tracking-tight line-clamp-1 hover:text-cyan-400 transition-colors">{movie.title}</h3>
               </a>
             ) : (

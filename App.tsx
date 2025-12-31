@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { ContentType, Movie, AppState, Feedback, SearchHistoryItem } from './types';
-import { GENRES, MOODS, CONTENT_TYPES, MAJOR_PLATFORMS } from './constants';
+import { GENRES, MOODS, CONTENT_TYPES } from './constants';
 import { getRecommendations } from './services/geminiService';
 import { MovieCard } from './components/MovieCard';
 import { NeuralLoader } from './components/NeuralLoader';
@@ -26,8 +26,7 @@ const INITIAL_FILTERS = {
   type: ContentType.BOTH,
   genre: '',
   mood: '',
-  query: '',
-  providers: []
+  query: ''
 };
 
 const App: React.FC = () => {
@@ -259,7 +258,6 @@ const App: React.FC = () => {
         mood: state.filters.mood,
         seedMovie: seed,
         naturalLanguageQuery: effectiveQuery,
-        preferredProviders: state.filters.providers,
         isGuest: !user,
         limit: 4,
         excludeTitles: isMore ? state.recommendations.map(m => m.title) : []
@@ -749,7 +747,7 @@ const App: React.FC = () => {
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                           {[
                             {
                               label: 'Modality', component: (
@@ -768,8 +766,7 @@ const App: React.FC = () => {
                               )
                             },
                             { label: 'Genre_Axis', value: state.filters.genre, setter: (v: string) => setState(s => ({ ...s, filters: { ...s.filters, genre: v } })), options: GENRES, placeholder: 'ALL_CHANNELS' },
-                            { label: 'Affective_State', value: state.filters.mood, setter: (v: string) => setState(s => ({ ...s, filters: { ...s.filters, mood: v } })), options: MOODS, placeholder: 'UNCALIBRATED' },
-                            { label: 'Availability', value: state.filters.providers?.[0] || '', setter: (v: string) => setState(s => ({ ...s, filters: { ...s.filters, providers: v ? [v] : [] } })), options: MAJOR_PLATFORMS.map(p => p.name), placeholder: 'GLOBAL_STREAM' }
+                            { label: 'Affective_State', value: state.filters.mood, setter: (v: string) => setState(s => ({ ...s, filters: { ...s.filters, mood: v } })), options: MOODS, placeholder: 'UNCALIBRATED' }
                           ].map((f, i) => (
                             <div key={i} className={`space-y-3 ${tuningVisible ? 'animate-neural-reveal' : 'opacity-0'}`} style={{ animationDelay: `${200 + i * 100}ms`, animationFillMode: 'both' }}>
                               <label className="mono text-[10px] uppercase text-slate-300 font-bold tracking-widest flex items-center gap-2">
