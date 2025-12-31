@@ -838,7 +838,7 @@ const App: React.FC = () => {
                         <div className="w-8 h-1 bg-cyan-500"></div>
                       </div>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 items-stretch">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 items-stretch">
                       {state.recommendations.map((movie, idx) => (
                         <MovieCard key={movie.id} movie={movie} index={idx} isRecommendation onLikeSimilar={(seed) => fetchRecommendations(seed)} onMarkWatched={(m) => markAsWatched(m)} onFeedback={(m, f) => handleFeedback(m, f)} onAddToWatchlist={(m) => addToWatchlist(m)} />
                       ))}
