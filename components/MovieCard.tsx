@@ -200,9 +200,6 @@ export const MovieCard: React.FC<MovieCardProps> = ({
             )}
             <p className="mono text-[10px] text-slate-500 uppercase">{movie.year} // {movie.type}</p>
           </div>
-          <div className="w-4 h-4 bg-cyan-500/10 flex items-center justify-center tech-chipped">
-            <div className="w-1.5 h-1.5 bg-cyan-400"></div>
-          </div>
         </div>
 
         <div className="flex flex-wrap gap-1.5">

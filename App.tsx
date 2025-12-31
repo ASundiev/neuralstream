@@ -395,7 +395,6 @@ const App: React.FC = () => {
                 onClick={() => setShowStatsModal(true)}
                 className="group flex items-center gap-4 p-1.5 pr-6 bg-cyan-500/5 border border-cyan-500/10 hover:border-cyan-500/30 transition-all rounded-sm relative z-50 cursor-pointer"
               >
-                <div className="absolute top-0 right-0 w-2 h-2 bg-cyan-500"></div>
                 <div className="w-10 h-10 flex items-center justify-center bg-cyan-500/20 text-cyan-400 group-hover:bg-cyan-500 group-hover:text-black transition-all tech-chipped">
                   <i className="fa-solid fa-id-badge text-xl"></i>
                 </div>
@@ -720,11 +719,6 @@ const App: React.FC = () => {
                               placeholder="SPECIFY_NEURAL_OVERRIDE..."
                               className="w-full bg-black/40 border border-white/10 group-hover:border-cyan-500/40 focus:border-cyan-500/60 p-5 pl-20 mono text-sm text-white outline-none uppercase placeholder-slate-800 rounded-sm resize-none overflow-hidden"
                             />
-                            <div className="absolute bottom-2 right-2 flex gap-1">
-                              <div className="w-1 h-3 bg-cyan-500/20"></div>
-                              <div className="w-1 h-3 bg-cyan-500/40"></div>
-                              <div className="w-1 h-3 bg-cyan-500/60"></div>
-                            </div>
                           </div>
                         </div>
 
@@ -752,7 +746,6 @@ const App: React.FC = () => {
                           ].map((f, i) => (
                             <div key={i} className={`space-y-3 ${tuningVisible ? 'animate-neural-reveal' : 'opacity-0'}`} style={{ animationDelay: `${200 + i * 100}ms`, animationFillMode: 'both' }}>
                               <label className="mono text-[10px] uppercase text-slate-300 font-bold tracking-widest flex items-center gap-2">
-                                <div className="w-1.5 h-1.5 bg-cyan-500"></div>
                                 {f.label}
                               </label>
                               {f.component || (
@@ -777,7 +770,6 @@ const App: React.FC = () => {
                         <div className="flex flex-row items-center gap-4">
                           <div className="flex-1 h-[1px] bg-cyan-500/10"></div>
                           <div className="flex gap-2">
-                            {[...Array(4)].map((_, i) => <div key={i} className="w-2 h-2 border border-cyan-500/20"></div>)}
                           </div>
                           <div className="flex-1 h-[1px] bg-cyan-500/10"></div>
                         </div>

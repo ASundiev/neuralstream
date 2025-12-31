@@ -14,10 +14,6 @@ export const PromoHero: React.FC<PromoHeroProps> = ({ onTryNow, onLogin, onSignU
       <div className="scanline opacity-10"></div>
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,245,255,0.08)_0%,transparent_70%)] pointer-events-none"></div>
 
-      {/* Decorative corners */}
-      <div className="absolute top-4 left-4 w-4 h-4 border-t border-l border-cyan-500/40"></div>
-      <div className="absolute bottom-4 right-4 w-4 h-4 border-b border-r border-cyan-500/40"></div>
-
       {/* Decorative Grid */}
       <div className="absolute inset-0 opacity-[0.05] pointer-events-none bg-[linear-gradient(rgba(0,245,255,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(0,245,255,0.1)_1px,transparent_1px)] bg-[size:60px_60px]"></div>
 
