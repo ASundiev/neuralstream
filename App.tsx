@@ -58,7 +58,8 @@ const App: React.FC = () => {
     isRecsLoading: false,
     filters: INITIAL_FILTERS,
     sources: [],
-    guestSearchUsed: !!localStorage.getItem('neural_guest_search')
+    guestSearchUsed: !!localStorage.getItem('neural_guest_search'),
+    isMoreLoading: false
   });
 
   const skipSync = useRef(false);
@@ -228,12 +229,27 @@ const App: React.FC = () => {
     }
   };
 
-  const fetchRecommendations = useCallback(async (seed?: Movie) => {
-    if (!user && state.guestSearchUsed) {
+  const fetchRecommendations = useCallback(async (seed?: Movie, isMore: boolean = false) => {
+    if (!user && state.guestSearchUsed && !isMore) {
       openAuth(true);
       return;
     }
-    setState((prev) => ({ ...prev, isRecsLoading: true }));
+
+    const effectiveQuery = state.filters.query || "";
+
+    const parts: string[] = [];
+    if (state.filters.genre) parts.push(state.filters.genre.toUpperCase());
+    if (state.filters.mood) parts.push(state.filters.mood.toUpperCase());
+    if (state.filters.type !== ContentType.BOTH) parts.push(state.filters.type.toUpperCase());
+    const filterLabel = parts.join(' ');
+    const searchLabel = effectiveQuery || (filterLabel.length > 0 ? filterLabel : "NEURAL_SWEEP");
+
+    if (isMore) {
+      setState((prev) => ({ ...prev, isMoreLoading: true }));
+    } else {
+      setState((prev) => ({ ...prev, isRecsLoading: true }));
+    }
+
     try {
       const { movies, sources: newSources } = await getRecommendations({
         watchedHistory: state.userMovies,
@@ -242,31 +258,34 @@ const App: React.FC = () => {
         genre: state.filters.genre,
         mood: state.filters.mood,
         seedMovie: seed,
-        naturalLanguageQuery: state.filters.query,
+        naturalLanguageQuery: effectiveQuery,
         preferredProviders: state.filters.providers,
-        isGuest: !user
+        isGuest: !user,
+        limit: 4,
+        excludeTitles: isMore ? state.recommendations.map(m => m.title) : []
       });
       if (!user) localStorage.setItem('neural_guest_search', 'true');
       setState((prev) => ({
         ...prev,
-        recommendations: movies,
-        sources: newSources,
+        recommendations: isMore ? [...prev.recommendations, ...movies] : movies,
+        sources: isMore ? [...prev.sources, ...newSources] : newSources,
         guestSearchUsed: !user ? true : prev.guestSearchUsed,
-        searchHistory: [
+        isMoreLoading: false,
+        isRecsLoading: false,
+        searchHistory: isMore ? prev.searchHistory : [
           {
             id: Math.random().toString(36).substr(2, 9),
-            query: prev.filters.query || "NEURAL_SWEEP",
+            query: searchLabel,
             timestamp: new Date().toISOString(),
             recommendations: movies,
-            filters: { ...prev.filters }
+            filters: { ...prev.filters, query: effectiveQuery }
           },
           ...(prev.searchHistory || [])
         ].slice(0, 50)
       }));
     } catch (error) {
       alert("ENGINE_FAILURE: SYNTHESIS INTERRUPTED.");
-    } finally {
-      setState((prev) => ({ ...prev, isRecsLoading: false }));
+      setState(prev => ({ ...prev, isMoreLoading: false, isRecsLoading: false }));
     }
   }, [state.userMovies, state.feedbackHistory, state.filters, state.guestSearchUsed, user]);
 
@@ -823,6 +842,23 @@ const App: React.FC = () => {
                       {state.recommendations.map((movie, idx) => (
                         <MovieCard key={movie.id} movie={movie} index={idx} isRecommendation onLikeSimilar={(seed) => fetchRecommendations(seed)} onMarkWatched={(m) => markAsWatched(m)} onFeedback={(m, f) => handleFeedback(m, f)} onAddToWatchlist={(m) => addToWatchlist(m)} />
                       ))}
+                    </div>
+
+                    <div className="flex justify-center pt-8">
+                      <button
+                        onClick={() => fetchRecommendations(undefined, true)}
+                        disabled={state.isMoreLoading}
+                        className="group relative px-10 py-4 bg-cyan-500/5 border border-cyan-500/20 hover:border-cyan-500/60 transition-all tech-chipped overflow-hidden"
+                      >
+                        <div className="absolute inset-0 bg-cyan-500/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+                        <div className="relative flex items-center gap-3 mono text-[10px] font-black uppercase tracking-[0.2em] text-cyan-400 group-hover:text-white transition-colors">
+                          {state.isMoreLoading ? (
+                            <><i className="fa-solid fa-sync animate-spin"></i> EXPANDING_MATRIX...</>
+                          ) : (
+                            <><i className="fa-solid fa-plus"></i> SHOW_MORE_RESULTS</>
+                          )}
+                        </div>
+                      </button>
                     </div>
                   </section>
                 )}
