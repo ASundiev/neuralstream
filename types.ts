@@ -56,6 +56,8 @@ export interface RecommendationRequest {
   naturalLanguageQuery?: string;
   preferredProviders?: string[];
   isGuest?: boolean;
+  limit?: number;
+  excludeTitles?: string[];
 }
 
 export interface AppState {
@@ -67,6 +69,7 @@ export interface AppState {
   recommendations: Movie[];
   isLoading: boolean;
   isRecsLoading: boolean;
+  isMoreLoading?: boolean;
   filters: {
     type: ContentType;
     genre: string;

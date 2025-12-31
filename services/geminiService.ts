@@ -4,8 +4,8 @@ import { RecommendationRequest, Movie, ContentType, WatchProvider } from "../typ
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
-const TMDB_TOKEN = (process.env.VITE_TMDB_TOKEN && process.env.VITE_TMDB_TOKEN !== 'undefined' && process.env.VITE_TMDB_TOKEN !== '') 
-  ? process.env.VITE_TMDB_TOKEN 
+const TMDB_TOKEN = (process.env.VITE_TMDB_TOKEN && process.env.VITE_TMDB_TOKEN !== 'undefined' && process.env.VITE_TMDB_TOKEN !== '')
+  ? process.env.VITE_TMDB_TOKEN
   : null;
 
 /**
@@ -24,7 +24,7 @@ async function fetchTmdbMetadata(title: string, year?: string, type?: string): P
     // Supports both v4 tokens and v3 API keys
     const headers: Record<string, string> = { 'Accept': 'application/json' };
     let authParams = '';
-    
+
     if (TMDB_TOKEN.length > 50) {
       headers['Authorization'] = `Bearer ${TMDB_TOKEN}`;
     } else {
@@ -34,7 +34,7 @@ async function fetchTmdbMetadata(title: string, year?: string, type?: string): P
     const query = encodeURIComponent(title);
     const yearParam = isTV ? 'first_air_date_year' : 'primary_release_year';
     const searchUrl = `${baseUrl}/search/${searchType}?query=${query}${cleanYear ? `&${yearParam}=${cleanYear}` : ''}&include_adult=false&language=en-US&page=1${authParams}`;
-    
+
     const searchResponse = await fetch(searchUrl, { headers }).catch(() => null);
     if (!searchResponse || !searchResponse.ok) return { posterUrl: null, providers: [], tmdbId: null };
 
@@ -120,7 +120,7 @@ export async function searchMovieForHistory(query: string): Promise<Movie | null
 }
 
 export async function getRecommendations(request: RecommendationRequest): Promise<{ movies: Movie[], sources: any[] }> {
-  const { watchedHistory, feedbackHistory, targetType, genre, mood, seedMovie, naturalLanguageQuery, isGuest } = request;
+  const { watchedHistory, feedbackHistory, targetType, genre, mood, seedMovie, naturalLanguageQuery, isGuest, limit, excludeTitles } = request;
 
   const context = watchedHistory
     .filter(m => (m.userRating || 0) >= 7)
@@ -129,7 +129,7 @@ export async function getRecommendations(request: RecommendationRequest): Promis
     .join(', ');
 
   const prompt = `
-    GENERATE ${isGuest ? '6' : '8'} RECOMMENDATIONS.
+    GENERATE ${limit || (isGuest ? '6' : '8')} RECOMMENDATIONS.
     HISTORY: [${context}]
     SIGNALS: [${feedbackHistory.map(f => `${f.title}: ${f.feedback.type}`).join(', ')}]
     MODALITY: ${targetType}
@@ -137,6 +137,7 @@ export async function getRecommendations(request: RecommendationRequest): Promis
     MOOD: ${mood || "ANY"}
     ${naturalLanguageQuery ? `USER_REQUEST: ${naturalLanguageQuery}` : ""}
     ${seedMovie ? `SEED_SIMILARITY: ${seedMovie.title}` : ""}
+    ${excludeTitles && excludeTitles.length > 0 ? `STRICT_EXCLUSION: [${excludeTitles.join(', ')}]` : ""}
   `;
 
   try {
@@ -144,7 +145,7 @@ export async function getRecommendations(request: RecommendationRequest): Promis
       model: "gemini-3-flash-preview",
       contents: prompt,
       config: {
-        systemInstruction: "You are the NeuralStream Recommendation Engine. Only return Title, Year, Type, and Genres. No image links.",
+        systemInstruction: `You are the NeuralStream Recommendation Engine. Only return Title, Year, Type, and Genres. No image links.${excludeTitles && excludeTitles.length > 0 ? ` DO NOT RECOMMEND ANY OF THESE TITLES: ${excludeTitles.join(', ')}.` : ""}`,
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.ARRAY,
