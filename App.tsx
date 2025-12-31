@@ -498,16 +498,16 @@ const App: React.FC = () => {
               </button>
             </div>
 
-            <div className="px-4 md:px-8 border-b border-white/5 flex gap-8">
+            <div className="px-4 md:px-8 border-b border-white/5 flex gap-4 md:gap-8 overflow-x-auto custom-scrollbar whitespace-nowrap">
               {[
-                { id: 'SIGNALS', label: 'Feedback_Signals' },
-                { id: 'SEARCHES', label: 'Search_Memory' },
+                { id: 'SIGNALS', label: 'Signals' },
+                { id: 'SEARCHES', label: 'Searches' },
                 { id: 'WATCHLIST', label: 'Watchlist' }
               ].map(tab => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveStatsTab(tab.id as any)}
-                  className={`py-4 mono text-[10px] font-black uppercase tracking-[0.2em] relative transition-all ${activeStatsTab === tab.id ? 'text-cyan-400' : 'text-slate-500 hover:text-slate-300'
+                  className={`py-4 mono text-[10px] font-black uppercase tracking-[0.2em] relative transition-all shrink-0 ${activeStatsTab === tab.id ? 'text-cyan-400' : 'text-slate-500 hover:text-slate-300'
                     }`}
                 >
                   {tab.label}
