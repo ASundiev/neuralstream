@@ -827,7 +827,7 @@ const App: React.FC = () => {
                 {state.isRecsLoading && <div className="mt-10 animate-in fade-in duration-700"><NeuralLoader /></div>}
 
                 {!state.isRecsLoading && state.recommendations.length > 0 && (
-                  <section className="space-y-10 animate-in fade-in slide-in-from-bottom-8 duration-1000 mt-10 px-4 md:px-12">
+                  <section className="space-y-10 animate-in fade-in slide-in-from-bottom-8 duration-1000 mt-10 md:px-12">
                     <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-white/10 pb-8">
                       <div>
                         <div className="mono text-[10px] text-cyan-500 uppercase tracking-widest font-bold">Output_Matrix</div>
@@ -838,7 +838,7 @@ const App: React.FC = () => {
                         <div className="w-8 h-1 bg-cyan-500"></div>
                       </div>
                     </div>
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 items-stretch">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8 items-stretch">
                       {state.recommendations.map((movie, idx) => (
                         <MovieCard key={movie.id} movie={movie} index={idx} isRecommendation onLikeSimilar={(seed) => fetchRecommendations(seed)} onMarkWatched={(m) => markAsWatched(m)} onFeedback={(m, f) => handleFeedback(m, f)} onAddToWatchlist={(m) => addToWatchlist(m)} />
                       ))}
