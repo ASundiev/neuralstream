@@ -204,6 +204,20 @@
     .animate-card-entrance {
       animation: card-entrance 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
     }
+
+    @keyframes scan-slow {
+      0% {
+        transform: translateX(-100%);
+      }
+
+      100% {
+        transform: translateX(100%);
+      }
+    }
+
+    .group:hover .group-hover\:animate-scan-slow {
+      animation: scan-slow 3s linear infinite;
+    }
   </style>
   <script type="importmap">
 {

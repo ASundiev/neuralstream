@@ -8,6 +8,7 @@ import { NeuralLoader } from './components/NeuralLoader';
 import { PromoHero } from './components/PromoHero';
 import { PromoFeatures } from './components/PromoFeatures';
 import { MosaicBackground } from './components/MosaicBackground';
+import { NeuralDNA } from './components/NeuralDNA';
 
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://vplgyzzwgbgwudbtdgfk.supabase.co';
 const SUPABASE_KEY = process.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZwbGd5enp3Z2Jnd3VkYnRkZ2ZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYxNzM0ODksImV4cCI6MjA4MTc0OTQ4OX0.90zVerWUdgekP_MWRiViKC80bDy46UkZau6MZ6ANrKE';
@@ -496,6 +497,13 @@ const App: React.FC = () => {
               <button onClick={() => setShowStatsModal(false)} className="text-slate-500 hover:text-white transition-colors">
                 <i className="fa-solid fa-xmark text-2xl"></i>
               </button>
+            </div>
+
+            <div className="px-4 md:px-8 py-6 border-b border-white/5 bg-black/20">
+              <NeuralDNA
+                totalSignals={state.userMovies.length + state.feedbackHistory.length}
+                maxSignals={150}
+              />
             </div>
 
             <div className="px-4 md:px-8 border-b border-white/5 flex gap-4 md:gap-8 overflow-x-auto custom-scrollbar whitespace-nowrap">
