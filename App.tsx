@@ -299,6 +299,13 @@ const App: React.FC = () => {
     });
   };
 
+  const removeFeedback = (index: number) => {
+    setState((prev) => ({
+      ...prev,
+      feedbackHistory: prev.feedbackHistory.filter((_, i) => i !== index)
+    }));
+  };
+
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -492,11 +499,20 @@ const App: React.FC = () => {
               {activeStatsTab === 'SIGNALS' ? (
                 <div className="space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
                   {state.feedbackHistory.length > 0 ? state.feedbackHistory.map((f, i) => (
-                    <div key={i} className="flex items-center justify-between p-4 bg-black/40 border border-white/5 tech-chipped">
-                      <span className="text-[11px] font-bold text-slate-300">{f.title}</span>
-                      <span className={`mono text-[9px] uppercase px-3 py-1 font-black ${f.feedback.type === 'like' ? 'text-cyan-400 bg-cyan-500/10' : 'text-red-400 bg-red-500/10'}`}>
-                        {f.feedback.type}
-                      </span>
+                    <div key={i} className="flex items-center justify-between p-4 bg-black/40 border border-white/5 group transition-colors hover:bg-black/60">
+                      <div className="flex items-center gap-6">
+                        <div className={`w-8 h-8 flex items-center justify-center rounded-sm ${f.feedback.type === 'like' ? 'text-cyan-400 bg-cyan-500/10' : 'text-red-400 bg-red-500/10'}`}>
+                          <i className={`fa-solid ${f.feedback.type === 'like' ? 'fa-thumbs-up' : 'fa-thumbs-down'} text-xs`}></i>
+                        </div>
+                        <span className="mono text-[11px] font-bold text-slate-300 uppercase tracking-wider">{f.title}</span>
+                      </div>
+                      <button
+                        onClick={() => removeFeedback(i)}
+                        className="w-8 h-8 flex items-center justify-center bg-white/5 text-slate-600 hover:bg-red-500 hover:text-white transition-all rounded-sm"
+                        title="Remove from memory"
+                      >
+                        <i className="fa-solid fa-xmark text-xs"></i>
+                      </button>
                     </div>
                   )) : (
                     <div className="p-6 text-center mono text-[10px] text-slate-700 uppercase tech-chipped bg-black/20">NO_SIGNALS_DETECTED</div>
