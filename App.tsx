@@ -41,7 +41,7 @@ const App: React.FC = () => {
 
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showStatsModal, setShowStatsModal] = useState(false);
-  const [activeStatsTab, setActiveStatsTab] = useState<'SIGNALS' | 'SEARCHES'>('SIGNALS');
+  const [activeStatsTab, setActiveStatsTab] = useState<'SIGNALS' | 'SEARCHES' | 'WATCHLIST'>('SIGNALS');
   const [tuningVisible, setTuningVisible] = useState(false);
   const [isFlipped, setIsFlipped] = useState(false);
   const [importSuccess, setImportSuccess] = useState(false);
@@ -49,6 +49,7 @@ const App: React.FC = () => {
   const [state, setState] = useState<AppState>({
     isLoggedIn: false,
     userMovies: [],
+    watchlist: [],
     feedbackHistory: [],
     searchHistory: [],
     recommendations: [],
@@ -128,6 +129,7 @@ const App: React.FC = () => {
             ...data.state,
             filters: { ...INITIAL_FILTERS, ...(data.state.filters || {}) },
             searchHistory: data.state.searchHistory || [],
+            watchlist: data.state.watchlist || [],
             isLoggedIn: true,
             isLoading: false,
             isRecsLoading: false,
@@ -306,6 +308,27 @@ const App: React.FC = () => {
     }));
   };
 
+  const addToWatchlist = (movie: Movie) => {
+    gateInteraction(() => {
+      setState((prev) => {
+        if (prev.watchlist.some(m => m.title.toLowerCase() === movie.title.toLowerCase())) {
+          return prev;
+        }
+        return {
+          ...prev,
+          watchlist: [...prev.watchlist, movie]
+        };
+      });
+    });
+  };
+
+  const removeFromWatchlist = (title: string) => {
+    setState((prev) => ({
+      ...prev,
+      watchlist: prev.watchlist.filter(m => m.title.toLowerCase() !== title.toLowerCase())
+    }));
+  };
+
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -479,7 +502,8 @@ const App: React.FC = () => {
             <div className="px-4 md:px-8 border-b border-white/5 flex gap-8">
               {[
                 { id: 'SIGNALS', label: 'Feedback_Signals' },
-                { id: 'SEARCHES', label: 'Search_Memory' }
+                { id: 'SEARCHES', label: 'Search_Memory' },
+                { id: 'WATCHLIST', label: 'Watchlist' }
               ].map(tab => (
                 <button
                   key={tab.id}
@@ -518,7 +542,7 @@ const App: React.FC = () => {
                     <div className="p-6 text-center mono text-[10px] text-slate-700 uppercase tech-chipped bg-black/20">NO_SIGNALS_DETECTED</div>
                   )}
                 </div>
-              ) : (
+              ) : activeStatsTab === 'SEARCHES' ? (
                 <div className="space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
                   {state.searchHistory && state.searchHistory.length > 0 ? state.searchHistory.map((s, i) => (
                     <button
@@ -534,6 +558,66 @@ const App: React.FC = () => {
                     </button>
                   )) : (
                     <div className="p-6 text-center mono text-[10px] text-slate-700 uppercase tech-chipped bg-black/20">MEMORY_EMPTY</div>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  {state.watchlist.length > 0 ? state.watchlist.map((m, i) => (
+                    <div key={i} className="flex flex-col md:flex-row items-start md:items-center justify-between p-4 bg-black/40 border border-white/5 group transition-colors hover:bg-black/60 gap-4">
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-14 bg-slate-800 shrink-0 overflow-hidden tech-chipped">
+                          {m.posterUrl && !m.posterUrl.includes('[SIGNAL_LOST]') ? (
+                            <img src={m.posterUrl} alt={m.title} className="w-full h-full object-cover grayscale-[0.4] contrast-125" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <i className="fa-solid fa-film text-slate-700 text-xs"></i>
+                            </div>
+                          )}
+                        </div>
+                        <div className="space-y-1">
+                          <span className="mono text-[11px] font-bold text-slate-300 uppercase tracking-wider">{m.title}</span>
+                          <div className="mono text-[8px] text-slate-600 uppercase">{m.year} // {m.type}</div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 w-full md:w-auto">
+                        <button
+                          onClick={() => {
+                            handleFeedback(m, { type: 'like' });
+                            removeFromWatchlist(m.title);
+                          }}
+                          className="flex-1 md:flex-none h-8 px-3 flex items-center justify-center bg-white/5 border border-white/5 text-slate-400 hover:bg-cyan-500 hover:text-black transition-all rounded-sm mono text-[8px] font-black uppercase"
+                        >
+                          <i className="fa-solid fa-thumbs-up mr-2 text-[10px]"></i> LIKE
+                        </button>
+                        <button
+                          onClick={() => {
+                            handleFeedback(m, { type: 'dislike' });
+                            removeFromWatchlist(m.title);
+                          }}
+                          className="flex-1 md:flex-none h-8 px-3 flex items-center justify-center bg-white/5 border border-white/5 text-slate-400 hover:bg-red-500 hover:text-white transition-all rounded-sm mono text-[8px] font-black uppercase"
+                        >
+                          <i className="fa-solid fa-thumbs-down mr-2 text-[10px]"></i> DISLIKE
+                        </button>
+                        <button
+                          onClick={() => {
+                            markAsWatched(m);
+                            removeFromWatchlist(m.title);
+                          }}
+                          className="flex-1 md:flex-none h-8 px-3 flex items-center justify-center bg-white/5 border border-white/5 text-slate-400 hover:bg-greenAcc-500 hover:text-black transition-all rounded-sm mono text-[8px] font-black uppercase"
+                        >
+                          <i className="fa-solid fa-check mr-2 text-[10px]"></i> WATCHED
+                        </button>
+                        <button
+                          onClick={() => removeFromWatchlist(m.title)}
+                          className="w-8 h-8 flex items-center justify-center bg-white/5 text-slate-600 hover:bg-red-500 hover:text-white transition-all rounded-sm"
+                          title="Remove from watchlist"
+                        >
+                          <i className="fa-solid fa-xmark text-xs"></i>
+                        </button>
+                      </div>
+                    </div>
+                  )) : (
+                    <div className="p-6 text-center mono text-[10px] text-slate-700 uppercase tech-chipped bg-black/20">WATCHLIST_EMPTY</div>
                   )}
                 </div>
               )}
@@ -737,7 +821,7 @@ const App: React.FC = () => {
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 items-stretch">
                       {state.recommendations.map((movie, idx) => (
-                        <MovieCard key={movie.id} movie={movie} index={idx} isRecommendation onLikeSimilar={(seed) => fetchRecommendations(seed)} onMarkWatched={(m) => markAsWatched(m)} onFeedback={(m, f) => handleFeedback(m, f)} />
+                        <MovieCard key={movie.id} movie={movie} index={idx} isRecommendation onLikeSimilar={(seed) => fetchRecommendations(seed)} onMarkWatched={(m) => markAsWatched(m)} onFeedback={(m, f) => handleFeedback(m, f)} onAddToWatchlist={(m) => addToWatchlist(m)} />
                       ))}
                     </div>
                   </section>

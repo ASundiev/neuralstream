@@ -61,6 +61,7 @@ export interface RecommendationRequest {
 export interface AppState {
   isLoggedIn: boolean;
   userMovies: Movie[];
+  watchlist: Movie[];
   feedbackHistory: { title: string, feedback: Feedback }[];
   searchHistory?: SearchHistoryItem[];
   recommendations: Movie[];
