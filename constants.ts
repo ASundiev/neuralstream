@@ -19,16 +19,6 @@ export const CONTENT_TYPES = [
   { value: ContentType.BOTH, label: 'Both' }
 ];
 
-export const MAJOR_PLATFORMS = [
-  { id: '8', name: 'Netflix' },
-  { id: '15', name: 'Hulu' },
-  { id: '337', name: 'Disney Plus' },
-  { id: '1899', name: 'Max' },
-  { id: '9', name: 'Amazon Prime' },
-  { id: '350', name: 'Apple TV Plus' },
-  { id: '232', name: 'Paramount Plus' },
-  { id: '384', name: 'HBO Max' }
-];
 
 export const SAMPLE_DATA: any[] = [
   { id: '1', title: 'The Shawshank Redemption', year: '1994', userRating: 9, type: 'movie', genres: ['Drama'] },

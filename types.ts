@@ -10,15 +10,9 @@ export interface Feedback {
   reason?: string;
 }
 
-export interface WatchProvider {
-  provider_id: number;
-  provider_name: string;
-  logo_path: string;
-}
 
 export interface Movie {
   id: string;
-  tmdbId?: number;
   title: string;
   year: string;
   rating: number;
@@ -29,7 +23,6 @@ export interface Movie {
   reason?: string;
   posterUrl?: string;
   feedback?: Feedback;
-  providers?: WatchProvider[];
 }
 
 export interface SearchHistoryItem {
@@ -42,7 +35,6 @@ export interface SearchHistoryItem {
     genre: string;
     mood: string;
     query: string;
-    providers: string[];
   };
 }
 
@@ -54,7 +46,6 @@ export interface RecommendationRequest {
   mood?: string;
   seedMovie?: Movie;
   naturalLanguageQuery?: string;
-  preferredProviders?: string[];
   isGuest?: boolean;
   limit?: number;
   excludeTitles?: string[];
@@ -75,7 +66,6 @@ export interface AppState {
     genre: string;
     mood: string;
     query: string;
-    providers: string[];
   };
   sources: any[];
   guestSearchUsed: boolean;
