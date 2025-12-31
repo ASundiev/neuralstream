@@ -9,6 +9,7 @@ interface MovieCardProps {
   onLikeSimilar?: (movie: Movie) => void;
   onMarkWatched?: (movie: Movie) => void;
   onFeedback?: (movie: Movie, feedback: Feedback) => void;
+  onAddToWatchlist?: (movie: Movie) => void;
 }
 
 export const MovieCard: React.FC<MovieCardProps> = ({
@@ -17,7 +18,8 @@ export const MovieCard: React.FC<MovieCardProps> = ({
   isRecommendation,
   onLikeSimilar,
   onMarkWatched,
-  onFeedback
+  onFeedback,
+  onAddToWatchlist
 }) => {
   const [showReasonInput, setShowReasonInput] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
@@ -294,6 +296,32 @@ export const MovieCard: React.FC<MovieCardProps> = ({
                             className="w-full text-left px-3 py-2 mono text-[9px] uppercase font-black text-slate-500 hover:text-greenAcc-400 hover:bg-white/5 transition-colors"
                           >
                             [ WATCHED ]
+                          </button>
+                          <button
+                            onClick={async () => {
+                              if (isSynthesizingPoster) {
+                                // Wait for synthesis to complete if user clicks while it's working
+                                return;
+                              }
+                              let finalPoster = neuralPoster;
+                              if (!finalPoster) {
+                                setIsSynthesizingPoster(true);
+                                try {
+                                  finalPoster = await generateNeuralPoster(movie.title, movie.description);
+                                  if (finalPoster) setNeuralPoster(finalPoster);
+                                } catch (e) {
+                                  console.error("WATCHLIST_SYNTHESIS_ERROR", e);
+                                } finally {
+                                  setIsSynthesizingPoster(false);
+                                }
+                              }
+                              onAddToWatchlist?.({ ...movie, posterUrl: finalPoster || '[SIGNAL_LOST]' });
+                              setShowMenu(false);
+                            }}
+                            className="w-full text-left px-3 py-2 mono text-[9px] uppercase font-black text-slate-500 hover:text-cyan-400 hover:bg-white/5 transition-colors border-t border-white/5"
+                            disabled={isSynthesizingPoster}
+                          >
+                            {isSynthesizingPoster ? '[ SYNTHESIZING... ]' : '[ + WATCHLIST ]'}
                           </button>
                         </div>
                       </>
