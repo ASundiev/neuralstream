@@ -35,24 +35,6 @@ export const MovieCard: React.FC<MovieCardProps> = ({
   const cardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const triggerSynthesis = async () => {
-      if (!neuralPoster && !isSynthesizingPoster) {
-        setIsSynthesizingPoster(true);
-        try {
-          const result = await generateNeuralPoster(movie.title, movie.description);
-          if (result) setNeuralPoster(result);
-        } catch (e) {
-          console.error("NEURAL_POSTER_SYNTHESIS_ERROR", e);
-        } finally {
-          setIsSynthesizingPoster(false);
-        }
-      }
-    };
-
-    if (isInView) triggerSynthesis();
-  }, [isInView, movie.title, movie.description, neuralPoster, isSynthesizingPoster]);
-
-  useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
