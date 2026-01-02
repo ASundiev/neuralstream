@@ -11,6 +11,22 @@ const supabase = (SUPABASE_URL && SUPABASE_KEY) ? createClient(SUPABASE_URL, SUP
 
 const posterCache: Record<string, string> = {};
 
+const PALETTES = [
+  { name: "RETRO_GRID", primary: "Electric Lime (#e0f603)", accent: "Vibrant Magenta (#ff1388)" },
+  { name: "TOXIC_DATA", primary: "Toxic Green (#39ff14)", accent: "Deep Teal (#008080)" },
+  { name: "DEEP_COSMOS", primary: "Cyber Blue (#00f5ff)", accent: "Ultraviolet (#9d00ff)" },
+  { name: "INDUSTRIAL_HAZARD", primary: "Neon Orange (#ff6700)", accent: "Chrome Silver (#c0c0c0)" },
+  { name: "NOIR_SIGNAL", primary: "Crimson Red (#ff0000)", accent: "Deep Indigo (#0a0068)" }
+];
+
+function getPaletteForTitle(title: string) {
+  let hash = 0;
+  for (let i = 0; i < title.length; i++) {
+    hash = title.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return PALETTES[Math.abs(hash) % PALETTES.length];
+}
+
 /**
  * Utility to convert base64 to Blob for storage upload
  */
@@ -51,6 +67,7 @@ export async function generateNeuralPoster(title: string, description: string = 
 
   // Layer 3: Neural Synthesis (Nano Banana)
   try {
+    const palette = getPaletteForTitle(title);
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash-image',
       contents: {
@@ -59,7 +76,7 @@ export async function generateNeuralPoster(title: string, description: string = 
             text: `A raw, minimalist street-art movie poster for "${title}". 
             Style: Aggressive stencil-style cyberpunk. Use thick, heavy black ink outlines and broad, expressive spray-paint strokes. 
             Composition: FULL BLEED edge-to-edge artwork. Extremely focused on a single, powerful central character or iconic silhouette. 
-            Palette: High-contrast blocks of neon lime-yellow (#e0f603) and vibrant magenta (#ff1388) against deep, solid black. Use electric cyan (#00f5ff) only for sharp, minimal highlights or digital accents.
+            Palette: Use the "${palette.name}" color scheme: ${palette.primary} as the dominant neon color and ${palette.accent} as the vibrant accent, both against deep, solid black.
             Graphic Elements: Integrate vertical bars, large graphic blocks of color, and abstract symbols that look like futuristic kanji or hazard warnings. 
             Texture: Distressed ink splatters, rough brush edges, and subtle halftone patterns to create a hand-crafted, raw street-art feel.
             Subject: A stylized, iconic representation of the main theme from "${title}".
@@ -113,7 +130,7 @@ async function urlToBase64(url: string): Promise<{ data: string; mimeType: strin
     const response = await fetch(url);
     const blob = await response.blob();
     const mimeType = blob.type;
-    
+
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -147,7 +164,7 @@ export async function editMoviePoster(imageUrl: string, prompt: string): Promise
             },
           },
           {
-            text: `Modify this movie poster: ${prompt}. Maintain the minimalist stencil-style, rough street-art aesthetic, and the high-contrast yellow/magenta/cyan palette. Ensure NO BORDERS or FRAMES are added.`,
+            text: `Modify this movie poster: ${prompt}. Maintain the minimalist stencil-style and rough street-art aesthetic. Ensure NO BORDERS or FRAMES are added. Keep the existing high-contrast cyberpunk palette.`,
           },
         ],
       },
