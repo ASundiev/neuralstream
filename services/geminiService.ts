@@ -43,7 +43,7 @@ export async function searchMovieForHistory(query: string): Promise<Movie | null
 }
 
 export async function getRecommendations(request: RecommendationRequest): Promise<{ movies: Movie[], sources: any[] }> {
-  const { watchedHistory, feedbackHistory, targetType, genre, mood, seedMovie, naturalLanguageQuery, isGuest, limit, excludeTitles } = request;
+  const { watchedHistory, feedbackHistory, targetType, genre, mood, seedMovie, naturalLanguageQuery, isGuest, limit, excludeTitles, onProgress } = request;
 
   const context = watchedHistory
     .filter(m => (m.userRating || 0) >= 7)
@@ -64,6 +64,21 @@ export async function getRecommendations(request: RecommendationRequest): Promis
   `;
 
   try {
+    let currentProgress = 0;
+    const report = (p: number) => {
+      if (p > currentProgress && onProgress) {
+        currentProgress = p;
+        onProgress(currentProgress);
+      }
+    };
+
+    report(5);
+
+    // Creep progress while waiting for Gemini (0-40 range)
+    const geminiCreep = setInterval(() => {
+      if (currentProgress < 38) report(currentProgress + 1);
+    }, 200);
+
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: prompt,
@@ -89,10 +104,21 @@ export async function getRecommendations(request: RecommendationRequest): Promis
       }
     });
 
+    clearInterval(geminiCreep);
+    report(40);
+
     const results = JSON.parse(response.text);
+    const totalCount = results.length;
+    let completedCount = 0;
 
     const moviesWithMetadata = await Promise.all(results.map(async (item: any) => {
+      // Small creep while waiting for each poster
       const posterUrl = await generateNeuralPoster(item.title, item.description);
+      completedCount++;
+
+      const targetAfterThis = 40 + Math.floor((completedCount / totalCount) * 60);
+      report(targetAfterThis);
+
       return {
         ...item,
         id: Math.random().toString(36).substr(2, 9),
@@ -101,6 +127,7 @@ export async function getRecommendations(request: RecommendationRequest): Promis
       };
     }));
 
+    report(100);
     return { movies: moviesWithMetadata, sources: [] };
   } catch (error) {
     console.error("ENGINE_SYNTHESIS_ERROR:", error);

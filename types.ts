@@ -49,6 +49,7 @@ export interface RecommendationRequest {
   isGuest?: boolean;
   limit?: number;
   excludeTitles?: string[];
+  onProgress?: (progress: number) => void;
 }
 
 export interface AppState {
@@ -61,6 +62,7 @@ export interface AppState {
   isLoading: boolean;
   isRecsLoading: boolean;
   isMoreLoading?: boolean;
+  progress?: number;
   filters: {
     type: ContentType;
     genre: string;
