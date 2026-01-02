@@ -246,7 +246,7 @@ const App: React.FC = () => {
     if (isMore) {
       setState((prev) => ({ ...prev, isMoreLoading: true }));
     } else {
-      setState((prev) => ({ ...prev, isRecsLoading: true }));
+      setState((prev) => ({ ...prev, isRecsLoading: true, progress: 0 }));
     }
 
     try {
@@ -260,7 +260,8 @@ const App: React.FC = () => {
         naturalLanguageQuery: effectiveQuery,
         isGuest: !user,
         limit: 4,
-        excludeTitles: isMore ? state.recommendations.map(m => m.title) : []
+        excludeTitles: isMore ? state.recommendations.map(m => m.title) : [],
+        onProgress: (p) => setState(prev => ({ ...prev, progress: p }))
       });
       if (!user) localStorage.setItem('neural_guest_search', 'true');
       setState((prev) => ({
@@ -816,12 +817,12 @@ const App: React.FC = () => {
                             )}
                           </div>
                         </button>
+
+                        {state.isRecsLoading && <NeuralLoader variant="compact" progress={state.progress} />}
                       </section>
                     </div>
                   </div>
                 </div>
-
-                {state.isRecsLoading && <div className="mt-10 animate-in fade-in duration-700"><NeuralLoader /></div>}
 
                 {!state.isRecsLoading && state.recommendations.length > 0 && (
                   <section className="space-y-10 animate-in fade-in slide-in-from-bottom-8 duration-1000 mt-10 md:px-12">
