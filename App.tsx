@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { ContentType, Movie, AppState, Feedback, SearchHistoryItem } from './types';
+import logo from './assets/Logo.svg';
 import { GENRES, MOODS, CONTENT_TYPES } from './constants';
 import { getRecommendations } from './services/geminiService';
 import { MovieCard } from './components/MovieCard';
@@ -399,15 +400,12 @@ const App: React.FC = () => {
 
       {(user || state.userMovies.length > 0) && (
         <header className="fixed top-0 left-0 right-0 z-[80] bg-slate-950/60 backdrop-blur-xl border-b border-cyan-500/5 h-20 flex items-center animate-in slide-in-from-top duration-700">
-          <div className="max-w-7xl mx-auto w-full px-4 md:px-8">
+          <div className="max-w-7xl mx-auto w-full px-4 md:px-20">
             <div className="flex items-center justify-between w-full">
               <div className="flex items-center gap-4">
-                <div className="w-10 h-10 flex items-center justify-center bg-cyan-500 shadow-[0_0_20px_rgba(0,245,255,0.4)] tech-chipped">
-                  <i className="fa-solid fa-dna text-lg text-black"></i>
+                <div className="hidden md:block">
+                  <img src={logo} alt="NEURALSTREAM" className="h-4 w-auto" />
                 </div>
-                <h1 className="hidden md:block text-2xl font-black uppercase italic tracking-tighter text-white drop-shadow-[0_0:10px_rgba(0,245,255,0.2)]">
-                  NeuralStream
-                </h1>
               </div>
 
               <button
@@ -420,10 +418,18 @@ const App: React.FC = () => {
                 <div className="text-left space-y-0.5 pointer-events-none">
                   <div className="flex items-center gap-2">
                     <span className="w-1.5 h-1.5 bg-cyan-500 rounded-full animate-pulse shadow-[0_0_5px_rgba(0,245,255,0.5)]"></span>
-                    <span className="mono text-[9px] text-slate-500 uppercase font-black tracking-widest">Neural_DNA_Profile</span>
+                    <span className="font-mono italic font-[800] text-[9px] leading-[14px] tracking-[0.9px] text-[#64748B] uppercase">Neural_DNA_Profile</span>
                   </div>
-                  <div className="mono text-[10px] font-black uppercase tracking-tight">
-                    <span className="text-cyan-400">Nodes:</span> {state.userMovies.length} <span className="text-slate-700 mx-1">//</span> <span className="text-cyan-400">Signals:</span> {state.feedbackHistory.length}
+                  <div className="font-mono italic font-[800] text-[10px] leading-[15px] tracking-[-0.25px] text-[#00F5FF] uppercase flex items-center gap-2">
+                    <div className="flex items-center gap-1">
+                      <span>Nodes:</span>
+                      <span className="text-white">{state.userMovies.length}</span>
+                    </div>
+                    <span className="text-slate-700">//</span>
+                    <div className="flex items-center gap-1">
+                      <span>Signals:</span>
+                      <span className="text-white">{state.feedbackHistory.length}</span>
+                    </div>
                   </div>
                 </div>
               </button>
@@ -440,36 +446,38 @@ const App: React.FC = () => {
             </button>
 
             <div className="md:w-1/2 p-4 md:p-12 bg-black/40 border-b md:border-b-0 md:border-r border-white/5 space-y-10">
-              <div className="space-y-4">
-                <div className="mono text-[10px] text-cyan-500 uppercase tracking-[0.4em] font-black">Unlock all features</div>
-                <h2 className="text-3xl font-black text-white italic uppercase tracking-tighter leading-[0.9]">Secure Your <br /><span className="text-cyan-400">Taste Matrix</span></h2>
+              <div className="space-y-1 italic">
+                <div className="font-mono text-[10px] text-cyan-500 uppercase tracking-[0.4em] font-black">Unlock all features</div>
+                <h2 className="auth-title">
+                  Secure Your <br /><span className="text-cyan-400">Taste Matrix</span>
+                </h2>
               </div>
 
               <div className="space-y-6">
                 <div className="flex gap-4 group">
-                  <div className="w-8 h-8 shrink-0 flex items-center justify-center bg-slate-800 border border-white/5 text-slate-500 group-hover:text-cyan-400 transition-colors tech-chipped">
+                  <div className="w-8 h-8 shrink-0 flex items-center justify-center bg-slate-800 border border-white/5 text-slate-500 group-hover:text-cyan-400 transition-all tech-chipped">
                     <i className="fa-solid fa-vault text-xs"></i>
                   </div>
                   <div>
-                    <h4 className="mono text-[10px] font-black text-white uppercase tracking-widest mb-1">Search History & Saves</h4>
-                    <p className="mono text-[9px] text-slate-500 uppercase leading-relaxed">Save all your recommendations and search history to access them anytime across all devices.</p>
+                    <h4 className="auth-feature-title mb-1">Search History & Saves</h4>
+                    <p className="auth-feature-desc">Save all your recommendations and search history to access them anytime across all devices.</p>
                   </div>
                 </div>
                 <div className="flex gap-4 group">
-                  <div className="w-8 h-8 shrink-0 flex items-center justify-center bg-slate-800 border border-white/5 text-slate-500 group-hover:text-greenAcc-400 transition-colors tech-chipped">
+                  <div className="w-8 h-8 shrink-0 flex items-center justify-center bg-slate-800 border border-white/5 text-slate-500 group-hover:text-greenAcc-400 transition-all tech-chipped">
                     <i className="fa-solid fa-sync text-xs"></i>
                   </div>
                   <div>
-                    <h4 className="mono text-[10px] font-black text-white uppercase tracking-widest mb-1">Personalized Taste Profile</h4>
-                    <p className="mono text-[9px] text-slate-500 uppercase leading-relaxed">Your movie history and preferences are securely stored and synced across your unique viewer profile.</p>
+                    <h4 className="auth-feature-title mb-1">Personalized Taste Profile</h4>
+                    <p className="auth-feature-desc">Your movie history and preferences are securely stored and synced across your unique viewer profile.</p>
                   </div>
                 </div>
               </div>
             </div>
 
             <div className="md:w-1/2 p-4 md:p-12 flex flex-col justify-center bg-slate-900">
-              <div className="text-center space-y-4 mb-10">
-                <h3 className="text-xl font-black text-white uppercase italic">IDENTITY_VERIFICATION</h3>
+              <div className="text-center mb-10">
+                <h3 className="section-title-tourney inline-block">Identity Verification</h3>
               </div>
 
               {verificationSent ? (
@@ -483,17 +491,17 @@ const App: React.FC = () => {
               ) : (
                 <form onSubmit={handleAuth} className="space-y-6">
                   <div className="space-y-1">
-                    <label className="mono text-[9px] text-slate-500 uppercase font-black ml-1">ACCESS_EMAIL</label>
-                    <input type="email" required value={authEmail} onChange={(e) => setAuthEmail(e.target.value)} className="w-full bg-black/40 border border-white/10 p-4 mono text-sm text-white outline-none focus:border-cyan-500 uppercase rounded-sm" placeholder="TYPE_EMAIL..." />
+                    <label className="auth-input-label ml-1">ACCESS_EMAIL</label>
+                    <input type="email" required value={authEmail} onChange={(e) => setAuthEmail(e.target.value)} className="w-full bg-black/40 border border-white/10 p-4 auth-input-text text-white outline-none focus:border-cyan-500 rounded-sm" placeholder="TYPE_EMAIL..." />
                   </div>
                   <div className="space-y-1">
-                    <label className="mono text-[9px] text-slate-500 uppercase font-black ml-1">SECURITY_KEY</label>
-                    <input type="password" required value={authPassword} onChange={(e) => setAuthPassword(e.target.value)} className="w-full bg-black/40 border border-white/10 p-4 mono text-sm text-white outline-none focus:border-cyan-500 uppercase rounded-sm" placeholder="TYPE_PASSWORD..." />
+                    <label className="auth-input-label ml-1">SECURITY_KEY</label>
+                    <input type="password" required value={authPassword} onChange={(e) => setAuthPassword(e.target.value)} className="w-full bg-black/40 border border-white/10 p-4 auth-input-text text-white outline-none focus:border-cyan-500 rounded-sm" placeholder="TYPE_PASSWORD..." />
                   </div>
                   <button
                     type="submit"
                     disabled={authLoading}
-                    className="w-full py-5 bg-cyan-500 text-black mono font-black text-sm uppercase tracking-[0.3em] transition-all relative overflow-hidden group/auth-btn hover:bg-white shadow-[0_0_30px_rgba(0,245,255,0.2)] tech-chipped"
+                    className="w-full py-5 bg-cyan-500 text-black font-mono mono-extrabold-italic text-sm uppercase tracking-[3.84px] transition-all relative overflow-hidden group/auth-btn hover:bg-white shadow-[0_0_30px_rgba(0,245,255,0.2)] tech-chipped"
                   >
                     <span className="relative z-10">{authLoading ? 'ESTABLISHING_UPLINK...' : (isSignUp ? 'SIGN UP' : 'LOG IN')}</span>
                   </button>
@@ -510,7 +518,7 @@ const App: React.FC = () => {
           <div className="max-w-4xl w-full h-[640px] max-h-[80vh] tech-border bg-slate-900 border-cyan-500/20 shadow-[0_0_100px_rgba(0,245,255,0.1)] relative tech-chipped flex flex-col">
             <div className="p-4 md:p-8 border-b border-white/5 flex items-center justify-between">
               <div className="space-y-1">
-                <h2 className="text-3xl font-black text-white italic uppercase tracking-tighter">Neural DNA Profile</h2>
+                <h2 className="modal-title-tourney text-white">Neural DNA Profile</h2>
               </div>
               <button onClick={() => setShowStatsModal(false)} className="text-slate-500 hover:text-white transition-colors">
                 <i className="fa-solid fa-xmark text-2xl"></i>
@@ -533,7 +541,7 @@ const App: React.FC = () => {
                 <button
                   key={tab.id}
                   onClick={() => setActiveStatsTab(tab.id as any)}
-                  className={`py-4 mono text-[10px] font-black uppercase tracking-[0.2em] relative transition-all shrink-0 ${activeStatsTab === tab.id ? 'text-cyan-400' : 'text-slate-500 hover:text-slate-300'
+                  className={`py-4 dna-tab-label relative transition-all shrink-0 ${activeStatsTab === tab.id ? 'text-cyan-400' : 'text-slate-500 hover:text-slate-300'
                     }`}
                 >
                   {tab.label}
@@ -553,7 +561,7 @@ const App: React.FC = () => {
                         <div className={`w-8 h-8 flex items-center justify-center rounded-sm ${f.feedback.type === 'like' ? 'text-cyan-400 bg-cyan-500/10' : 'text-red-400 bg-red-500/10'}`}>
                           <i className={`fa-solid ${f.feedback.type === 'like' ? 'fa-thumbs-up' : 'fa-thumbs-down'} text-xs`}></i>
                         </div>
-                        <span className="mono text-[11px] font-bold text-slate-300 uppercase tracking-wider">{f.title}</span>
+                        <span className="dna-list-item-title">{f.title}</span>
                       </div>
                       <button
                         onClick={() => removeFeedback(i)}
@@ -576,8 +584,8 @@ const App: React.FC = () => {
                       className="w-full text-left flex items-center justify-between p-4 bg-black/40 border border-white/5 hover:border-cyan-500/40 transition-all tech-chipped group"
                     >
                       <div className="space-y-1">
-                        <div className="text-[11px] font-bold text-slate-400 group-hover:text-white transition-colors line-clamp-1">{s.query}</div>
-                        <div className="mono text-[8px] text-slate-600 uppercase">{new Date(s.timestamp).toLocaleDateString()}</div>
+                        <div className="dna-list-item-title group-hover:!text-white transition-colors line-clamp-1">{s.query}</div>
+                        <div className="dna-list-item-date">{new Date(s.timestamp).toLocaleDateString()}</div>
                       </div>
                       <i className="fa-solid fa-chevron-right text-[10px] text-slate-700 group-hover:text-cyan-400 transition-colors"></i>
                     </button>
@@ -600,8 +608,8 @@ const App: React.FC = () => {
                           )}
                         </div>
                         <div className="space-y-1">
-                          <span className="mono text-[11px] font-bold text-slate-300 uppercase tracking-wider">{m.title}</span>
-                          <div className="mono text-[8px] text-slate-600 uppercase">{m.year} // {m.type}</div>
+                          <span className="dna-list-item-title">{m.title}</span>
+                          <div className="dna-list-item-date">{m.year} // {m.type}</div>
                         </div>
                       </div>
                       <div className="flex items-center gap-2 w-full md:w-auto">
@@ -610,7 +618,7 @@ const App: React.FC = () => {
                             handleFeedback(m, { type: 'like' });
                             removeFromWatchlist(m.title);
                           }}
-                          className="flex-1 md:flex-none h-8 px-3 flex items-center justify-center bg-white/5 border border-white/5 text-slate-400 hover:bg-cyan-500 hover:text-black transition-all rounded-sm mono text-[8px] font-black uppercase"
+                          className="flex-1 md:flex-none h-8 px-3 flex items-center justify-center bg-white/5 border border-white/5 text-slate-400 hover:bg-cyan-500 hover:text-black transition-all rounded-sm dna-watchlist-btn-label"
                         >
                           <i className="fa-solid fa-thumbs-up mr-2 text-[10px]"></i> LIKE
                         </button>
@@ -619,7 +627,7 @@ const App: React.FC = () => {
                             handleFeedback(m, { type: 'dislike' });
                             removeFromWatchlist(m.title);
                           }}
-                          className="flex-1 md:flex-none h-8 px-3 flex items-center justify-center bg-white/5 border border-white/5 text-slate-400 hover:bg-red-500 hover:text-white transition-all rounded-sm mono text-[8px] font-black uppercase"
+                          className="flex-1 md:flex-none h-8 px-3 flex items-center justify-center bg-white/5 border border-white/5 text-slate-400 hover:bg-red-500 hover:text-white transition-all rounded-sm dna-watchlist-btn-label"
                         >
                           <i className="fa-solid fa-thumbs-down mr-2 text-[10px]"></i> DISLIKE
                         </button>
@@ -628,7 +636,7 @@ const App: React.FC = () => {
                             markAsWatched(m);
                             removeFromWatchlist(m.title);
                           }}
-                          className="flex-1 md:flex-none h-8 px-3 flex items-center justify-center bg-white/5 border border-white/5 text-slate-400 hover:bg-greenAcc-500 hover:text-black transition-all rounded-sm mono text-[8px] font-black uppercase"
+                          className="flex-1 md:flex-none h-8 px-3 flex items-center justify-center bg-white/5 border border-white/5 text-slate-400 hover:bg-greenAcc-500 hover:text-black transition-all rounded-sm dna-watchlist-btn-label"
                         >
                           <i className="fa-solid fa-check mr-2 text-[10px]"></i> WATCHED
                         </button>
@@ -652,8 +660,9 @@ const App: React.FC = () => {
               <div className="relative p-[1px] tech-chipped-red">
                 <button
                   onClick={handleLogout}
-                  className="px-8 py-3 bg-red-500/10 text-red-500 mono text-[10px] font-black uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all"
+                  className="px-6 py-4 flex items-center gap-2 hover:bg-red-500/10 transition-colors dna-sign-out-label"
                 >
+                  <i className="fa-solid fa-power-off text-xs"></i>
                   Sign out
                 </button>
               </div>
@@ -706,18 +715,18 @@ const App: React.FC = () => {
                         <div className={`space-y-6 ${tuningVisible ? 'animate-neural-reveal' : 'opacity-0'}`} style={{ animationFillMode: 'both' }}>
                           <div className="flex flex-col md:flex-row justify-between items-start gap-6 md:gap-0">
                             <div className="space-y-1">
-                              <div className="mono text-[10px] uppercase font-black tracking-widest flex items-center gap-2">
+                              <div className="mono text-[10px] uppercase font-black tracking-widest flex items-center gap-2 mono-extrabold-italic">
                                 <span className={`w-1.5 h-1.5 bg-cyan-500 rounded-full animate-pulse shadow-[0_0_5px_rgba(0,245,255,0.5)]`}></span>
                                 <span className="text-cyan-500">Neural_Uplink_Console</span>
                               </div>
-                              <h2 className="text-2xl font-black text-white italic uppercase tracking-tight">Tuning Parameters</h2>
+                              <h2 className="section-title-tourney">Tuning Parameters</h2>
                             </div>
 
                             <div className="flex flex-col items-start md:items-end gap-2">
                               <div className="relative">
                                 <button
                                   onClick={() => fileInputRef.current?.click()}
-                                  className={`px-6 py-2 border mono font-black text-xs uppercase tracking-widest transition-all tech-chipped whitespace-nowrap ${importSuccess
+                                  className={`px-6 py-2 border font-mono mono-extrabold-italic text-xs uppercase tracking-widest transition-all tech-chipped whitespace-nowrap ${importSuccess
                                     ? 'bg-cyan-500 border-cyan-400 text-black'
                                     : state.userMovies.length > 0
                                       ? 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10 hover:text-white'
@@ -732,7 +741,7 @@ const App: React.FC = () => {
                           </div>
 
                           <div className={`relative flex items-start group ${tuningVisible ? 'animate-neural-reveal' : 'opacity-0'}`} style={{ animationDelay: '100ms', animationFillMode: 'both' }}>
-                            <div className="absolute left-6 top-5 mono text-cyan-500/60 font-black text-sm select-none">CMD_&gt;</div>
+                            <div className="absolute left-6 top-5 font-mono mono-extrabold-italic text-cyan-500/60 text-sm select-none">CMD_&gt;</div>
                             <textarea
                               ref={textareaRef}
                               rows={1}
@@ -743,7 +752,7 @@ const App: React.FC = () => {
                                 e.target.style.height = `${e.target.scrollHeight}px`;
                               }}
                               placeholder="SPECIFY_NEURAL_OVERRIDE..."
-                              className="w-full bg-black/40 border border-white/10 group-hover:border-cyan-500/40 focus:border-cyan-500/60 p-5 pl-20 mono text-sm text-white outline-none uppercase placeholder-slate-800 rounded-sm resize-none overflow-hidden"
+                              className="w-full bg-black/40 border border-white/10 group-hover:border-cyan-500/40 focus:border-cyan-500/60 p-5 pl-20 font-mono italic text-sm text-white outline-none uppercase placeholder-slate-800 rounded-sm resize-none overflow-hidden"
                             />
                           </div>
                         </div>
@@ -757,7 +766,7 @@ const App: React.FC = () => {
                                     <button
                                       key={ct.value}
                                       onClick={() => setState((s) => ({ ...s, filters: { ...s.filters, type: ct.value } }))}
-                                      className={`flex-1 flex items-center justify-center mono text-[10px] font-black uppercase transition-all ${state.filters.type === ct.value ? 'bg-cyan-500/20 text-cyan-400' : 'text-slate-500'
+                                      className={`flex-1 flex items-center justify-center font-mono mono-extrabold-italic text-[10px] uppercase transition-all ${state.filters.type === ct.value ? 'bg-cyan-500/20 text-cyan-400' : 'text-[#8195b1]'
                                         }`}
                                     >
                                       {ct.label}
@@ -770,7 +779,7 @@ const App: React.FC = () => {
                             { label: 'Affective_State', value: state.filters.mood, setter: (v: string) => setState(s => ({ ...s, filters: { ...s.filters, mood: v } })), options: MOODS, placeholder: 'UNCALIBRATED' }
                           ].map((f, i) => (
                             <div key={i} className={`space-y-3 ${tuningVisible ? 'animate-neural-reveal' : 'opacity-0'}`} style={{ animationDelay: `${200 + i * 100}ms`, animationFillMode: 'both' }}>
-                              <label className="mono text-[10px] uppercase text-slate-300 font-bold tracking-widest flex items-center gap-2">
+                              <label className="font-mono text-[10px] uppercase text-[#8195b1] font-bold italic mono-bold-italic tracking-widest flex items-center gap-2">
                                 {f.label}
                               </label>
                               {f.component || (
@@ -778,7 +787,7 @@ const App: React.FC = () => {
                                   <select
                                     value={f.value}
                                     onChange={(e) => f.setter!(e.target.value)}
-                                    className="w-full bg-black/40 border border-white/10 p-4 h-[52px] mono text-xs uppercase text-white outline-none group-hover:border-cyan-500/30 focus:border-cyan-500/50 appearance-none tech-chipped"
+                                    className="w-full bg-black/40 border border-white/10 p-4 h-[52px] font-mono italic text-xs uppercase text-white outline-none group-hover:border-cyan-500/30 focus:border-cyan-500/50 appearance-none tech-chipped"
                                   >
                                     <option value="">{f.placeholder}</option>
                                     {f.options?.map((opt: string) => <option key={opt} value={opt}>{opt.toUpperCase()}</option>)}
@@ -809,7 +818,7 @@ const App: React.FC = () => {
                           <span className={`absolute inset-[-200%] animate-[spin_4s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,transparent_0%,transparent_75%,#00f5ff_100%)] opacity-0 transition-opacity duration-300 group-hover:opacity-100 ${state.isRecsLoading ? 'opacity-100' : ''}`}></span>
 
                           {/* Inner Surface & Content */}
-                          <div className={`relative z-10 w-full py-5 bg-slate-900 mono font-black text-sm uppercase tracking-[0.6em] flex items-center justify-center gap-4 transition-colors duration-300 group-hover:text-cyan-400 ${state.isRecsLoading ? 'text-cyan-400' : 'text-cyan-400/60'}`}>
+                          <div className={`relative z-10 w-full py-5 bg-slate-900 font-mono mono-extrabold-italic text-sm uppercase tracking-[0.6em] flex items-center justify-center gap-4 transition-colors duration-300 group-hover:text-cyan-400 ${state.isRecsLoading ? 'text-cyan-400' : 'text-cyan-400/60'}`}>
                             {state.isRecsLoading ? (
                               <><i className="fa-solid fa-microchip animate-spin text-lg"></i>SYNTHESIZING...</>
                             ) : (
@@ -827,9 +836,12 @@ const App: React.FC = () => {
                 {!state.isRecsLoading && state.recommendations.length > 0 && (
                   <section className="space-y-10 animate-in fade-in slide-in-from-bottom-8 duration-1000 mt-10 md:px-12">
                     <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-white/10 pb-8">
-                      <div>
-                        <div className="mono text-[10px] text-cyan-500 uppercase tracking-widest font-bold">Output_Matrix</div>
-                        <h3 className="text-xl font-black uppercase text-white italic">VERIFIED_MATCHES</h3>
+                      <div className="space-y-1">
+                        <div className="mono text-[10px] uppercase font-black tracking-widest flex items-center gap-2 mono-extrabold-italic">
+                          <span className="w-1.5 h-1.5 bg-cyan-500 rounded-full animate-pulse shadow-[0_0_5px_rgba(0,245,255,0.5)]"></span>
+                          <span className="text-cyan-500">Output_Matrix</span>
+                        </div>
+                        <h3 className="section-title-tourney">Verified Matches</h3>
                       </div>
                       <div className="flex gap-2 opacity-30">
                         <div className="w-32 h-1 bg-cyan-500"></div>
@@ -849,7 +861,7 @@ const App: React.FC = () => {
                         className="group relative px-10 py-4 bg-cyan-500/5 border border-cyan-500/20 hover:border-cyan-500/60 transition-all tech-chipped overflow-hidden"
                       >
                         <div className="absolute inset-0 bg-cyan-500/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
-                        <div className="relative flex items-center gap-3 mono text-[10px] font-black uppercase tracking-[0.2em] text-cyan-400 group-hover:text-white transition-colors">
+                        <div className="relative flex items-center gap-3 btn-show-more-label transition-colors">
                           {state.isMoreLoading ? (
                             <><i className="fa-solid fa-sync animate-spin"></i> EXPANDING_MATRIX...</>
                           ) : (

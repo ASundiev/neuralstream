@@ -151,7 +151,7 @@ export const MovieCard: React.FC<MovieCardProps> = ({
       )}
 
       <div className="absolute top-2 left-2 right-2 flex justify-end items-start pointer-events-none z-20">
-        <div className="mono text-xs bg-greenAcc-500 text-black px-2 py-0.5 font-bold tech-chipped shadow-lg">
+        <div className="font-mono italic font-bold text-[12px] leading-4 bg-greenAcc-500 text-black px-2 py-0.5 tech-chipped shadow-lg">
           {movie.rating ? movie.rating.toFixed(1) : '8.0'}
         </div>
       </div>
@@ -179,18 +179,18 @@ export const MovieCard: React.FC<MovieCardProps> = ({
           <div className="space-y-0.5">
             {imdbUrl ? (
               <a href={imdbUrl} target="_blank" rel="noopener noreferrer" className="block focus:outline-none">
-                <h3 className="text-[13px] font-black uppercase tracking-tight line-clamp-1 hover:text-cyan-400 transition-colors">{movie.title}</h3>
+                <h3 className="movie-card-title hover:text-cyan-400 transition-colors">{movie.title}</h3>
               </a>
             ) : (
-              <h3 className="text-[13px] font-black uppercase tracking-tight line-clamp-1 group-hover:text-cyan-400 transition-colors">{movie.title}</h3>
+              <h3 className="movie-card-title group-hover:text-cyan-400 transition-colors">{movie.title}</h3>
             )}
-            <p className="mono text-[10px] text-slate-500 uppercase">{movie.year} // {movie.type}</p>
+            <p className="font-mono text-[10px] text-[#8195b1] uppercase italic mono-italic">{movie.year} // {movie.type}</p>
           </div>
         </div>
 
         <div className="flex flex-wrap gap-1.5">
           {movie.genres.slice(0, 2).map((genre: string) => (
-            <span key={genre} className="mono text-[9px] px-2 py-1 bg-slate-800 text-slate-400 border border-white/5 uppercase font-bold tech-chipped">
+            <span key={genre} className="font-mono text-[9px] leading-[14px] px-2 py-1 bg-slate-800 text-[#94A3B8] border border-white/5 uppercase font-bold italic mono-bold-italic tech-chipped">
               {genre}
             </span>
           ))}
@@ -199,7 +199,7 @@ export const MovieCard: React.FC<MovieCardProps> = ({
         {isRecommendation ? (
           <div className="pt-3 border-t border-white/5 space-y-4 flex-1 flex flex-col justify-between">
             <div className="relative h-20 overflow-y-auto custom-scrollbar pr-1 opacity-70 group-hover:opacity-100 transition-opacity">
-              <p className="text-[11px] text-slate-400 leading-relaxed font-light italic">
+              <p className="movie-card-ai-quote">
                 {movie.reason}
               </p>
             </div>

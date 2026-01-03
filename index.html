@@ -14,6 +14,12 @@
             cyan: { 400: '#00f5ff', 500: '#00f5ff' },
             magenta: { 400: '#ff1388', 500: '#ff1388' },
             greenAcc: { 400: '#e0f603', 500: '#e0f603' }
+          },
+          fontFamily: {
+            brand: ['"Sea-Dog Halftone Italic"', 'sans-serif'],
+            heading: ['Tourney', 'Inter', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+            sans: ['Inter', 'sans-serif']
           }
         }
       }
@@ -21,7 +27,7 @@
   </script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500;700&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300..800;1,300..800&family=JetBrains+Mono:ital,wght@0,300..800;1,300..800&family=Tourney:ital,wdth,wght@0,75..125,100..900;1,75..125,100..900&display=swap"
     rel="stylesheet">
   <style>
     :root {
@@ -29,17 +35,245 @@
       --magenta: #ff1388;
       --green: #e0f603;
       --deep: #020617;
+
+      /* Typography Grid Tokens */
+      --font-brand: 'Sea-Dog Halftone Italic', sans-serif;
+      --font-heading: 'Tourney', sans-serif;
+      --font-body: 'Inter', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
     }
 
     body {
-      font-family: 'Inter', sans-serif;
+      font-family: var(--font-body);
       background-color: var(--deep);
       color: #f8fafc;
       overflow-x: hidden;
+      line-height: 1.5;
     }
 
     .mono {
-      font-family: 'JetBrains Mono', monospace;
+      font-family: var(--font-mono);
+    }
+
+    .brand-logo {
+      font-family: var(--font-brand);
+      text-transform: uppercase;
+      font-size: 24px;
+      line-height: 28px;
+      letter-spacing: -1.2px;
+      text-shadow: 2px 2px 0px rgba(204, 32, 112, 0.64);
+      display: inline-flex;
+      align-items: center;
+      font-style: italic;
+      text-decoration: underline;
+      text-decoration-color: white;
+      text-underline-offset: 4px;
+      text-decoration-thickness: 1px;
+    }
+
+    .logo-n {
+      color: #67e8f9;
+    }
+
+    .logo-s {
+      color: #e0f603;
+    }
+
+    .cyber-headline {
+      font-family: var(--font-heading);
+      text-transform: uppercase;
+      font-variation-settings: 'wdth' 100;
+      text-shadow: -4px 4px 0px #c8206b, 2px 2px 0px #00f5ff;
+    }
+
+    /* JetBrains Mono Variants */
+    .mono-medium-italic {
+      font-family: var(--font-mono);
+      font-weight: 500;
+      font-style: italic;
+    }
+
+    .mono-bold-italic {
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-style: italic;
+    }
+
+    .mono-extrabold-italic {
+      font-family: var(--font-mono);
+      font-weight: 800;
+      font-style: italic;
+    }
+
+    /* Section Headings */
+    .section-title-tourney {
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-style: italic;
+      font-size: 24px;
+      line-height: 32px;
+      text-decoration: underline;
+      text-decoration-color: white;
+      text-underline-offset: 6px;
+      text-transform: uppercase;
+    }
+
+    .auth-title {
+      font-family: var(--font-heading);
+      font-style: italic;
+      font-weight: 500;
+      font-size: 36px;
+      line-height: 90%;
+      letter-spacing: -1.5px;
+      text-transform: uppercase;
+      color: #FFFFFF;
+      text-shadow: -2px 2px 0px #CC2070;
+    }
+
+    .auth-feature-title {
+      font-family: var(--font-heading);
+      font-style: italic;
+      font-weight: 900;
+      font-size: 11px;
+      line-height: 16px;
+      letter-spacing: 1.1px;
+      text-transform: uppercase;
+      color: #FFFFFF;
+    }
+
+    .auth-feature-desc {
+      font-family: var(--font-mono);
+      font-style: italic;
+      font-weight: 400;
+      font-size: 10px;
+      line-height: 15px;
+      text-transform: uppercase;
+      color: #8195B1;
+    }
+
+    .auth-input-label {
+      font-family: var(--font-mono);
+      font-style: italic;
+      font-weight: 700;
+      font-size: 10px;
+      line-height: 15px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: #CBD5E1;
+    }
+
+    .auth-input-text {
+      font-family: var(--font-mono);
+      font-style: italic;
+      font-weight: 400;
+      font-size: 14px;
+      line-height: 20px;
+      text-transform: uppercase;
+    }
+
+    .mono-italic {
+      font-family: var(--font-mono);
+      font-weight: 400;
+      font-style: italic;
+    }
+
+    .movie-card-title {
+      font-family: var(--font-heading);
+      font-style: italic;
+      font-weight: 900;
+      font-size: 13px;
+      line-height: 20px;
+      letter-spacing: -0.325px;
+      text-transform: uppercase;
+      color: #F8FAFC;
+    }
+
+    .movie-card-ai-quote {
+      font-family: var(--font-body);
+      font-style: italic;
+      font-weight: 300;
+      font-size: 11px;
+      line-height: 18px;
+      color: #8195B1;
+    }
+
+    .inter-light-italic {
+      font-family: var(--font-body);
+      font-weight: 300;
+      font-style: italic;
+    }
+
+    .btn-show-more-label {
+      font-family: var(--font-mono);
+      font-style: italic;
+      font-weight: 800;
+      font-size: 10px;
+      line-height: 15px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #00F5FF;
+    }
+
+    .modal-title-tourney {
+      font-family: var(--font-heading);
+      font-style: italic;
+      font-weight: 600;
+      font-size: 24px;
+      line-height: 32px;
+      text-decoration-line: underline;
+      text-transform: uppercase;
+    }
+
+    .dna-tab-label {
+      font-family: var(--font-mono);
+      font-style: italic;
+      font-weight: 800;
+      font-size: 10px;
+      line-height: 15px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .dna-list-item-title {
+      font-family: var(--font-mono);
+      font-style: italic;
+      font-weight: 700;
+      font-size: 11px;
+      line-height: 16px;
+      letter-spacing: 0.55px;
+      text-transform: uppercase;
+      color: #CBD5E1;
+    }
+
+    .dna-list-item-date {
+      font-family: var(--font-mono);
+      font-style: italic;
+      font-weight: 400;
+      font-size: 10px;
+      line-height: 15px;
+      text-transform: uppercase;
+      color: #8195B1;
+    }
+
+    .dna-watchlist-btn-label {
+      font-family: var(--font-mono);
+      font-style: italic;
+      font-weight: 800;
+      font-size: 8px;
+      line-height: 12px;
+      text-transform: uppercase;
+      color: #94A3B8;
+    }
+
+    .dna-sign-out-label {
+      font-family: var(--font-mono);
+      font-style: italic;
+      font-weight: 800;
+      font-size: 10px;
+      line-height: 15px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: #EF4444;
     }
 
     .grid-overlay {

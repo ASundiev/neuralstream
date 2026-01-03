@@ -22,12 +22,12 @@ export const NeuralDNA: React.FC<NeuralDNAProps> = ({ totalSignals, maxSignals =
             <div className="flex justify-between items-end mb-1">
                 <div className="flex items-center gap-2">
                     <div className="w-2 h-2 bg-cyan-500 animate-pulse shadow-[0_0_8px_#00f5ff]"></div>
-                    <span className="mono text-[10px] font-black uppercase tracking-[0.2em] text-cyan-500/80">Neural_DNA_Completeness</span>
+                    <span className="font-mono italic font-[800] text-[9px] leading-[14px] tracking-[0.9px] text-[#64748B] uppercase">Neural_DNA_Completeness</span>
                 </div>
-                <div className="mono text-[10px] font-black text-slate-500">
+                <div className="font-mono italic font-[800] text-[10px] leading-[15px] tracking-[-0.25px] uppercase">
                     <span className="text-cyan-400">{Math.min(100, Math.floor((totalSignals / maxSignals) * 100))}%</span>
                     <span className="mx-2 text-slate-800">/</span>
-                    <span>{totalSignals} SIGNALS</span>
+                    <span className="text-white">{totalSignals} SIGNALS</span>
                 </div>
             </div>
 
@@ -54,8 +54,8 @@ export const NeuralDNA: React.FC<NeuralDNAProps> = ({ totalSignals, maxSignals =
             </div>
 
             <div className="flex justify-between items-start px-1">
-                <div className="mono text-[8px] text-slate-600 uppercase tracking-widest">Helix_Sequence_v4</div>
-                <div className="mono text-[8px] text-slate-600 uppercase tracking-widest">Matrix_Density::{totalSignals >= maxSignals ? 'STABLE' : 'EVOLVING'}</div>
+                <div className="font-mono italic text-[8px] leading-3 tracking-[0.8px] text-[#475569] uppercase">Helix_Sequence_v4</div>
+                <div className="font-mono italic text-[8px] leading-3 tracking-[0.8px] text-[#475569] uppercase">Matrix_Density::{totalSignals >= maxSignals ? 'STABLE' : 'EVOLVING'}</div>
             </div>
         </div>
     );

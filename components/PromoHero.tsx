@@ -1,4 +1,5 @@
 import React from 'react';
+import logo from '../assets/Logo.svg';
 
 interface PromoHeroProps {
   onTryNow: () => void;
@@ -21,21 +22,16 @@ export const PromoHero: React.FC<PromoHeroProps> = ({ onTryNow, onLogin, onSignU
         <div className="space-y-10">
           <div className="flex flex-col items-center space-y-8">
             <div className="flex items-center gap-4">
-              <div className="w-10 h-10 flex items-center justify-center bg-cyan-500 shadow-[0_0_15px_rgba(0,245,255,0.4)] tech-chipped">
-                <i className="fa-solid fa-dna text-sm text-black"></i>
-              </div>
-              <span className="text-xl md:text-2xl font-black tracking-tighter uppercase italic leading-tight text-white drop-shadow-[0_0:10px_rgba(0,245,255,0.1)] mono">
-                NeuralStream
-              </span>
+              <img src={logo} alt="NEURALSTREAM" className="h-[18px] w-auto" />
             </div>
 
             <div className="space-y-6">
-              <h1 className="text-5xl md:text-8xl font-black italic uppercase tracking-tighter text-white leading-[0.85] drop-shadow-[0_0_20px_rgba(0,245,255,0.2)]">
+              <h1 className="text-5xl md:text-[96px] font-thin leading-[0.89] text-white uppercase tracking-[-2px] font-heading cyber-headline italic">
                 Decode Your <br />
                 Cinematic <span className="text-cyan-400">DNA_</span>
               </h1>
               <div className="flex items-center justify-center gap-4">
-                <p className="mono text-[10px] md:text-xs text-slate-400 max-w-2xl leading-relaxed font-light tracking-[0.1em] uppercase">
+                <p className="font-mono text-[10px] md:text-xs text-[#8195b1] max-w-2xl leading-relaxed font-medium italic tracking-[0.1em] uppercase mono-medium-italic">
                   Uplink your IMDB ratings matrix. Our neural engine maps recommendations synthesized from your unique viewer profile.
                 </p>
               </div>
@@ -46,24 +42,24 @@ export const PromoHero: React.FC<PromoHeroProps> = ({ onTryNow, onLogin, onSignU
             {!isFlipped ? (
               <button
                 onClick={onTryNow}
-                className="px-24 py-6 bg-cyan-500 text-black mono font-black text-sm uppercase tracking-[0.6em] hover:bg-white transition-all shadow-[0_0_50px_rgba(0,245,255,0.3)] hover:shadow-cyan-400/60 relative group/btn tech-chipped overflow-hidden active:scale-95"
+                className="px-24 py-6 bg-cyan-500 text-black font-mono font-extrabold italic text-sm uppercase tracking-[0.4em] hover:bg-white transition-all shadow-[0_0_50px_rgba(0,245,255,0.3)] hover:shadow-cyan-400/60 relative group/btn tech-chipped overflow-hidden active:scale-95"
               >
                 {/* Internal shine effect */}
                 <div className="absolute inset-0 bg-white/30 translate-x-[-100%] group-hover/btn:translate-x-[100%] transition-transform duration-700 ease-in-out pointer-events-none"></div>
 
-                <span className="relative z-10">TRY_NOW</span>
+                <span className="relative z-10 font-mono italic text-[20px] font-extrabold mono-extrabold-italic">TRY_NOW</span>
               </button>
             ) : (
               <div className="flex items-center gap-8 animate-in fade-in zoom-in-95 duration-500">
                 <button
                   onClick={onLogin}
-                  className="px-6 md:px-14 py-4 bg-cyan-500/10 border border-cyan-500/40 text-cyan-400 mono font-black text-xs uppercase tracking-[0.2em] hover:bg-cyan-500 hover:text-black transition-all tech-chipped whitespace-nowrap"
+                  className="px-6 md:px-14 py-4 bg-cyan-500/10 border border-cyan-500/40 text-cyan-400 font-mono font-extrabold italic text-xs uppercase tracking-[0.2em] hover:bg-cyan-500 hover:text-black transition-all tech-chipped whitespace-nowrap mono-extrabold-italic"
                 >
                   [ LOG IN ]
                 </button>
                 <button
                   onClick={onSignUp}
-                  className="mono text-xs font-black uppercase tracking-widest text-slate-500 hover:text-white transition-colors whitespace-nowrap"
+                  className="font-mono text-xs font-extrabold italic uppercase tracking-widest text-[#8195b1] hover:text-white transition-colors whitespace-nowrap mono-extrabold-italic"
                 >
                   [ SIGN UP ]
                 </button>
