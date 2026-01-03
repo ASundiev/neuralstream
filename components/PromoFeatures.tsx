@@ -136,8 +136,8 @@ const FeatureItem: React.FC<FeatureItemProps> = ({ iconType, title, desc, showBo
         <Illustration type={iconType} />
       </div>
       <div className="relative z-10 space-y-3">
-        <h4 className="mono text-[11px] font-black text-white uppercase tracking-widest">{title}</h4>
-        <p className="mono text-[9px] text-slate-500 uppercase leading-relaxed font-light">
+        <h4 className="font-heading italic font-[900] text-[11px] leading-4 tracking-[1.1px] text-white uppercase">{title}</h4>
+        <p className="font-mono text-[10px] text-[#8195b1] uppercase leading-relaxed font-normal italic mono-medium-italic">
           {desc}
         </p>
       </div>
