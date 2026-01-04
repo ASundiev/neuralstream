@@ -2,6 +2,7 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { ContentType, Movie, AppState, Feedback, SearchHistoryItem } from './types';
 import logo from './assets/Logo.svg';
+import headerLogo from './assets/HeaderLogo.svg';
 import { GENRES, MOODS, CONTENT_TYPES } from './constants';
 import { getRecommendations } from './services/geminiService';
 import { MovieCard } from './components/MovieCard';
@@ -404,7 +405,7 @@ const App: React.FC = () => {
             <div className="flex items-center justify-between w-full">
               <div className="flex items-center gap-4">
                 <div className="hidden md:block">
-                  <img src={logo} alt="NEURALSTREAM" className="h-4 w-auto" />
+                  <img src={headerLogo} alt="NEURALSTREAM" style={{ width: '96px', height: '30px' }} className="block" />
                 </div>
               </div>
 
