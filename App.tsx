@@ -63,6 +63,13 @@ const App: React.FC = () => {
     isMoreLoading: false
   });
 
+  const [minLoadingComplete, setMinLoadingComplete] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setMinLoadingComplete(true), 3000);
+    return () => clearTimeout(timer);
+  }, []);
+
   const skipSync = useRef(false);
   const tuningRef = useRef<HTMLElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -110,7 +117,9 @@ const App: React.FC = () => {
 
   const fetchProfile = useCallback(async () => {
     if (!user || !supabase) {
-      if (!user) setState(s => ({ ...s, isLoading: false }));
+      if (!user) {
+        // We still wait for the 3s timer even for guests
+      }
       return;
     }
 
@@ -134,7 +143,7 @@ const App: React.FC = () => {
             searchHistory: data.state.searchHistory || [],
             watchlist: data.state.watchlist || [],
             isLoggedIn: true,
-            isLoading: false,
+            isLoading: false, // This will be combined with minLoadingComplete
             isRecsLoading: false,
             guestSearchUsed: true
           });
@@ -393,10 +402,11 @@ const App: React.FC = () => {
   };
 
   if (!supabase) return <div className="min-h-screen flex items-center justify-center text-white">SUPABASE_CONFIG_MISSING</div>;
-  if (state.isLoading) return <div className="min-h-screen flex items-center justify-center"><NeuralLoader /></div>;
+  const isLoading = state.isLoading || !minLoadingComplete;
 
   return (
     <div className={`min-h-screen pb-20 relative ${!user ? 'landing-bg-desktop' : ''}`}>
+      {isLoading && <NeuralLoader />}
       {!user && <MosaicBackground />}
 
       {(user || state.userMovies.length > 0) && (
