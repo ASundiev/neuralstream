@@ -392,11 +392,11 @@ const App: React.FC = () => {
     if (e.target) e.target.value = ''; // Reset input
   };
 
-  if (!supabase) return <div className="min-h-screen flex items-center justify-center bg-slate-950 text-white">SUPABASE_CONFIG_MISSING</div>;
-  if (state.isLoading) return <div className="min-h-screen bg-slate-950 flex items-center justify-center"><NeuralLoader /></div>;
+  if (!supabase) return <div className="min-h-screen flex items-center justify-center text-white">SUPABASE_CONFIG_MISSING</div>;
+  if (state.isLoading) return <div className="min-h-screen flex items-center justify-center"><NeuralLoader /></div>;
 
   return (
-    <div className="min-h-screen pb-20 relative bg-slate-950">
+    <div className={`min-h-screen pb-20 relative ${!user ? 'landing-bg-desktop' : ''}`}>
       {!user && <MosaicBackground />}
 
       {(user || state.userMovies.length > 0) && (
@@ -404,9 +404,7 @@ const App: React.FC = () => {
           <div className="max-w-7xl mx-auto w-full px-4 md:px-20">
             <div className="flex items-center justify-between w-full">
               <div className="flex items-center gap-4">
-                <div className="hidden md:block">
-                  <img src={headerLogo} alt="NEURALSTREAM" style={{ width: '96px', height: '30px' }} className="block" />
-                </div>
+                <img src={headerLogo} alt="NEURALSTREAM" style={{ width: '96px', height: '30px' }} className="block" />
               </div>
 
               <button

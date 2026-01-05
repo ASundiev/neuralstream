@@ -9,17 +9,17 @@
 
   <!-- OpenGraph -->
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://neuralstream.ai/">
+  <meta property="og:url" content="https://asundiev.github.io/neuralstream/">
   <meta property="og:title" content="NeuralStream AI - Neural Recommendation Engine">
   <meta property="og:description" content="Decode your cinematic DNA with our neural recommendation engine.">
-  <meta property="og:image" content="/assets/og.jpg">
+  <meta property="og:image" content="https://asundiev.github.io/neuralstream/assets/og.jpg">
 
   <!-- Twitter -->
   <meta property="twitter:card" content="summary_large_image">
-  <meta property="twitter:url" content="https://neuralstream.ai/">
+  <meta property="twitter:url" content="https://asundiev.github.io/neuralstream/">
   <meta property="twitter:title" content="NeuralStream AI - Neural Recommendation Engine">
   <meta property="twitter:description" content="Decode your cinematic DNA with our neural recommendation engine.">
-  <meta property="twitter:image" content="/assets/og.jpg">
+  <meta property="twitter:image" content="https://asundiev.github.io/neuralstream/assets/og.jpg">
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -58,12 +58,34 @@
       --font-mono: 'JetBrains Mono', monospace;
     }
 
+    html {
+      background-color: var(--deep);
+    }
+
     body {
       font-family: var(--font-body);
-      background-color: var(--deep);
       color: #f8fafc;
       overflow-x: hidden;
       line-height: 1.5;
+      position: relative;
+    }
+
+    @media (min-width: 1024px) {
+      .landing-bg-desktop::before {
+        content: "";
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 100%;
+        background-image: url('/assets/bg.png');
+        background-position: bottom center;
+        background-repeat: no-repeat;
+        background-size: cover;
+        opacity: 0.16;
+        z-index: -1;
+        pointer-events: none;
+      }
     }
 
     .mono {
@@ -291,12 +313,7 @@
       color: #EF4444;
     }
 
-    .grid-overlay {
-      background-image:
-        linear-gradient(rgba(0, 245, 255, 0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0, 245, 255, 0.03) 1px, transparent 1px);
-      background-size: 32px 32px;
-    }
+
 
     /* Cleaned up tech borders without clip-path issues */
     .tech-border {
@@ -581,7 +598,7 @@
 </script>
 </head>
 
-<body class="grid-overlay">
+<body>
   <div id="root"></div>
   <script type="module" src="./index.tsx"></script>
 </body>
