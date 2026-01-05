@@ -1,10 +1,11 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 
 interface FeatureItemProps {
   iconType: 'synthesis' | 'dna' | 'tuning';
   title: string;
   desc: string;
   showBorder: boolean;
+  index: number;
 }
 
 const Illustration: React.FC<{ type: 'synthesis' | 'dna' | 'tuning' }> = ({ type }) => {
@@ -102,10 +103,36 @@ const Illustration: React.FC<{ type: 'synthesis' | 'dna' | 'tuning' }> = ({ type
   );
 };
 
-const FeatureItem: React.FC<FeatureItemProps> = ({ iconType, title, desc, showBorder }) => {
+const FeatureItem: React.FC<FeatureItemProps> = ({ iconType, title, desc, showBorder, index }) => {
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [isHovered, setIsHovered] = useState(false);
+  const [isInView, setIsInView] = useState(false);
+  const [canAnimate, setCanAnimate] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Global delay matching hero animation finish (~2.3s)
+    const timer = setTimeout(() => setCanAnimate(true), 2300);
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsInView(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.1, rootMargin: '0px 0px -50px 0px' }
+    );
+
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+    }
+
+    return () => {
+      clearTimeout(timer);
+      observer.disconnect();
+    };
+  }, []);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!containerRef.current) return;
@@ -115,13 +142,16 @@ const FeatureItem: React.FC<FeatureItemProps> = ({ iconType, title, desc, showBo
     setMousePos({ x, y });
   };
 
+  const shouldAnimate = isInView && canAnimate;
+
   return (
     <div
       ref={containerRef}
       onMouseMove={handleMouseMove}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className={`p-4 md:p-8 pt-6 pb-10 space-y-8 flex flex-col relative overflow-hidden transition-colors duration-500 ${isHovered ? 'bg-cyan-500/[0.02]' : ''} ${showBorder ? 'border-b md:border-b-0 md:border-r border-cyan-500/10' : ''}`}
+      className={`p-4 md:p-8 pt-6 pb-10 space-y-8 flex flex-col relative overflow-hidden transition-colors duration-500 ${shouldAnimate ? 'animate-slide-fade-blur' : 'opacity-0'} ${isHovered ? 'bg-cyan-500/[0.02]' : ''} ${showBorder ? 'border-b md:border-b-0 md:border-r border-cyan-500/10' : ''}`}
+      style={{ animationDelay: `${index * 150}ms`, animationFillMode: 'both' }}
     >
       {/* Flashlight Effect */}
       <div
@@ -173,6 +203,7 @@ export const PromoFeatures: React.FC = () => {
           title={f.title}
           desc={f.desc}
           showBorder={i !== features.length - 1}
+          index={i}
         />
       ))}
     </div>

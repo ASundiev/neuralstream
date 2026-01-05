@@ -405,11 +405,11 @@ const App: React.FC = () => {
   const isLoading = state.isLoading || !minLoadingComplete;
 
   return (
-    <div className={`min-h-screen pb-20 relative ${!user ? 'landing-bg-desktop' : ''}`}>
+    <div className={`min-h-screen pb-20 relative ${!user && !isLoading ? 'landing-bg-desktop' : ''} ${isLoading ? 'bg-slate-950' : ''}`}>
       {isLoading && <NeuralLoader />}
-      {!user && <MosaicBackground />}
+      {!user && !isLoading && <MosaicBackground />}
 
-      {(user || state.userMovies.length > 0) && (
+      {(user || state.userMovies.length > 0) && !isLoading && (
         <header className="fixed top-0 left-0 right-0 z-[80] bg-slate-950/60 backdrop-blur-xl border-b border-cyan-500/5 h-20 flex items-center animate-in slide-in-from-top duration-700">
           <div className="max-w-7xl mx-auto w-full px-4 md:px-20">
             <div className="flex items-center justify-between w-full">
@@ -680,212 +680,214 @@ const App: React.FC = () => {
         </div>
       )}
 
-      <main className={`max-w-7xl mx-auto px-4 md:px-8 relative z-10 pt-24 md:pt-40`}>
-        <div className="relative">
-          <div className="">
-            {!user && (
-              <div className="md:mx-[3rem]">
-                <PromoHero
-                  isFlipped={isFlipped}
-                  onTryNow={() => setIsFlipped(true)}
-                  onLogin={() => openAuth(false)}
-                  onSignUp={() => openAuth(true)}
-                />
-              </div>
-            )}
-
-            {showUploadScreen ? (
-              <div className="max-w-xl mx-auto tech-border bg-slate-900/40 p-4 md:p-12 text-center space-y-10 relative -mt-16 backdrop-blur-md z-30 border-cyan-500/20 tech-chipped">
-                <div className="space-y-4">
-                  <div className="mono text-xs text-cyan-400 uppercase tracking-widest animate-pulse">Neural_Profile_Empty</div>
-                  <h2 className="text-3xl font-black uppercase text-white italic">Initialize Your <span className="text-cyan-400">Matrix</span></h2>
+      {!isLoading && (
+        <main className={`max-w-7xl mx-auto px-4 md:px-8 relative z-10 pt-24 md:pt-40 animate-in fade-in duration-1000`}>
+          <div className="relative">
+            <div className="">
+              {!user && (
+                <div className="md:mx-[3rem]">
+                  <PromoHero
+                    isFlipped={isFlipped}
+                    onTryNow={() => setIsFlipped(true)}
+                    onLogin={() => openAuth(false)}
+                    onSignUp={() => openAuth(true)}
+                  />
                 </div>
-                <label className="group relative w-full flex flex-col items-center justify-center gap-6 py-16 border border-cyan-500/20 hover:border-cyan-500/60 bg-cyan-500/5 cursor-pointer transition-all tech-chipped">
-                  <i className="fa-solid fa-cloud-arrow-up text-5xl text-cyan-400"></i>
-                  <span className="mono text-sm text-cyan-400 font-black uppercase tracking-widest">[ UPLOAD IMDB CSV ]</span>
-                  <input type="file" className="hidden" accept=".csv" onChange={handleFileUpload} />
-                </label>
-              </div>
-            ) : (
-              <div className="space-y-12">
-                <div className="perspective-1000 relative mt-0 md:-mt-8 z-30 md:mx-[3rem]">
-                  <div className={`transition-all duration-1000 preserve-3d relative ${isFlipped || user ? 'rotate-y-180' : ''}`}>
-                    <div className={`backface-hidden ${isFlipped || user ? 'absolute inset-0 invisible pointer-events-none' : 'relative'}`}>
-                      <div className="tech-border bg-slate-900/80 backdrop-blur-xl border-cyan-500/10 tech-chipped">
-                        <PromoFeatures />
-                      </div>
-                    </div>
+              )}
 
-                    <div className={`backface-hidden rotate-y-180 ${isFlipped || user ? 'relative' : 'absolute inset-0 invisible pointer-events-none'}`}>
-                      <section
-                        ref={tuningRef}
-                        className="tech-border p-4 md:p-8 bg-slate-900/80 backdrop-blur-xl space-y-10 border-cyan-500/30 tech-chipped"
-                      >
-                        <div className={`space-y-6 ${tuningVisible ? 'animate-neural-reveal' : 'opacity-0'}`} style={{ animationFillMode: 'both' }}>
-                          <div className="flex flex-col md:flex-row justify-between items-start gap-6 md:gap-0">
-                            <div className="space-y-1">
-                              <div className="mono text-[10px] uppercase font-black tracking-widest flex items-center gap-2 mono-extrabold-italic">
-                                <span className={`w-1.5 h-1.5 bg-cyan-500 rounded-full animate-pulse shadow-[0_0_5px_rgba(0,245,255,0.5)]`}></span>
-                                <span className="text-cyan-500">Neural_Uplink_Console</span>
-                              </div>
-                              <h2 className="section-title-tourney">Tuning Parameters</h2>
-                            </div>
-
-                            <div className="flex flex-col items-start md:items-end gap-2">
-                              <div className="relative">
-                                <button
-                                  onClick={() => fileInputRef.current?.click()}
-                                  className={`px-6 py-2 border font-mono mono-extrabold-italic text-xs uppercase tracking-widest transition-all tech-chipped whitespace-nowrap ${importSuccess
-                                    ? 'bg-cyan-500 border-cyan-400 text-black'
-                                    : state.userMovies.length > 0
-                                      ? 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10 hover:text-white'
-                                      : 'bg-cyan-500/10 border-cyan-500/40 text-cyan-400 hover:bg-cyan-500 hover:text-black'
-                                    }`}
-                                >
-                                  {importSuccess ? '[ SYNC_COMPLETE ]' : state.userMovies.length > 0 ? '[ RE-IMPORT FROM IMDB ]' : '[ IMPORT FROM IMDB ]'}
-                                </button>
-                                <input type="file" ref={fileInputRef} className="hidden" accept=".csv" onChange={handleFileUpload} />
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className={`relative flex items-start group ${tuningVisible ? 'animate-neural-reveal' : 'opacity-0'}`} style={{ animationDelay: '100ms', animationFillMode: 'both' }}>
-                            <div className="absolute left-6 top-5 font-mono mono-extrabold-italic text-cyan-500/60 text-sm select-none">CMD_&gt;</div>
-                            <textarea
-                              ref={textareaRef}
-                              rows={1}
-                              value={state.filters.query}
-                              onChange={(e) => {
-                                setState((s) => ({ ...s, filters: { ...s.filters, query: e.target.value } }));
-                                e.target.style.height = 'auto';
-                                e.target.style.height = `${e.target.scrollHeight}px`;
-                              }}
-                              placeholder="SPECIFY_NEURAL_OVERRIDE..."
-                              className="w-full bg-black/40 border border-white/10 group-hover:border-cyan-500/40 focus:border-cyan-500/60 p-5 pl-20 font-mono italic text-sm text-white outline-none uppercase placeholder-slate-800 rounded-sm resize-none overflow-hidden"
-                            />
-                          </div>
+              {showUploadScreen ? (
+                <div className="max-w-xl mx-auto tech-border bg-slate-900/40 p-4 md:p-12 text-center space-y-10 relative -mt-16 backdrop-blur-md z-30 border-cyan-500/20 tech-chipped">
+                  <div className="space-y-4">
+                    <div className="mono text-xs text-cyan-400 uppercase tracking-widest animate-pulse">Neural_Profile_Empty</div>
+                    <h2 className="text-3xl font-black uppercase text-white italic">Initialize Your <span className="text-cyan-400">Matrix</span></h2>
+                  </div>
+                  <label className="group relative w-full flex flex-col items-center justify-center gap-6 py-16 border border-cyan-500/20 hover:border-cyan-500/60 bg-cyan-500/5 cursor-pointer transition-all tech-chipped">
+                    <i className="fa-solid fa-cloud-arrow-up text-5xl text-cyan-400"></i>
+                    <span className="mono text-sm text-cyan-400 font-black uppercase tracking-widest">[ UPLOAD IMDB CSV ]</span>
+                    <input type="file" className="hidden" accept=".csv" onChange={handleFileUpload} />
+                  </label>
+                </div>
+              ) : (
+                <div className="space-y-12">
+                  <div className="perspective-1000 relative mt-0 md:-mt-8 z-30 md:mx-[3rem]">
+                    <div className={`transition-all duration-1000 preserve-3d relative ${isFlipped || user ? 'rotate-y-180' : ''}`}>
+                      <div className={`backface-hidden ${isFlipped || user ? 'absolute inset-0 invisible pointer-events-none' : 'relative'}`}>
+                        <div className="tech-border bg-slate-900/80 backdrop-blur-xl border-cyan-500/10 tech-chipped animate-slide-fade-blur [animation-delay:2300ms]">
+                          <PromoFeatures />
                         </div>
+                      </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                          {[
-                            {
-                              label: 'Modality', component: (
-                                <div className="flex w-full p-1 bg-black/40 border border-white/10 h-[52px] tech-chipped">
-                                  {CONTENT_TYPES.map((ct) => (
-                                    <button
-                                      key={ct.value}
-                                      onClick={() => setState((s) => ({ ...s, filters: { ...s.filters, type: ct.value } }))}
-                                      className={`flex-1 flex items-center justify-center font-mono mono-extrabold-italic text-[10px] uppercase transition-all ${state.filters.type === ct.value ? 'bg-cyan-500/20 text-cyan-400' : 'text-[#8195b1]'
-                                        }`}
-                                    >
-                                      {ct.label}
-                                    </button>
-                                  ))}
+                      <div className={`backface-hidden rotate-y-180 ${isFlipped || user ? 'relative' : 'absolute inset-0 invisible pointer-events-none'}`}>
+                        <section
+                          ref={tuningRef}
+                          className="tech-border p-4 md:p-8 bg-slate-900/80 backdrop-blur-xl space-y-10 border-cyan-500/30 tech-chipped"
+                        >
+                          <div className={`space-y-6 ${tuningVisible ? 'animate-neural-reveal' : 'opacity-0'}`} style={{ animationFillMode: 'both' }}>
+                            <div className="flex flex-col md:flex-row justify-between items-start gap-6 md:gap-0">
+                              <div className="space-y-1">
+                                <div className="mono text-[10px] uppercase font-black tracking-widest flex items-center gap-2 mono-extrabold-italic">
+                                  <span className={`w-1.5 h-1.5 bg-cyan-500 rounded-full animate-pulse shadow-[0_0_5px_rgba(0,245,255,0.5)]`}></span>
+                                  <span className="text-cyan-500">Neural_Uplink_Console</span>
                                 </div>
-                              )
-                            },
-                            { label: 'Genre_Axis', value: state.filters.genre, setter: (v: string) => setState(s => ({ ...s, filters: { ...s.filters, genre: v } })), options: GENRES, placeholder: 'ALL_CHANNELS' },
-                            { label: 'Affective_State', value: state.filters.mood, setter: (v: string) => setState(s => ({ ...s, filters: { ...s.filters, mood: v } })), options: MOODS, placeholder: 'UNCALIBRATED' }
-                          ].map((f, i) => (
-                            <div key={i} className={`space-y-3 ${tuningVisible ? 'animate-neural-reveal' : 'opacity-0'}`} style={{ animationDelay: `${200 + i * 100}ms`, animationFillMode: 'both' }}>
-                              <label className="font-mono text-[10px] uppercase text-[#8195b1] font-bold italic mono-bold-italic tracking-widest flex items-center gap-2">
-                                {f.label}
-                              </label>
-                              {f.component || (
-                                <div className="relative group">
-                                  <select
-                                    value={f.value}
-                                    onChange={(e) => f.setter!(e.target.value)}
-                                    className="w-full bg-black/40 border border-white/10 p-4 h-[52px] font-mono italic text-xs uppercase text-white outline-none group-hover:border-cyan-500/30 focus:border-cyan-500/50 appearance-none tech-chipped"
+                                <h2 className="section-title-tourney">Tuning Parameters</h2>
+                              </div>
+
+                              <div className="flex flex-col items-start md:items-end gap-2">
+                                <div className="relative">
+                                  <button
+                                    onClick={() => fileInputRef.current?.click()}
+                                    className={`px-6 py-2 border font-mono mono-extrabold-italic text-xs uppercase tracking-widest transition-all tech-chipped whitespace-nowrap ${importSuccess
+                                      ? 'bg-cyan-500 border-cyan-400 text-black'
+                                      : state.userMovies.length > 0
+                                        ? 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10 hover:text-white'
+                                        : 'bg-cyan-500/10 border-cyan-500/40 text-cyan-400 hover:bg-cyan-500 hover:text-black'
+                                      }`}
                                   >
-                                    <option value="">{f.placeholder}</option>
-                                    {f.options?.map((opt: string) => <option key={opt} value={opt}>{opt.toUpperCase()}</option>)}
-                                  </select>
-                                  <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-cyan-500/50">
-                                    <i className="fa-solid fa-chevron-down text-[10px]"></i>
-                                  </div>
+                                    {importSuccess ? '[ SYNC_COMPLETE ]' : state.userMovies.length > 0 ? '[ RE-IMPORT FROM IMDB ]' : '[ IMPORT FROM IMDB ]'}
+                                  </button>
+                                  <input type="file" ref={fileInputRef} className="hidden" accept=".csv" onChange={handleFileUpload} />
                                 </div>
+                              </div>
+                            </div>
+
+                            <div className={`relative flex items-start group ${tuningVisible ? 'animate-neural-reveal' : 'opacity-0'}`} style={{ animationDelay: '100ms', animationFillMode: 'both' }}>
+                              <div className="absolute left-6 top-5 font-mono mono-extrabold-italic text-cyan-500/60 text-sm select-none">CMD_&gt;</div>
+                              <textarea
+                                ref={textareaRef}
+                                rows={1}
+                                value={state.filters.query}
+                                onChange={(e) => {
+                                  setState((s) => ({ ...s, filters: { ...s.filters, query: e.target.value } }));
+                                  e.target.style.height = 'auto';
+                                  e.target.style.height = `${e.target.scrollHeight}px`;
+                                }}
+                                placeholder="SPECIFY_NEURAL_OVERRIDE..."
+                                className="w-full bg-black/40 border border-white/10 group-hover:border-cyan-500/40 focus:border-cyan-500/60 p-5 pl-20 font-mono italic text-sm text-white outline-none uppercase placeholder-slate-800 rounded-sm resize-none overflow-hidden"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                            {[
+                              {
+                                label: 'Modality', component: (
+                                  <div className="flex w-full p-1 bg-black/40 border border-white/10 h-[52px] tech-chipped">
+                                    {CONTENT_TYPES.map((ct) => (
+                                      <button
+                                        key={ct.value}
+                                        onClick={() => setState((s) => ({ ...s, filters: { ...s.filters, type: ct.value } }))}
+                                        className={`flex-1 flex items-center justify-center font-mono mono-extrabold-italic text-[10px] uppercase transition-all ${state.filters.type === ct.value ? 'bg-cyan-500/20 text-cyan-400' : 'text-[#8195b1]'
+                                          }`}
+                                      >
+                                        {ct.label}
+                                      </button>
+                                    ))}
+                                  </div>
+                                )
+                              },
+                              { label: 'Genre_Axis', value: state.filters.genre, setter: (v: string) => setState(s => ({ ...s, filters: { ...s.filters, genre: v } })), options: GENRES, placeholder: 'ALL_CHANNELS' },
+                              { label: 'Affective_State', value: state.filters.mood, setter: (v: string) => setState(s => ({ ...s, filters: { ...s.filters, mood: v } })), options: MOODS, placeholder: 'UNCALIBRATED' }
+                            ].map((f, i) => (
+                              <div key={i} className={`space-y-3 ${tuningVisible ? 'animate-neural-reveal' : 'opacity-0'}`} style={{ animationDelay: `${200 + i * 100}ms`, animationFillMode: 'both' }}>
+                                <label className="font-mono text-[10px] uppercase text-[#8195b1] font-bold italic mono-bold-italic tracking-widest flex items-center gap-2">
+                                  {f.label}
+                                </label>
+                                {f.component || (
+                                  <div className="relative group">
+                                    <select
+                                      value={f.value}
+                                      onChange={(e) => f.setter!(e.target.value)}
+                                      className="w-full bg-black/40 border border-white/10 p-4 h-[52px] font-mono italic text-xs uppercase text-white outline-none group-hover:border-cyan-500/30 focus:border-cyan-500/50 appearance-none tech-chipped"
+                                    >
+                                      <option value="">{f.placeholder}</option>
+                                      {f.options?.map((opt: string) => <option key={opt} value={opt}>{opt.toUpperCase()}</option>)}
+                                    </select>
+                                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-cyan-500/50">
+                                      <i className="fa-solid fa-chevron-down text-[10px]"></i>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+
+                          <div className="flex flex-row items-center gap-4">
+                            <div className="flex-1 h-[1px] bg-cyan-500/10"></div>
+                            <div className="flex gap-2">
+                            </div>
+                            <div className="flex-1 h-[1px] bg-cyan-500/10"></div>
+                          </div>
+
+                          <button
+                            onClick={() => fetchRecommendations()}
+                            disabled={state.isRecsLoading}
+                            className={`group w-full relative p-[1px] overflow-hidden transition-all duration-300 rounded-sm tech-chipped ${tuningVisible ? 'animate-neural-reveal' : 'opacity-0'}`}
+                            style={{ animationDelay: '600ms', animationFillMode: 'both' }}
+                          >
+                            {/* Spinning Border Beam */}
+                            <span className={`absolute inset-[-200%] animate-[spin_4s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,transparent_0%,transparent_75%,#00f5ff_100%)] opacity-0 transition-opacity duration-300 group-hover:opacity-100 ${state.isRecsLoading ? 'opacity-100' : ''}`}></span>
+
+                            {/* Inner Surface & Content */}
+                            <div className={`relative z-10 w-full py-5 bg-slate-900 font-mono mono-extrabold-italic text-sm uppercase tracking-[0.6em] flex items-center justify-center gap-4 transition-colors duration-300 group-hover:text-cyan-400 ${state.isRecsLoading ? 'text-cyan-400' : 'text-cyan-400/60'}`}>
+                              {state.isRecsLoading ? (
+                                <><i className="fa-solid fa-microchip animate-spin text-lg"></i>SYNTHESIZING...</>
+                              ) : (
+                                <><i className="fa-solid fa-bolt text-xs"></i>INITIATE<i className="fa-solid fa-bolt text-xs"></i></>
                               )}
                             </div>
-                          ))}
-                        </div>
+                          </button>
 
-                        <div className="flex flex-row items-center gap-4">
-                          <div className="flex-1 h-[1px] bg-cyan-500/10"></div>
-                          <div className="flex gap-2">
+                          {state.isRecsLoading && <NeuralLoader variant="compact" progress={state.progress} />}
+                        </section>
+                      </div>
+                    </div>
+                  </div>
+
+                  {!state.isRecsLoading && state.recommendations.length > 0 && (
+                    <section className="space-y-10 animate-in fade-in slide-in-from-bottom-8 duration-1000 mt-10 md:px-12">
+                      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-white/10 pb-8">
+                        <div className="space-y-1">
+                          <div className="mono text-[10px] uppercase font-black tracking-widest flex items-center gap-2 mono-extrabold-italic">
+                            <span className="w-1.5 h-1.5 bg-cyan-500 rounded-full animate-pulse shadow-[0_0_5px_rgba(0,245,255,0.5)]"></span>
+                            <span className="text-cyan-500">Output_Matrix</span>
                           </div>
-                          <div className="flex-1 h-[1px] bg-cyan-500/10"></div>
+                          <h3 className="section-title-tourney">Verified Matches</h3>
                         </div>
+                        <div className="flex gap-2 opacity-30">
+                          <div className="w-32 h-1 bg-cyan-500"></div>
+                          <div className="w-8 h-1 bg-cyan-500"></div>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8 items-stretch">
+                        {state.recommendations.map((movie, idx) => (
+                          <MovieCard key={movie.id} movie={movie} index={idx} isRecommendation onLikeSimilar={(seed) => fetchRecommendations(seed)} onMarkWatched={(m) => markAsWatched(m)} onFeedback={(m, f) => handleFeedback(m, f)} onAddToWatchlist={(m) => addToWatchlist(m)} />
+                        ))}
+                      </div>
 
+                      <div className="flex justify-center pt-8">
                         <button
-                          onClick={() => fetchRecommendations()}
-                          disabled={state.isRecsLoading}
-                          className={`group w-full relative p-[1px] overflow-hidden transition-all duration-300 rounded-sm tech-chipped ${tuningVisible ? 'animate-neural-reveal' : 'opacity-0'}`}
-                          style={{ animationDelay: '600ms', animationFillMode: 'both' }}
+                          onClick={() => fetchRecommendations(undefined, true)}
+                          disabled={state.isMoreLoading}
+                          className="group relative px-10 py-4 bg-cyan-500/5 border border-cyan-500/20 hover:border-cyan-500/60 transition-all tech-chipped overflow-hidden"
                         >
-                          {/* Spinning Border Beam */}
-                          <span className={`absolute inset-[-200%] animate-[spin_4s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,transparent_0%,transparent_75%,#00f5ff_100%)] opacity-0 transition-opacity duration-300 group-hover:opacity-100 ${state.isRecsLoading ? 'opacity-100' : ''}`}></span>
-
-                          {/* Inner Surface & Content */}
-                          <div className={`relative z-10 w-full py-5 bg-slate-900 font-mono mono-extrabold-italic text-sm uppercase tracking-[0.6em] flex items-center justify-center gap-4 transition-colors duration-300 group-hover:text-cyan-400 ${state.isRecsLoading ? 'text-cyan-400' : 'text-cyan-400/60'}`}>
-                            {state.isRecsLoading ? (
-                              <><i className="fa-solid fa-microchip animate-spin text-lg"></i>SYNTHESIZING...</>
+                          <div className="absolute inset-0 bg-cyan-500/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+                          <div className="relative flex items-center gap-3 btn-show-more-label transition-colors">
+                            {state.isMoreLoading ? (
+                              <><i className="fa-solid fa-sync animate-spin"></i> EXPANDING_MATRIX...</>
                             ) : (
-                              <><i className="fa-solid fa-bolt text-xs"></i>INITIATE<i className="fa-solid fa-bolt text-xs"></i></>
+                              <><i className="fa-solid fa-plus"></i> SHOW_MORE_RESULTS</>
                             )}
                           </div>
                         </button>
-
-                        {state.isRecsLoading && <NeuralLoader variant="compact" progress={state.progress} />}
-                      </section>
-                    </div>
-                  </div>
+                      </div>
+                    </section>
+                  )}
                 </div>
-
-                {!state.isRecsLoading && state.recommendations.length > 0 && (
-                  <section className="space-y-10 animate-in fade-in slide-in-from-bottom-8 duration-1000 mt-10 md:px-12">
-                    <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-white/10 pb-8">
-                      <div className="space-y-1">
-                        <div className="mono text-[10px] uppercase font-black tracking-widest flex items-center gap-2 mono-extrabold-italic">
-                          <span className="w-1.5 h-1.5 bg-cyan-500 rounded-full animate-pulse shadow-[0_0_5px_rgba(0,245,255,0.5)]"></span>
-                          <span className="text-cyan-500">Output_Matrix</span>
-                        </div>
-                        <h3 className="section-title-tourney">Verified Matches</h3>
-                      </div>
-                      <div className="flex gap-2 opacity-30">
-                        <div className="w-32 h-1 bg-cyan-500"></div>
-                        <div className="w-8 h-1 bg-cyan-500"></div>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8 items-stretch">
-                      {state.recommendations.map((movie, idx) => (
-                        <MovieCard key={movie.id} movie={movie} index={idx} isRecommendation onLikeSimilar={(seed) => fetchRecommendations(seed)} onMarkWatched={(m) => markAsWatched(m)} onFeedback={(m, f) => handleFeedback(m, f)} onAddToWatchlist={(m) => addToWatchlist(m)} />
-                      ))}
-                    </div>
-
-                    <div className="flex justify-center pt-8">
-                      <button
-                        onClick={() => fetchRecommendations(undefined, true)}
-                        disabled={state.isMoreLoading}
-                        className="group relative px-10 py-4 bg-cyan-500/5 border border-cyan-500/20 hover:border-cyan-500/60 transition-all tech-chipped overflow-hidden"
-                      >
-                        <div className="absolute inset-0 bg-cyan-500/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
-                        <div className="relative flex items-center gap-3 btn-show-more-label transition-colors">
-                          {state.isMoreLoading ? (
-                            <><i className="fa-solid fa-sync animate-spin"></i> EXPANDING_MATRIX...</>
-                          ) : (
-                            <><i className="fa-solid fa-plus"></i> SHOW_MORE_RESULTS</>
-                          )}
-                        </div>
-                      </button>
-                    </div>
-                  </section>
-                )}
-              </div>
-            )}
+              )}
+            </div>
           </div>
-        </div>
-      </main>
+        </main>
+      )}
     </div>
   );
 };
