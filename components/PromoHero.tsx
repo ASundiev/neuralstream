@@ -10,7 +10,7 @@ interface PromoHeroProps {
 
 export const PromoHero: React.FC<PromoHeroProps> = ({ onTryNow, onLogin, onSignUp, isFlipped }) => {
   return (
-    <div className="relative w-full tech-border bg-slate-900/10 backdrop-blur-[2px] overflow-hidden py-8 md:py-16 px-4 md:px-12 flex flex-col items-center justify-center min-h-[400px] md:min-h-[500px] animate-neural-reveal tech-chipped">
+    <div className="relative w-full tech-border bg-slate-900/10 backdrop-blur-[4px] overflow-hidden py-8 md:py-16 px-4 md:px-12 flex flex-col items-center justify-center min-h-[400px] md:min-h-[500px] animate-neural-reveal tech-chipped">
       {/* HUD Background elements */}
       <div className="scanline opacity-10"></div>
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,245,255,0.08)_0%,transparent_70%)] pointer-events-none"></div>
