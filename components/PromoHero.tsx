@@ -10,7 +10,7 @@ interface PromoHeroProps {
 
 export const PromoHero: React.FC<PromoHeroProps> = ({ onTryNow, onLogin, onSignUp, isFlipped }) => {
   return (
-    <div className="relative w-full tech-border bg-slate-900/10 backdrop-blur-[4px] overflow-hidden py-8 md:py-16 px-4 md:px-12 flex flex-col items-center justify-center min-h-[400px] md:min-h-[500px] animate-neural-reveal tech-chipped">
+    <div className="relative w-full tech-border bg-slate-900/10 backdrop-blur-[4px] overflow-hidden py-8 md:py-16 px-4 md:px-12 flex flex-col items-center justify-center min-h-[400px] md:min-h-[500px] animate-expand-hero tech-chipped">
       {/* HUD Background elements */}
       <div className="scanline opacity-10"></div>
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,245,255,0.08)_0%,transparent_70%)] pointer-events-none"></div>
@@ -21,16 +21,16 @@ export const PromoHero: React.FC<PromoHeroProps> = ({ onTryNow, onLogin, onSignU
       <div className="relative z-20 flex flex-col items-center justify-center text-center max-w-4xl mx-auto space-y-12">
         <div className="space-y-10">
           <div className="flex flex-col items-center space-y-8">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 animate-slide-fade-blur [animation-delay:1000ms]">
               <img src={logo} alt="NEURALSTREAM" className="h-[18px] w-auto" />
             </div>
 
             <div className="space-y-6">
-              <h1 className="text-5xl md:text-[96px] font-thin leading-[0.89] text-white uppercase tracking-[-2px] font-heading cyber-headline italic">
+              <h1 className="text-5xl md:text-[96px] font-thin leading-[0.89] text-white uppercase tracking-[-2px] font-heading cyber-headline italic animate-slide-fade-blur [animation-delay:1100ms]">
                 Decode Your <br />
                 Cinematic <span className="text-cyan-400">DNA_</span>
               </h1>
-              <div className="flex items-center justify-center gap-4">
+              <div className="flex items-center justify-center gap-4 animate-slide-fade-blur [animation-delay:1200ms]">
                 <p className="font-mono text-[10px] md:text-xs text-[#8195b1] max-w-2xl leading-relaxed font-medium italic tracking-[0.1em] uppercase mono-medium-italic">
                   Uplink your IMDB ratings matrix. Our neural engine maps recommendations synthesized from your unique viewer profile.
                 </p>
@@ -38,7 +38,7 @@ export const PromoHero: React.FC<PromoHeroProps> = ({ onTryNow, onLogin, onSignU
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-6 min-h-[80px]">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-6 min-h-[80px] animate-slide-fade-blur [animation-delay:1300ms]">
             {!isFlipped ? (
               <button
                 onClick={onTryNow}
@@ -50,7 +50,7 @@ export const PromoHero: React.FC<PromoHeroProps> = ({ onTryNow, onLogin, onSignU
                 <span className="relative z-10 font-mono italic text-[20px] font-extrabold mono-extrabold-italic">TRY_NOW</span>
               </button>
             ) : (
-              <div className="flex items-center gap-8 animate-in fade-in zoom-in-95 duration-500">
+              <div className="flex items-center gap-8">
                 <button
                   onClick={onLogin}
                   className="px-6 md:px-14 py-4 bg-cyan-500/10 border border-cyan-500/40 text-cyan-400 font-mono font-extrabold italic text-xs uppercase tracking-[0.2em] hover:bg-cyan-500 hover:text-black transition-all tech-chipped whitespace-nowrap mono-extrabold-italic"
