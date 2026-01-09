@@ -460,12 +460,12 @@
 
     @keyframes expand-hero {
       0% {
-        transform: scaleX(0) scaleY(0.05);
+        transform: scaleX(0) scaleY(0);
         opacity: 0;
       }
 
-      45% {
-        transform: scaleX(1) scaleY(0.05);
+      20% {
+        transform: scaleX(1) scaleY(0);
         opacity: 1;
       }
 
@@ -491,6 +491,7 @@
 
     .animate-expand-hero {
       animation: expand-hero 1.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+      transform-origin: top;
     }
 
     .animate-slide-fade-blur {
@@ -605,18 +606,39 @@
       }
     }
 
-    .glitch-effect-1 {
-      animation: glitch-anim-1 6s infinite linear alternate-reverse;
+    .query-input-placeholder::placeholder {
+      font-family: 'JetBrains Mono', monospace;
+      font-style: italic;
+      font-weight: 400;
+      font-size: 14px;
+      line-height: 150%;
+      text-transform: uppercase;
+      color: #94A3B8;
     }
 
-    .glitch-effect-2 {
-      animation: glitch-anim-2 8s infinite linear alternate-reverse;
+    .filters-expansion-grid {
+      display: grid;
+      grid-template-rows: 0fr;
+      transition: grid-template-rows 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    .glitch-flash {
-      animation: glitch-anim-flash 10s -2s infinite linear;
+    .filters-expansion-grid.expanded {
+      grid-template-rows: 1fr;
+    }
+
+    .filters-expansion-content {
+      overflow: hidden;
+    }
+
+    /* Expansion transition */
+    .animate-expand-hero {
+      animation: expand-hero 1.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+      transform-origin: top;
     }
   </style>
+
+
+
   <script type="importmap">
 {
   "imports": {
