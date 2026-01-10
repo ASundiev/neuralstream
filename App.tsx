@@ -420,24 +420,24 @@ const App: React.FC = () => {
 
               <button
                 onClick={() => setShowStatsModal(true)}
-                className="group flex items-center gap-4 p-1.5 pr-6 bg-cyan-500/5 border border-cyan-500/10 hover:border-cyan-500/30 transition-all rounded-sm relative z-50 cursor-pointer"
+                className="group flex items-center gap-2 md:gap-4 p-1 md:p-1.5 pr-3 md:pr-6 bg-cyan-500/5 border border-cyan-500/10 hover:border-cyan-500/30 transition-all rounded-sm relative z-50 cursor-pointer"
               >
-                <div className="w-10 h-10 flex items-center justify-center bg-cyan-500/20 text-cyan-400 group-hover:bg-cyan-500 group-hover:text-black transition-all tech-chipped">
-                  <i className="fa-solid fa-id-badge text-xl"></i>
+                <div className="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center bg-cyan-500/20 text-cyan-400 group-hover:bg-cyan-500 group-hover:text-black transition-all tech-chipped">
+                  <i className="fa-solid fa-id-badge text-lg md:text-xl"></i>
                 </div>
                 <div className="text-left space-y-0.5 pointer-events-none">
-                  <div className="flex items-center gap-2">
+                  <div className="items-center gap-2 hidden md:flex">
                     <span className="w-1.5 h-1.5 bg-cyan-500 rounded-full animate-pulse shadow-[0_0_5px_rgba(0,245,255,0.5)]"></span>
                     <span className="font-mono italic font-[800] text-[9px] leading-[14px] tracking-[0.9px] text-[#64748B] uppercase">Neural_DNA_Profile</span>
                   </div>
-                  <div className="font-mono italic font-[800] text-[10px] leading-[15px] tracking-[-0.25px] text-[#00F5FF] uppercase flex items-center gap-2">
+                  <div className="font-mono italic font-[800] text-[10px] leading-[15px] tracking-[-0.25px] text-[#00F5FF] uppercase flex items-center gap-1.5 md:gap-2">
                     <div className="flex items-center gap-1">
-                      <span>Nodes:</span>
+                      <span className="hidden xs:inline">Nodes:</span>
                       <span className="text-white">{state.userMovies.length}</span>
                     </div>
                     <span className="text-slate-700">//</span>
                     <div className="flex items-center gap-1">
-                      <span>Signals:</span>
+                      <span className="hidden xs:inline">Signals:</span>
                       <span className="text-white">{state.feedbackHistory.length}</span>
                     </div>
                   </div>
