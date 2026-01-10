@@ -192,7 +192,7 @@ export const MovieCard: React.FC<MovieCardProps> = ({
       className={`group relative overflow-visible transition-all duration-300 flex flex-col h-full ${isInView ? 'animate-card-entrance' : 'opacity-[0.01]'}`}
     >
       {/* Hover Background Glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[140%] aspect-square z-0 opacity-0 group-hover:opacity-80 transition-opacity duration-700 pointer-events-none blur-[150px]">
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[140%] aspect-square z-0 opacity-0 group-hover:opacity-90 transition-opacity duration-700 pointer-events-none blur-[170px]">
         {isValidUrl ? (
           <img
             src={pUrl || ''}
