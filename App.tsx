@@ -102,11 +102,33 @@ const App: React.FC = () => {
   }, [user, state.userMovies, isFlipped]);
 
   useEffect(() => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+    const adjustHeight = () => {
+      const textarea = textareaRef.current;
+      if (textarea) {
+        textarea.style.height = 'auto';
+        textarea.style.height = `${textarea.scrollHeight}px`;
+      }
+    };
+
+    // Run immediately and periodically to handle animations/font loading
+    adjustHeight();
+    const interval = setInterval(adjustHeight, 100);
+
+    // Stop listening after 2 seconds (sufficient for all animations)
+    const timeout = setTimeout(() => clearInterval(interval), 2000);
+
+    // Also listen for font loading
+    if (document.fonts) {
+      document.fonts.ready.then(adjustHeight);
     }
-  }, [state.filters.query]);
+
+    window.addEventListener('resize', adjustHeight);
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timeout);
+      window.removeEventListener('resize', adjustHeight);
+    };
+  }, [state.filters.query, tuningVisible]);
 
   const handleLogout = async () => {
     if (window.confirm("TERMINATE_NEURAL_UPLINK? ANY UNSYNCED LOCAL CACHE WILL BE FLUSHED.")) {
@@ -769,8 +791,8 @@ const App: React.FC = () => {
                             </div>
                           </div>
 
-                          <div className={`relative flex items-center group mt-6 ${tuningVisible ? 'animate-neural-reveal' : 'opacity-0'}`} style={{ animationDelay: '100ms', animationFillMode: 'both' }}>
-                            <div className="absolute left-6 top-1/2 -translate-y-1/2 font-mono mono-extrabold-italic text-cyan-500/60 text-sm select-none">CMD_&gt;</div>
+                          <div className={`relative flex items-center group md:mt-6 ${tuningVisible ? 'animate-neural-reveal' : 'opacity-0'}`} style={{ animationDelay: '100ms', animationFillMode: 'both' }}>
+                            <div className="absolute left-6 top-5 font-mono mono-extrabold-italic text-cyan-500/60 text-sm select-none">CMD_&gt;</div>
                             <textarea
                               ref={textareaRef}
                               rows={1}
@@ -842,7 +864,7 @@ const App: React.FC = () => {
                             </div>
                           </div>
 
-                          <div className="flex flex-row items-center gap-4 mt-10">
+                          <div className="flex flex-row items-center gap-4 mt-6 md:mt-10">
                             <div className="flex-1 h-[1px] bg-cyan-500/10"></div>
                             <div className="flex gap-2"></div>
                             <div className="flex-1 h-[1px] bg-cyan-500/10"></div>
@@ -851,7 +873,7 @@ const App: React.FC = () => {
                           <button
                             onClick={() => fetchRecommendations()}
                             disabled={state.isRecsLoading}
-                            className={`group w-full relative p-[1px] overflow-hidden transition-all duration-300 rounded-sm tech-chipped mt-10`}
+                            className={`group w-full relative p-[1px] overflow-hidden transition-all duration-300 rounded-sm tech-chipped mt-6 md:mt-10`}
                           >
                             <span className={`absolute inset-[-200%] animate-[spin_4s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,transparent_0%,transparent_75%,#00f5ff_100%)] opacity-0 transition-opacity duration-300 group-hover:opacity-100 ${state.isRecsLoading ? 'opacity-100' : ''}`}></span>
                             <div className={`relative z-10 w-full py-5 bg-slate-900 font-mono mono-extrabold-italic text-sm uppercase tracking-[0.6em] flex items-center justify-center gap-4 transition-colors duration-300 group-hover:text-cyan-400 ${state.isRecsLoading ? 'text-cyan-400' : 'text-cyan-400/60'}`}>
@@ -875,8 +897,8 @@ const App: React.FC = () => {
                   </div>
 
                   {!state.isRecsLoading && state.recommendations.length > 0 && (
-                    <section className="space-y-10 animate-in fade-in slide-in-from-bottom-8 duration-1000 mt-10 md:px-12">
-                      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-white/10 pb-8">
+                    <section className="space-y-6 md:space-y-10 animate-in fade-in slide-in-from-bottom-8 duration-1000 mt-10 md:px-12">
+                      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-white/10 pb-6 md:pb-8">
                         <div className="space-y-1">
                           <div className="mono text-[10px] uppercase font-black tracking-widest flex items-center gap-2 mono-extrabold-italic">
                             <span className="w-1.5 h-1.5 bg-cyan-500 rounded-full animate-pulse shadow-[0_0_5px_rgba(0,245,255,0.5)]"></span>
@@ -884,7 +906,7 @@ const App: React.FC = () => {
                           </div>
                           <h3 className="section-title-tourney">Verified Matches</h3>
                         </div>
-                        <div className="flex gap-2 opacity-30">
+                        <div className="hidden md:flex gap-2 opacity-30">
                           <div className="w-32 h-1 bg-cyan-500"></div>
                           <div className="w-8 h-1 bg-cyan-500"></div>
                         </div>
