@@ -83,7 +83,7 @@ export async function getRecommendations(request: RecommendationRequest): Promis
       model: "gemini-3-flash-preview",
       contents: prompt,
       config: {
-        systemInstruction: `You are the NeuralStream Recommendation Engine. Only return Title, Year, Type, and Genres. No image links.${excludeTitles && excludeTitles.length > 0 ? ` DO NOT RECOMMEND ANY OF THESE TITLES: ${excludeTitles.join(', ')}.` : ""}`,
+        systemInstruction: `You are the NeuralStream Recommendation Engine. Only return Title, Year, Type, and Genres. No image links. ONLY RECOMMEND TITLES WITH A RATING OF 7.0 OR HIGHER.${excludeTitles && excludeTitles.length > 0 ? ` DO NOT RECOMMEND ANY OF THESE TITLES: ${excludeTitles.join(', ')}.` : ""}`,
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.ARRAY,
@@ -108,10 +108,11 @@ export async function getRecommendations(request: RecommendationRequest): Promis
     report(40);
 
     const results = JSON.parse(response.text);
-    const totalCount = results.length;
+    const filteredResults = results.filter((item: any) => item.rating >= 7);
+    const totalCount = filteredResults.length;
     let completedCount = 0;
 
-    const moviesWithMetadata = await Promise.all(results.map(async (item: any) => {
+    const moviesWithMetadata = await Promise.all(filteredResults.map(async (item: any) => {
       // Small creep while waiting for each poster
       const posterUrl = await generateNeuralPoster(item.title, item.description);
       completedCount++;
