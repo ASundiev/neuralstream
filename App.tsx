@@ -530,9 +530,22 @@ const App: React.FC = () => {
               <div className="space-y-1">
                 <h2 className="modal-title-tourney text-white">Neural DNA Profile</h2>
               </div>
-              <button onClick={() => setShowStatsModal(false)} className="text-slate-500 hover:text-white transition-colors">
-                <i className="fa-solid fa-xmark text-2xl"></i>
-              </button>
+              <div className="flex items-center gap-4">
+                {state.userMovies.length > 0 && (
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className={`px-4 py-1.5 border font-mono mono-extrabold-italic text-[10px] uppercase tracking-widest transition-all tech-chipped whitespace-nowrap ${importSuccess
+                      ? 'bg-cyan-500 border-cyan-400 text-black'
+                      : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10 hover:text-white'
+                      }`}
+                  >
+                    {importSuccess ? '[ SYNC_COMPLETE ]' : '[ RE-IMPORT FROM IMDB ]'}
+                  </button>
+                )}
+                <button onClick={() => setShowStatsModal(false)} className="text-slate-500 hover:text-white transition-colors">
+                  <i className="fa-solid fa-xmark text-2xl"></i>
+                </button>
+              </div>
             </div>
 
             <div className="px-4 md:px-8 py-6 border-b border-white/5 bg-black/20">
@@ -730,17 +743,17 @@ const App: React.FC = () => {
                               <h3 className="section-title-tourney tracking-tighter decoration-white">Tuning Parameters</h3>
                             </div>
                             <div className="flex flex-col items-end gap-2">
-                              <button
-                                onClick={() => fileInputRef.current?.click()}
-                                className={`px-6 py-2 border font-mono mono-extrabold-italic text-xs uppercase tracking-widest transition-all tech-chipped whitespace-nowrap ${importSuccess
-                                  ? 'bg-cyan-500 border-cyan-400 text-black'
-                                  : state.userMovies.length > 0
-                                    ? 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10 hover:text-white'
+                              {state.userMovies.length === 0 && (
+                                <button
+                                  onClick={() => fileInputRef.current?.click()}
+                                  className={`px-6 py-2 border font-mono mono-extrabold-italic text-xs uppercase tracking-widest transition-all tech-chipped whitespace-nowrap ${importSuccess
+                                    ? 'bg-cyan-500 border-cyan-400 text-black'
                                     : 'bg-cyan-500/10 border-cyan-500/40 text-cyan-400 hover:bg-cyan-500 hover:text-black'
-                                  }`}
-                              >
-                                {importSuccess ? '[ SYNC_COMPLETE ]' : state.userMovies.length > 0 ? '[ RE-IMPORT FROM IMDB ]' : '[ IMPORT FROM IMDB ]'}
-                              </button>
+                                    }`}
+                                >
+                                  {importSuccess ? '[ SYNC_COMPLETE ]' : '[ IMPORT FROM IMDB ]'}
+                                </button>
+                              )}
                               <input type="file" ref={fileInputRef} className="hidden" accept=".csv" onChange={handleFileUpload} />
                             </div>
                           </div>
