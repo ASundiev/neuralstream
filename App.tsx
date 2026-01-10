@@ -526,15 +526,26 @@ const App: React.FC = () => {
       {showStatsModal && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/95 backdrop-blur-lg animate-in fade-in duration-300">
           <div className="max-w-4xl w-full h-[640px] max-h-[80vh] tech-border bg-slate-900 border-cyan-500/20 shadow-[0_0_100px_rgba(0,245,255,0.1)] relative tech-chipped flex flex-col">
-            <div className="p-4 md:p-8 border-b border-white/5 flex items-center justify-between">
-              <div className="space-y-1">
+            <div className="p-4 md:p-8 border-b border-white/5 flex items-start md:items-center justify-between gap-4">
+              <div className="space-y-3 md:space-y-1 flex flex-col items-start">
                 <h2 className="modal-title-tourney text-white">Neural DNA Profile</h2>
+                {state.userMovies.length > 0 && (
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className={`md:hidden px-4 py-1.5 border font-mono mono-extrabold-italic text-[10px] uppercase tracking-widest transition-all tech-chipped whitespace-nowrap ${importSuccess
+                      ? 'bg-cyan-500 border-cyan-400 text-black'
+                      : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10 hover:text-white'
+                      }`}
+                  >
+                    {importSuccess ? '[ SYNC_COMPLETE ]' : '[ RE-IMPORT ]'}
+                  </button>
+                )}
               </div>
               <div className="flex items-center gap-4">
                 {state.userMovies.length > 0 && (
                   <button
                     onClick={() => fileInputRef.current?.click()}
-                    className={`px-4 py-1.5 border font-mono mono-extrabold-italic text-[10px] uppercase tracking-widest transition-all tech-chipped whitespace-nowrap ${importSuccess
+                    className={`hidden md:block px-4 py-1.5 border font-mono mono-extrabold-italic text-[10px] uppercase tracking-widest transition-all tech-chipped whitespace-nowrap ${importSuccess
                       ? 'bg-cyan-500 border-cyan-400 text-black'
                       : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10 hover:text-white'
                       }`}
