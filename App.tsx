@@ -75,6 +75,8 @@ const App: React.FC = () => {
   const tuningRef = useRef<HTMLElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const movieScrollRef = useRef<HTMLDivElement>(null);
+  const [activeCardIndex, setActiveCardIndex] = useState(0);
 
   const showUploadScreen = !!user && state.userMovies.length === 0;
 
@@ -99,7 +101,24 @@ const App: React.FC = () => {
       observer.disconnect();
       clearTimeout(fallbackTimer);
     };
-  }, [user, state.userMovies, isFlipped]);
+  }, [user]);
+
+  // Track active card on mobile scroll
+  useEffect(() => {
+    const scrollContainer = movieScrollRef.current;
+    if (!scrollContainer) return;
+
+    const handleScroll = () => {
+      const scrollLeft = scrollContainer.scrollLeft;
+      const cardWidth = scrollContainer.firstElementChild?.clientWidth || 1;
+      const gap = 16; // gap-4 = 16px
+      const index = Math.round(scrollLeft / (cardWidth + gap));
+      setActiveCardIndex(Math.max(0, Math.min(index, state.recommendations.length - 1)));
+    };
+
+    scrollContainer.addEventListener('scroll', handleScroll, { passive: true });
+    return () => scrollContainer.removeEventListener('scroll', handleScroll);
+  }, [state.recommendations.length, state.userMovies, isFlipped]);
 
   useEffect(() => {
     const adjustHeight = () => {
@@ -911,9 +930,30 @@ const App: React.FC = () => {
                           <div className="w-8 h-1 bg-cyan-500"></div>
                         </div>
                       </div>
-                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8 items-stretch">
+                      {/* Mobile blur glow - rendered outside scroll container to avoid clipping */}
+                      {state.recommendations.length > 0 && state.recommendations[activeCardIndex] && (
+                        <div className="md:hidden absolute top-0 left-0 w-[calc((100vw-48px)/1.5)] h-full flex items-center justify-center pointer-events-none z-0 overflow-visible">
+                          <div className="w-[155%] aspect-square blur-[170px] opacity-100 transition-opacity duration-500">
+                            {state.recommendations[activeCardIndex].posterUrl &&
+                              !state.recommendations[activeCardIndex].posterUrl.includes('[SIGNAL_LOST]') &&
+                              (state.recommendations[activeCardIndex].posterUrl.startsWith('http') || state.recommendations[activeCardIndex].posterUrl.startsWith('data:image')) ? (
+                              <img
+                                src={state.recommendations[activeCardIndex].posterUrl}
+                                className="w-full h-full object-cover rounded-full"
+                                alt=""
+                                aria-hidden="true"
+                              />
+                            ) : (
+                              <div className="w-full h-full bg-cyan-500 rounded-full" />
+                            )}
+                          </div>
+                        </div>
+                      )}
+                      <div ref={movieScrollRef} className="relative z-10 flex overflow-x-auto gap-4 pb-4 movie-cards-scroll md:grid md:grid-cols-3 lg:grid-cols-4 md:gap-8 md:overflow-visible md:pb-0 snap-x snap-mandatory md:snap-none">
                         {state.recommendations.map((movie, idx) => (
-                          <MovieCard key={movie.id} movie={movie} index={idx} isRecommendation onLikeSimilar={(seed) => fetchRecommendations(seed)} onMarkWatched={(m) => markAsWatched(m)} onFeedback={(m, f) => handleFeedback(m, f)} onAddToWatchlist={(m) => addToWatchlist(m)} />
+                          <div key={movie.id} className="shrink-0 w-[calc((100vw-48px)/1.5)] md:w-auto snap-start">
+                            <MovieCard movie={movie} index={idx} isRecommendation onLikeSimilar={(seed) => fetchRecommendations(seed)} onMarkWatched={(m) => markAsWatched(m)} onFeedback={(m, f) => handleFeedback(m, f)} onAddToWatchlist={(m) => addToWatchlist(m)} />
+                          </div>
                         ))}
                       </div>
 

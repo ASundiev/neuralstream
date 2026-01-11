@@ -81,6 +81,125 @@ export const MovieCard: React.FC<MovieCardProps> = ({
 
   const imdbUrl = `https://www.imdb.com/find?q=${encodeURIComponent(`${movie.title} ${movie.year}`)}&s=tt`;
 
+  // ActionButtons component handles the layout for interaction buttons
+  const ActionButtons = () => {
+    // If input is active, show it centered at the bottom
+    if (showReasonInput) {
+      return (
+        <div className="absolute bottom-[8px] left-1/2 -translate-x-1/2 flex gap-[6px] items-center z-30">
+          <div className="flex gap-[6px] animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <input
+              autoFocus
+              type="text"
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && submitFeedback()}
+              placeholder="MODIFIER..."
+              className="w-24 bg-[rgba(0,0,0,0.64)] backdrop-blur-[2px] border border-[rgba(255,255,255,0.1)] px-3 py-[11px] mono text-[10px] text-white outline-none uppercase placeholder-slate-600"
+              onClick={(e) => e.preventDefault()}
+            />
+            <button
+              onClick={(e) => { e.preventDefault(); submitFeedback(); }}
+              className="bg-[rgba(0,0,0,0.64)] backdrop-blur-[2px] border border-[rgba(255,255,255,0.1)] px-[17px] py-[11px] text-white hover:text-cyan-400 transition-colors"
+            >
+              <i className="fa-solid fa-check text-[12px]"></i>
+            </button>
+            <button
+              onClick={(e) => { e.preventDefault(); setShowReasonInput(false); }}
+              className="bg-[rgba(0,0,0,0.64)] backdrop-blur-[2px] border border-[rgba(255,255,255,0.1)] px-[17px] py-[11px] text-white hover:text-white transition-colors"
+            >
+              <i className="fa-solid fa-xmark text-[12px]"></i>
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    // Default state: Only Kebab Menu at Bottom Right
+    return (
+      <div className="absolute bottom-[8px] right-[8px] z-30">
+        <div className="relative">
+          <button
+            onClick={(e) => { e.preventDefault(); setShowMenu(!showMenu); }}
+            className={`bg-[rgba(0,0,0,0.64)] backdrop-blur-[2px] border border-[rgba(255,255,255,0.1)] w-12 h-12 md:w-auto md:h-auto md:px-[17px] md:py-[11px] flex items-center justify-center transition-all ${showMenu ? 'text-cyan-400 border-cyan-500/50' : 'text-white hover:text-cyan-400'}`}
+          >
+            <i className="fa-solid fa-ellipsis-vertical text-[12px]"></i>
+          </button>
+          {showMenu && (
+            <>
+              <div className="fixed inset-0 z-[55]" onClick={(e) => { e.preventDefault(); setShowMenu(false); }}></div>
+              <div className="absolute bottom-full right-0 mb-2 w-40 bg-slate-900 border border-white/10 shadow-2xl z-[60] py-1 animate-in fade-in slide-in-from-bottom-2 duration-200 rounded-sm">
+
+                {/* Feedback Actions */}
+                <div className="flex border-b border-white/5">
+                  <button
+                    onClick={(e) => { e.preventDefault(); handleVote('like'); setShowMenu(false); }}
+                    className={`flex-1 px-3 py-2 text-center hover:bg-white/5 transition-colors ${movie.feedback?.type === 'like' ? 'text-cyan-400' : 'text-slate-500 hover:text-cyan-400'}`}
+                  >
+                    <i className="fa-solid fa-thumbs-up text-[12px]"></i>
+                  </button>
+                  <div className="w-px bg-white/5"></div>
+                  <button
+                    onClick={(e) => { e.preventDefault(); handleVote('dislike'); setShowMenu(false); }}
+                    className={`flex-1 px-3 py-2 text-center hover:bg-white/5 transition-colors ${movie.feedback?.type === 'dislike' ? 'text-red-400' : 'text-slate-500 hover:text-red-400'}`}
+                  >
+                    <i className="fa-solid fa-thumbs-down text-[12px]"></i>
+                  </button>
+                </div>
+
+                {isRecommendation && (
+                  <button
+                    onClick={(e) => { e.preventDefault(); setShowDescription(!showDescription); setShowMenu(false); }}
+                    className={`w-full text-left px-3 py-2 mono text-[9px] uppercase font-black transition-colors ${showDescription ? 'text-cyan-400' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
+                  >
+                    [ WHY THIS? ]
+                  </button>
+                )}
+
+                <button
+                  onClick={(e) => { e.preventDefault(); onLikeSimilar?.(movie); setShowMenu(false); }}
+                  className="w-full text-left px-3 py-2 mono text-[9px] uppercase font-black text-slate-500 hover:text-cyan-400 hover:bg-white/5 transition-colors"
+                >
+                  [ SIMILAR ]
+                </button>
+                <button
+                  onClick={(e) => { e.preventDefault(); onMarkWatched?.(movie); setShowMenu(false); }}
+                  className="w-full text-left px-3 py-2 mono text-[9px] uppercase font-black text-slate-500 hover:text-greenAcc-400 hover:bg-white/5 transition-colors"
+                >
+                  [ WATCHED ]
+                </button>
+                <button
+                  onClick={async (e) => {
+                    e.preventDefault();
+                    if (isSynthesizingPoster) return;
+                    let finalPoster = neuralPoster;
+                    if (!finalPoster) {
+                      setIsSynthesizingPoster(true);
+                      try {
+                        finalPoster = await generateNeuralPoster(movie.title, movie.description);
+                        if (finalPoster) setNeuralPoster(finalPoster);
+                      } catch (err) {
+                        console.error("WATCHLIST_SYNTHESIS_ERROR", err);
+                      } finally {
+                        setIsSynthesizingPoster(false);
+                      }
+                    }
+                    onAddToWatchlist?.({ ...movie, posterUrl: finalPoster || '[SIGNAL_LOST]' });
+                    setShowMenu(false);
+                  }}
+                  className="w-full text-left px-3 py-2 mono text-[9px] uppercase font-black text-slate-500 hover:text-cyan-400 hover:bg-white/5 transition-colors border-t border-white/5"
+                  disabled={isSynthesizingPoster}
+                >
+                  {isSynthesizingPoster ? '[ SYNTHESIZING... ]' : '[ + WATCHLIST ]'}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   const PosterContent = () => (
     <div className="aspect-[2/3] w-full overflow-hidden relative shrink-0 bg-slate-950">
       {isSynthesizingPoster && (
@@ -126,6 +245,12 @@ export const MovieCard: React.FC<MovieCardProps> = ({
             loading="lazy"
             className={`w-full h-full object-cover transition-all duration-700 group-hover:scale-110 ${imageLoaded ? 'opacity-100' : 'opacity-0'} ${isNeuralGenerated ? 'grayscale-[0.4] group-hover:grayscale-0 contrast-125' : 'grayscale-[0.2] group-hover:grayscale-0'}`}
           />
+
+          {/* Dark gradient overlay at bottom for button contrast */}
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent from-[60%] to-[rgba(0,0,0,0.9)] pointer-events-none z-20" />
+
+          {/* Saturation overlay like Figma design */}
+          <div className="absolute inset-0 bg-[rgba(255,255,255,0.2)] mix-blend-saturation pointer-events-none" />
         </div>
       ) : (
         <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center relative bg-gradient-to-br from-slate-950 via-slate-900 to-black border-b border-cyan-500/10">
@@ -156,32 +281,15 @@ export const MovieCard: React.FC<MovieCardProps> = ({
           }}
         >
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="mono text-[9px] text-cyan-400 uppercase tracking-widest font-black">
-                [ NEURAL_GENESIS ]
-              </div>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowDescription(false);
-                }}
-                className="text-slate-500 hover:text-white transition-colors"
-              >
-                <i className="fa-solid fa-xmark"></i>
-              </button>
-            </div>
-            <p className="movie-card-ai-quote text-[12px] leading-relaxed">
+            <p className="font-sans italic text-white text-[14px] leading-relaxed">
               {movie.reason}
             </p>
           </div>
         </div>
       )}
 
-      <div className="absolute top-2 left-2 right-2 flex justify-end items-start pointer-events-none z-20">
-        <div className="font-mono italic font-bold text-[13.5px] leading-4 bg-greenAcc-500 text-black px-2 py-1 shadow-[0px_11.25px_16.875px_-3.375px_rgba(0,0,0,0.1),0px_4.5px_6.75px_-4.5px_rgba(0,0,0,0.1)] border-[1.125px] border-[rgba(0,245,255,0.2)]">
-          {movie.rating ? movie.rating.toFixed(1) : '8.0'}
-        </div>
-      </div>
+      {/* Action buttons overlay */}
+      <ActionButtons />
     </div>
   );
 
@@ -191,8 +299,8 @@ export const MovieCard: React.FC<MovieCardProps> = ({
       style={{ animationDelay: `${(index % 8) * 100}ms` }}
       className={`group relative overflow-visible transition-all duration-300 flex flex-col h-full ${isInView ? 'animate-card-entrance' : 'opacity-[0.01]'}`}
     >
-      {/* Hover Background Glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[140%] aspect-square z-0 opacity-0 group-hover:opacity-90 transition-opacity duration-700 pointer-events-none blur-[170px]">
+      {/* Hover Background Glow - hidden on mobile (rendered externally to avoid scroll clipping) */}
+      <div className="hidden md:block absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[140%] aspect-square z-0 opacity-0 group-hover:opacity-90 transition-opacity duration-700 pointer-events-none blur-[170px]">
         {isValidUrl ? (
           <img
             src={pUrl || ''}
@@ -205,143 +313,34 @@ export const MovieCard: React.FC<MovieCardProps> = ({
         )}
       </div>
 
-      <div className="relative z-10 flex flex-col h-full bg-[rgba(17,21,35,0.48)] border border-white/10 backdrop-blur-[2px] p-4 transition-all duration-300 group-hover:bg-[rgba(17,21,35,0.6)]">
-        {imdbUrl ? (
-          <a href={imdbUrl} target="_blank" rel="noopener noreferrer" className="block relative focus:outline-none focus:ring-2 focus:ring-cyan-500 z-10 mb-6">
+      {/* Card container - no fill/border, just backdrop blur for readability on glow */}
+      <div className="relative z-10 flex flex-col h-full backdrop-blur-[2px] transition-all duration-300">
+        {/* Poster section - no padding */}
+        <div className="relative">
+          {imdbUrl ? (
+            <a href={imdbUrl} target="_blank" rel="noopener noreferrer" className="block relative focus:outline-none focus:ring-2 focus:ring-cyan-500 z-10">
+              <PosterContent />
+            </a>
+          ) : (
             <PosterContent />
-          </a>
-        ) : (
-          <div className="mb-6">
-            <PosterContent />
-          </div>
-        )}
+          )}
+        </div>
 
-        <div className="flex flex-col flex-1 relative text-center">
-          <div className="flex flex-col items-center justify-center mb-6">
+        {/* Title and metadata section */}
+        <div className="flex flex-col flex-1 relative text-center pt-6 pb-4">
+          <div className="flex flex-col items-center justify-center gap-[4px]">
             {imdbUrl ? (
               <a href={imdbUrl} target="_blank" rel="noopener noreferrer" className="block focus:outline-none">
-                <h3 className="movie-card-title text-[15px] leading-[22px] tracking-[-0.025em] hover:text-cyan-400 transition-colors">{movie.title}</h3>
+                <h3 className="movie-card-title text-[20px] leading-[1.5] tracking-[-0.325px] hover:text-cyan-400 transition-colors">{movie.title}</h3>
               </a>
             ) : (
-              <h3 className="movie-card-title text-[15px] leading-[22px] tracking-[-0.025em] group-hover:text-cyan-400 transition-colors">{movie.title}</h3>
+              <h3 className="movie-card-title text-[20px] leading-[1.5] tracking-[-0.325px] group-hover:text-cyan-400 transition-colors">{movie.title}</h3>
             )}
-            <p className="font-mono text-[10px] text-[#8195b1] uppercase italic mono-italic tracking-wider mt-1">{movie.year} // {movie.type}</p>
-          </div>
-
-          <div className="mt-auto relative z-20">
-            {showReasonInput ? (
-              <div className="space-y-1 animate-in fade-in slide-in-from-top-2 duration-300">
-                <input
-                  autoFocus
-                  type="text"
-                  value={reason}
-                  onChange={(e) => setReason(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && submitFeedback()}
-                  placeholder="ENTER_MODIFIER..."
-                  className="w-full bg-black/60 border border-white/10 p-3 mono text-[10px] text-white outline-none uppercase placeholder-slate-700 rounded-sm"
-                />
-                <div className="flex gap-1.5">
-                  <button
-                    onClick={submitFeedback}
-                    className="flex-1 py-2 bg-white text-black mono text-[10px] font-black uppercase hover:bg-cyan-400 transition-colors rounded-sm"
-                  >
-                    [ CONFIRM ]
-                  </button>
-                  <button
-                    onClick={() => setShowReasonInput(false)}
-                    className="px-4 py-2 bg-white/5 border border-white/5 text-slate-500 hover:text-white mono text-[10px] font-black uppercase transition-all rounded-sm"
-                  >
-                    [ X ]
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="flex gap-1.5">
-                <div className="flex-1">
-                  {movie.feedback ? (
-                    <div className="h-full py-2 border border-white/10 bg-white/5 flex items-center justify-center gap-2 rounded-sm">
-                      <i className={`fa-solid ${movie.feedback.type === 'like' ? 'fa-thumbs-up text-cyan-500' : 'fa-thumbs-down text-red-500'} text-xs`}></i>
-                      <span className="mono text-[9px] text-slate-400 uppercase tracking-widest">RECORDED</span>
-                    </div>
-                  ) : (
-                    <div className="flex gap-1.5 h-full">
-                      <button
-                        onClick={() => handleVote('like')}
-                        className="flex-1 py-2.5 border border-white/10 bg-white/5 hover:bg-cyan-500/10 text-slate-500 hover:text-cyan-400 transition-all flex items-center justify-center rounded-sm"
-                      >
-                        <i className="fa-solid fa-thumbs-up text-xs"></i>
-                      </button>
-                      <button
-                        onClick={() => handleVote('dislike')}
-                        className="flex-1 py-2.5 border border-white/10 bg-white/5 hover:bg-red-500/10 text-slate-500 hover:text-red-400 transition-all flex items-center justify-center rounded-sm"
-                      >
-                        <i className="fa-solid fa-thumbs-down text-xs"></i>
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                {isRecommendation && (
-                  <button
-                    onClick={() => setShowDescription(!showDescription)}
-                    className={`px-4 py-2.5 border transition-all flex items-center justify-center rounded-sm h-full ${showDescription ? 'bg-cyan-500/20 border-cyan-500 text-cyan-400' : 'border-white/10 bg-white/5 text-slate-500 hover:text-white hover:bg-white/10'}`}
-                  >
-                    <i className="fa-solid fa-question text-xs"></i>
-                  </button>
-                )}
-
-                <div className="relative">
-                  <button
-                    onClick={() => setShowMenu(!showMenu)}
-                    className="px-4 py-2.5 border border-white/10 bg-white/5 hover:bg-white/10 text-slate-500 hover:text-white transition-all flex items-center justify-center rounded-sm h-full"
-                  >
-                    <i className="fa-solid fa-ellipsis-vertical text-xs"></i>
-                  </button>
-                  {showMenu && (
-                    <>
-                      <div className="fixed inset-0 z-[55]" onClick={() => setShowMenu(false)}></div>
-                      <div className="absolute bottom-full right-0 mb-2 w-32 bg-slate-900 border border-white/10 shadow-2xl z-[60] py-1 animate-in fade-in slide-in-from-bottom-2 duration-200 rounded-sm">
-                        <button
-                          onClick={() => { onLikeSimilar?.(movie); setShowMenu(false); }}
-                          className="w-full text-left px-3 py-2 mono text-[9px] uppercase font-black text-slate-500 hover:text-cyan-400 hover:bg-white/5 transition-colors"
-                        >
-                          [ SIMILAR ]
-                        </button>
-                        <button
-                          onClick={() => { onMarkWatched?.(movie); setShowMenu(false); }}
-                          className="w-full text-left px-3 py-2 mono text-[9px] uppercase font-black text-slate-500 hover:text-greenAcc-400 hover:bg-white/5 transition-colors"
-                        >
-                          [ WATCHED ]
-                        </button>
-                        <button
-                          onClick={async () => {
-                            if (isSynthesizingPoster) return;
-                            let finalPoster = neuralPoster;
-                            if (!finalPoster) {
-                              setIsSynthesizingPoster(true);
-                              try {
-                                finalPoster = await generateNeuralPoster(movie.title, movie.description);
-                                if (finalPoster) setNeuralPoster(finalPoster);
-                              } catch (e) {
-                                console.error("WATCHLIST_SYNTHESIS_ERROR", e);
-                              } finally {
-                                setIsSynthesizingPoster(false);
-                              }
-                            }
-                            onAddToWatchlist?.({ ...movie, posterUrl: finalPoster || '[SIGNAL_LOST]' });
-                            setShowMenu(false);
-                          }}
-                          className="w-full text-left px-3 py-2 mono text-[9px] uppercase font-black text-slate-500 hover:text-cyan-400 hover:bg-white/5 transition-colors border-t border-white/5"
-                          disabled={isSynthesizingPoster}
-                        >
-                          {isSynthesizingPoster ? '[ SYNTHESIZING... ]' : '[ + WATCHLIST ]'}
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
-            )}
+            {/* Metadata row with integrated rating */}
+            <p className="font-mono text-[12px] text-[#8195b1] italic leading-[15px]">
+              <span>{movie.year} // {movie.type} // ★ </span>
+              <span className="font-extrabold italic">{movie.rating ? movie.rating.toFixed(1) : '8.0'}</span>
+            </p>
           </div>
         </div>
       </div>
