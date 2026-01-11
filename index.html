@@ -606,16 +606,38 @@
       }
     }
 
+    @keyframes glitch-fade {
+      0% {
+        opacity: 0.75;
+      }
+
+      99% {
+        opacity: 0.75;
+      }
+
+      100% {
+        opacity: 0;
+      }
+    }
+
     .glitch-effect-1 {
-      animation: glitch-anim-1 4s infinite linear alternate-reverse;
+      opacity: 0;
+    }
+
+    .group:hover .glitch-effect-1 {
+      animation: glitch-anim-1 2s 1 linear alternate-reverse forwards, glitch-fade 2s 1 linear forwards;
     }
 
     .glitch-effect-2 {
-      animation: glitch-anim-2 6s infinite linear alternate-reverse;
+      opacity: 0;
     }
 
-    .glitch-flash {
-      animation: glitch-anim-flash 8s infinite;
+    .group:hover .glitch-effect-2 {
+      animation: glitch-anim-2 2.5s 1 linear alternate-reverse forwards, glitch-fade 2.5s 1 linear forwards;
+    }
+
+    .group:hover .glitch-flash {
+      animation: glitch-anim-flash 3s 1 forwards;
     }
 
     .glitch-anim-flash {
