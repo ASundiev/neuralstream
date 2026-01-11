@@ -128,20 +128,20 @@ export const MovieCard: React.FC<MovieCardProps> = ({
           {showMenu && (
             <>
               <div className="fixed inset-0 z-[55]" onClick={(e) => { e.preventDefault(); setShowMenu(false); }}></div>
-              <div className="absolute bottom-full right-0 mb-2 w-40 bg-slate-900 border border-white/10 shadow-2xl z-[60] py-1 animate-in fade-in slide-in-from-bottom-2 duration-200 rounded-sm">
+              <div className="absolute bottom-full right-0 mb-2 w-60 bg-slate-900 border border-white/10 shadow-2xl z-[60] py-1 animate-in fade-in slide-in-from-bottom-2 duration-200 rounded-sm">
 
                 {/* Feedback Actions */}
                 <div className="flex border-b border-white/5">
                   <button
                     onClick={(e) => { e.preventDefault(); handleVote('like'); setShowMenu(false); }}
-                    className={`flex-1 px-3 py-2 text-center hover:bg-white/5 transition-colors ${movie.feedback?.type === 'like' ? 'text-cyan-400' : 'text-slate-500 hover:text-cyan-400'}`}
+                    className={`flex-1 px-3 py-2 text-center hover:bg-white/5 transition-colors ${movie.feedback?.type === 'like' ? 'text-cyan-400' : 'text-[#8295b1] hover:text-cyan-400'}`}
                   >
                     <i className="fa-solid fa-thumbs-up text-[12px]"></i>
                   </button>
                   <div className="w-px bg-white/5"></div>
                   <button
                     onClick={(e) => { e.preventDefault(); handleVote('dislike'); setShowMenu(false); }}
-                    className={`flex-1 px-3 py-2 text-center hover:bg-white/5 transition-colors ${movie.feedback?.type === 'dislike' ? 'text-red-400' : 'text-slate-500 hover:text-red-400'}`}
+                    className={`flex-1 px-3 py-2 text-center hover:bg-white/5 transition-colors ${movie.feedback?.type === 'dislike' ? 'text-red-400' : 'text-[#8295b1] hover:text-red-400'}`}
                   >
                     <i className="fa-solid fa-thumbs-down text-[12px]"></i>
                   </button>
@@ -150,7 +150,7 @@ export const MovieCard: React.FC<MovieCardProps> = ({
                 {isRecommendation && (
                   <button
                     onClick={(e) => { e.preventDefault(); setShowDescription(!showDescription); setShowMenu(false); }}
-                    className={`w-full text-left px-3 py-2 mono text-[9px] uppercase font-black transition-colors ${showDescription ? 'text-cyan-400' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
+                    className={`w-full text-left px-3 py-1 mono text-[12px] leading-[24px] uppercase font-black transition-colors ${showDescription ? 'text-cyan-400' : 'text-[#8295b1] hover:text-white hover:bg-white/5'}`}
                   >
                     [ WHY THIS? ]
                   </button>
@@ -158,13 +158,13 @@ export const MovieCard: React.FC<MovieCardProps> = ({
 
                 <button
                   onClick={(e) => { e.preventDefault(); onLikeSimilar?.(movie); setShowMenu(false); }}
-                  className="w-full text-left px-3 py-2 mono text-[9px] uppercase font-black text-slate-500 hover:text-cyan-400 hover:bg-white/5 transition-colors"
+                  className="w-full text-left px-3 py-1 mono text-[12px] leading-[24px] uppercase font-black text-[#8295b1] hover:text-cyan-400 hover:bg-white/5 transition-colors"
                 >
                   [ SIMILAR ]
                 </button>
                 <button
                   onClick={(e) => { e.preventDefault(); onMarkWatched?.(movie); setShowMenu(false); }}
-                  className="w-full text-left px-3 py-2 mono text-[9px] uppercase font-black text-slate-500 hover:text-greenAcc-400 hover:bg-white/5 transition-colors"
+                  className="w-full text-left px-3 py-1 mono text-[12px] leading-[24px] uppercase font-black text-[#8295b1] hover:text-greenAcc-400 hover:bg-white/5 transition-colors"
                 >
                   [ WATCHED ]
                 </button>
@@ -187,7 +187,7 @@ export const MovieCard: React.FC<MovieCardProps> = ({
                     onAddToWatchlist?.({ ...movie, posterUrl: finalPoster || '[SIGNAL_LOST]' });
                     setShowMenu(false);
                   }}
-                  className="w-full text-left px-3 py-2 mono text-[9px] uppercase font-black text-slate-500 hover:text-cyan-400 hover:bg-white/5 transition-colors border-t border-white/5"
+                  className="w-full text-left px-3 h-[40px] flex items-center mono text-[12px] leading-[24px] uppercase font-black text-[#8295b1] hover:text-cyan-400 hover:bg-white/5 transition-colors border-t border-white/5"
                   disabled={isSynthesizingPoster}
                 >
                   {isSynthesizingPoster ? '[ SYNTHESIZING... ]' : '[ + WATCHLIST ]'}
