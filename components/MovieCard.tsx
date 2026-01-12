@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Movie, Feedback, ContentType } from '../types';
 import { generateNeuralPoster } from '../services/imageService';
+import { getImdbId } from '../services/simklService';
 
 interface MovieCardProps {
   movie: Movie;
@@ -26,6 +27,7 @@ export const MovieCard: React.FC<MovieCardProps> = ({
   const [showMenu, setShowMenu] = useState(false);
   const [isSynthesizingPoster, setIsSynthesizingPoster] = useState(false);
   const [neuralPoster, setNeuralPoster] = useState<string | null>(null);
+  const [imdbId, setImdbId] = useState<string | null>(null);
 
   const [tempFeedback, setTempFeedback] = useState<'like' | 'dislike' | null>(null);
   const [reason, setReason] = useState('');
@@ -50,12 +52,24 @@ export const MovieCard: React.FC<MovieCardProps> = ({
       observer.observe(cardRef.current);
     }
 
+    // Prefetch IMDB ID when card is mounted, but we can do it lazily or eagerly.
+    // Given the request, let's just fetch it.
+    let mounted = true;
+    const fetchId = async () => {
+      const id = await getImdbId(movie.title, movie.year, movie.type);
+      if (mounted && id) {
+        setImdbId(id);
+      }
+    };
+    fetchId();
+
     return () => {
+      mounted = false;
       if (cardRef.current) {
         observer.unobserve(cardRef.current);
       }
     };
-  }, []);
+  }, [movie.title, movie.year]);
 
   const handleVote = (type: 'like' | 'dislike') => {
     setTempFeedback(type);
@@ -79,7 +93,9 @@ export const MovieCard: React.FC<MovieCardProps> = ({
   const isValidUrl = !isLost && (pUrl.startsWith('http') || pUrl.startsWith('data:image'));
   const isNeuralGenerated = !!neuralPoster;
 
-  const imdbUrl = `https://www.imdb.com/find?q=${encodeURIComponent(`${movie.title} ${movie.year}`)}&s=tt`;
+  const imdbUrl = imdbId
+    ? `https://www.imdb.com/title/${imdbId}/`
+    : `https://www.imdb.com/find?q=${encodeURIComponent(`${movie.title} ${movie.year}`)}&s=tt`;
 
   // ActionButtons component handles the layout for interaction buttons
   const ActionButtons = () => {
