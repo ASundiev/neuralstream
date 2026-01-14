@@ -777,9 +777,7 @@ const App: React.FC = () => {
                 <div className="space-y-12">
                   <div className="relative z-30 md:mx-[3rem]">
                     {!isFlipped && !user ? (
-                      <div className="tech-border bg-slate-900/80 backdrop-blur-xl border-cyan-500/10 tech-chipped animate-slide-fade-blur [animation-delay:2300ms]">
-                        <PromoFeatures />
-                      </div>
+                      <PromoFeatures onGetStarted={() => setIsFlipped(true)} />
                     ) : (
                       <section
                         ref={tuningRef}

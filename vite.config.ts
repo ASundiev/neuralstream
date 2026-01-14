@@ -12,6 +12,7 @@ export default defineConfig(({ mode }) => {
       'process.env.VITE_SUPABASE_URL': JSON.stringify(env.VITE_SUPABASE_URL || env.SUPABASE_URL || ''),
       'process.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(env.VITE_SUPABASE_ANON_KEY || env.SUPABASE_ANON_KEY || ''),
       'process.env.VITE_TMDB_TOKEN': JSON.stringify(env.VITE_TMDB_TOKEN || env.TMDB_TOKEN || ''),
+      'process.env.SIMKL_CLIENT_ID': JSON.stringify(env.VITE_SIMKL_CLIENT_ID || env.SIMKL_CLIENT_ID || ''),
     }
   };
 });
