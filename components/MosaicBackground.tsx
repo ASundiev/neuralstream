@@ -203,7 +203,7 @@ export const MosaicBackground: React.FC = () => {
     return (
         <canvas
             ref={canvasRef}
-            className="fixed inset-0 z-0 pointer-events-none"
+            className="absolute inset-0 z-0 pointer-events-none"
             style={{ filter: 'blur(0.4px)' }}
         />
     );
